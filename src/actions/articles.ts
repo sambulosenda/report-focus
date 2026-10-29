@@ -1,0 +1,182 @@
+"use server";
+
+import { and, eq, ne } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { db } from "@/db";
+import { articles, media } from "@/db/schema";
+import { requireUser } from "@/lib/auth";
+import { canDeleteArticle, canEditArticle, canPublish } from "@/lib/permissions";
+import { saveImage } from "@/lib/storage";
+import { slugify } from "@/lib/utils";
+
+export type ArticleFormState = { error?: string; ok?: string; savedAt?: number } | undefined;
+
+const INTENTS = ["save", "submit", "publish", "return", "unpublish", "archive"] as const;
+
+const ArticleInput = z.object({
+  id: z.coerce.number().int().positive().optional(),
+  title: z.string().trim().min(1, "Add a headline.").max(200),
+  slug: z.string().trim().max(100).optional(),
+  summary: z.string().trim().max(400).default(""),
+  body: z.string().max(200_000).default(""),
+  heroImage: z.string().trim().max(500).optional(),
+  heroCaption: z.string().trim().max(300).optional(),
+  tags: z.string().trim().max(300).default(""),
+  categoryId: z.coerce.number().int().positive().optional(),
+  isBreaking: z.boolean(),
+  isFeatured: z.boolean(),
+  publishAt: z.string().trim().optional(),
+  editorNote: z.string().trim().max(1000).optional(),
+  intent: z.enum(INTENTS),
+});
+
+const blankToUndefined = (v: FormDataEntryValue | null) => (v === null || v === "" ? undefined : String(v));
+
+async function uniqueSlug(base: string, excludeId?: number) {
+  let slug = slugify(base);
+  for (let i = 2; ; i++) {
+    const clash = await db
+      .select({ id: articles.id })
+      .from(articles)
+      .where(excludeId ? and(eq(articles.slug, slug), ne(articles.id, excludeId)) : eq(articles.slug, slug))
+      .get();
+    if (!clash) return slug;
+    slug = `${slugify(base)}-${i}`;
+  }
+}
+
+export async function saveArticle(_prev: ArticleFormState, formData: FormData): Promise<ArticleFormState> {
+  const user = await requireUser();
+  const parsed = ArticleInput.safeParse({
+    id: blankToUndefined(formData.get("id")),
+    title: formData.get("title"),
+    slug: blankToUndefined(formData.get("slug")),
+    summary: formData.get("summary") ?? "",
+    body: formData.get("body") ?? "",
+    heroImage: blankToUndefined(formData.get("heroImage")),
+    heroCaption: blankToUndefined(formData.get("heroCaption")),
+    tags: formData.get("tags") ?? "",
+    categoryId: blankToUndefined(formData.get("categoryId")),
+    isBreaking: formData.get("isBreaking") === "on",
+    isFeatured: formData.get("isFeatured") === "on",
+    publishAt: blankToUndefined(formData.get("publishAt")),
+    editorNote: blankToUndefined(formData.get("editorNote")),
+    intent: formData.get("intent") ?? "save",
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form and try again." };
+  const input = parsed.data;
+
+  const existing = input.id ? await db.select().from(articles).where(eq(articles.id, input.id)).get() : undefined;
+  if (input.id && !existing) return { error: "This story no longer exists." };
+  if (existing && !canEditArticle(user, existing)) return { error: "You can’t edit this story any more. Ask an editor." };
+
+  const editor = canPublish(user);
+  if (["publish", "return", "unpublish", "archive"].includes(input.intent) && !editor) {
+    return { error: "Only editors can publish, return or unpublish stories." };
+  }
+  if (input.intent === "submit" || input.intent === "publish") {
+    if (!input.summary) return { error: "Add a summary before sending this story on." };
+    if (!input.body.trim()) return { error: "The story body is empty." };
+    if (!input.categoryId) return { error: "Choose a section for this story." };
+  }
+
+  let status = existing?.status ?? "draft";
+  let publishedAt = existing?.publishedAt ?? null;
+  switch (input.intent) {
+    case "submit":
+      status = "review";
+      break;
+    case "publish": {
+      status = "published";
+      const when = input.publishAt ? new Date(input.publishAt) : null;
+      if (when && Number.isNaN(when.getTime())) return { error: "That publish time isn’t valid." };
+      publishedAt = when ?? (existing?.status === "published" && publishedAt ? publishedAt : new Date());
+      break;
+    }
+    case "return":
+      status = "draft";
+      break;
+    case "unpublish":
+      status = "draft";
+      break;
+    case "archive":
+      status = "archived";
+      break;
+  }
+
+  const values = {
+    title: input.title,
+    summary: input.summary,
+    body: input.body,
+    heroImage: input.heroImage ?? null,
+    heroCaption: input.heroCaption ?? null,
+    tags: input.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .join(", "),
+    categoryId: input.categoryId ?? null,
+    status,
+    publishedAt,
+    updatedAt: new Date(),
+    // Only editors control placement flags and editor notes.
+    ...(editor
+      ? { isBreaking: input.isBreaking, isFeatured: input.isFeatured, editorNote: input.editorNote ?? null }
+      : {}),
+  };
+
+  let id = existing?.id;
+  if (existing) {
+    const slug = editor && input.slug && input.slug !== existing.slug ? await uniqueSlug(input.slug, existing.id) : existing.slug;
+    await db.update(articles).set({ ...values, slug }).where(eq(articles.id, existing.id));
+  } else {
+    const slug = await uniqueSlug(input.slug || input.title);
+    const row = await db
+      .insert(articles)
+      .values({ ...values, slug, authorId: user.id })
+      .returning({ id: articles.id })
+      .get();
+    id = row.id;
+  }
+
+  revalidatePath("/", "layout");
+  if (!existing) redirect(`/newsroom/articles/${id}?created=1`);
+
+  const messages: Record<(typeof INTENTS)[number], string> = {
+    save: "Saved.",
+    submit: "Sent to editors for review.",
+    publish: publishedAt && publishedAt > new Date() ? "Scheduled." : "Published. It’s live on the site.",
+    return: "Returned to the writer as a draft.",
+    unpublish: "Unpublished. The story is now a draft.",
+    archive: "Archived.",
+  };
+  return { ok: messages[input.intent], savedAt: Date.now() };
+}
+
+export async function deleteArticle(formData: FormData) {
+  const user = await requireUser();
+  const id = Number(formData.get("id"));
+  const existing = await db.select().from(articles).where(eq(articles.id, id)).get();
+  if (!existing || !canDeleteArticle(user, existing)) redirect("/newsroom/articles?error=delete");
+  await db.delete(articles).where(eq(articles.id, id));
+  revalidatePath("/", "layout");
+  redirect("/newsroom/articles?deleted=1");
+}
+
+export type UploadResult = { url?: string; error?: string };
+
+export async function uploadImage(formData: FormData): Promise<UploadResult> {
+  const user = await requireUser();
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "Choose an image to upload." };
+  try {
+    const url = await saveImage(file);
+    await db.insert(media).values({ url, alt: String(formData.get("alt") ?? ""), uploadedBy: user.id });
+    revalidatePath("/newsroom/media");
+    return { url };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Upload failed." };
+  }
+}
