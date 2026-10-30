@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatTime } from "@/lib/utils";
+import { excerpt, formatTime } from "@/lib/utils";
 import { BreakingBanner } from "@/components/BreakingBanner";
 import { NewsletterBand } from "@/components/NewsletterForm";
 import {
@@ -19,7 +19,7 @@ import {
   currentLiveStory,
   featuredStories,
   latestStories,
-  liveUpdatesFor,
+  newestLiveUpdate,
   mostRead,
   navCategories,
   relatedStories,
@@ -63,7 +63,7 @@ export default async function HomePage() {
   const stack = take(textStories, 5);
   const top = popular.slice(0, 8);
   // When the live story is already the lead, point to its newest post instead of repeating the headline.
-  const liveLatest = live && live.id === lead.id ? (await liveUpdatesFor(live.id, 1))[0] : undefined;
+  const liveLatest = live && live.id === lead.id ? await newestLiveUpdate(live.id) : undefined;
 
   const rails = await sectionRails(cats, 4);
   const blocks = cats.map((c) => ({ cat: c, stories: rails.get(c.id) ?? [] })).filter((b) => b.stories.length > 0);
@@ -96,15 +96,14 @@ export default async function HomePage() {
         <section className="grid gap-y-5 md:grid-cols-2 md:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.1fr)_minmax(0,1.1fr)]">
           {/* Lead story */}
           <article className="flex min-w-0 flex-col gap-2.5 md:col-span-2 md:gap-3 lg:order-2 lg:col-span-1">
-            <Link href={storyHref(lead)} aria-label={lead.title} className="relative -mx-4 block md:mx-0">
-              <StoryImage story={lead} priority />
-              {lead.kind === "live" && (
-                <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 bg-brand px-2 py-1 text-[11px] font-extrabold tracking-[0.06em] text-white md:left-3.5 md:top-3.5 md:px-2.5 md:py-[5px] md:text-xs">
-                  <span className="live-dot h-1.5 w-1.5 rounded-full bg-white md:h-[7px] md:w-[7px]" aria-hidden />
-                  LIVE
-                </span>
-              )}
-            </Link>
+            {lead.heroImage ? (
+              <Link href={storyHref(lead)} aria-label={lead.title} className="relative -mx-4 block md:mx-0">
+                <StoryImage story={lead} priority />
+                {lead.kind === "live" && <LiveBadge className="absolute left-3 top-3 md:left-3.5 md:top-3.5" />}
+              </Link>
+            ) : (
+              lead.kind === "live" && <LiveBadge className="self-start" />
+            )}
             <Kicker story={lead} />
             <h2>
               <Link href={storyHref(lead)} className="story-title headline block text-[30px] leading-[1.12] tracking-[-0.01em] md:text-[44px] md:leading-[1.06] md:tracking-[-0.015em]">
@@ -133,7 +132,7 @@ export default async function HomePage() {
                   Live
                 </span>
                 {liveLatest && <time dateTime={liveLatest.createdAt.toISOString()} className="flex-none text-[13px] font-bold text-muted tabular">{formatTime(liveLatest.createdAt)}</time>}
-                <span className="story-title text-[15px] font-semibold leading-snug text-ink">{liveLatest ? liveLatest.title || liveLatest.body : live.title}</span>
+                <span className="story-title text-[15px] font-semibold leading-snug text-ink">{liveLatest ? liveLatest.title || excerpt(liveLatest.body) : live.title}</span>
               </Link>
             )}
           </article>
@@ -211,5 +210,14 @@ export default async function HomePage() {
         <NewsletterBand />
       </div>
     </>
+  );
+}
+
+function LiveBadge({ className }: { className: string }) {
+  return (
+    <span className={`${className} inline-flex items-center gap-1.5 bg-brand px-2 py-1 text-[11px] font-extrabold tracking-[0.06em] text-white md:px-2.5 md:py-[5px] md:text-xs`}>
+      <span className="live-dot h-1.5 w-1.5 rounded-full bg-white md:h-[7px] md:w-[7px]" aria-hidden />
+      LIVE
+    </span>
   );
 }

@@ -115,6 +115,17 @@ export async function liveUpdatesFor(articleId: number, limit?: number) {
   return limit ? q.limit(limit) : q;
 }
 
+/** The most recently posted update on a live story, ignoring pins. */
+export async function newestLiveUpdate(articleId: number) {
+  const [row] = await db
+    .select({ id: liveUpdates.id, title: liveUpdates.title, body: liveUpdates.body, createdAt: liveUpdates.createdAt })
+    .from(liveUpdates)
+    .where(eq(liveUpdates.articleId, articleId))
+    .orderBy(desc(liveUpdates.createdAt), desc(liveUpdates.id))
+    .limit(1);
+  return row;
+}
+
 /** How many updates a live story has, its newest update id and when the last one was posted. */
 export async function liveUpdateStats(articleId: number) {
   const [row] = await db

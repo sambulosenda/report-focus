@@ -67,6 +67,18 @@ export function pageParam(value: string | undefined) {
   return Number.isInteger(n) && n >= 1 && n <= 10_000 ? n : 1;
 }
 
+/** First line of a Markdown text as plain words, cut at a word boundary near `max` characters. */
+export function excerpt(text: string, max = 120) {
+  const line = (text.split(/\n\s*\n|\n/).find((l) => l.trim()) ?? "")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/^[#>\-*\s]+|[*_`~]/g, "")
+    .trim();
+  if (line.length <= max) return line;
+  const cut = line.slice(0, max);
+  return `${cut.slice(0, cut.lastIndexOf(" ") > max * 0.6 ? cut.lastIndexOf(" ") : max).trimEnd()}…`;
+}
+
 export function initials(name: string) {
   return name
     .split(/\s+/)
