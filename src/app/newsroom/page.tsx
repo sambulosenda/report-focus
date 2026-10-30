@@ -112,7 +112,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const reviewCount = n(counts.review);
   const tabCount: Record<Tab, number> = { "": n(counts.all), review: reviewCount, draft: n(counts.draft), scheduled: n(counts.scheduled), published: n(counts.published) };
   const tiles = [
-    { label: "Awaiting review", value: reviewCount, note: stats.oldestReview ? `Oldest ${timeAgo(new Date(stats.oldestReview * 1000)).replace(" ago", "")} old` : "Queue is clear" },
+    { label: "Awaiting review", value: reviewCount, note: stats.oldestReview ? `Oldest sent ${timeAgo(new Date(stats.oldestReview * 1000)).toLowerCase()}` : "Queue is clear" },
     { label: "Scheduled", value: n(counts.scheduled), note: stats.nextScheduled ? `Next at ${when(new Date(stats.nextScheduled * 1000), now)}` : "Nothing scheduled" },
     { label: "Published in 24 hours", value: n(stats.publishedToday), note: n(stats.breakingToday) ? `${n(stats.breakingToday)} marked breaking` : "None marked breaking" },
     { label: "Drafts", value: n(counts.draft), note: editor ? "Across the newsroom" : "Yours" },
