@@ -2,22 +2,11 @@
  * Turns WordPress post HTML into the Markdown the story editor uses.
  * Story bodies render raw HTML as text, so nothing HTML-only may survive the conversion.
  */
+import { decodeHTML } from "entities";
 import TurndownService from "turndown";
 
-const NAMED: Record<string, string> = {
-  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ndash: "–", mdash: "—", hellip: "…",
-  lsquo: "‘", rsquo: "’", ldquo: "“", rdquo: "”", laquo: "«", raquo: "»", copy: "©", reg: "®", trade: "™",
-  eacute: "é", egrave: "è", aacute: "á", oacute: "ó", uacute: "ú", iacute: "í", ntilde: "ñ", ccedil: "ç", uuml: "ü", ouml: "ö", auml: "ä",
-};
-
 export function decodeEntities(s: string) {
-  return s.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (m, e: string) => {
-    if (e[0] === "#") {
-      const code = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
-      return Number.isFinite(code) && code > 0 && code < 0x110000 ? String.fromCodePoint(code) : m;
-    }
-    return NAMED[e.toLowerCase()] ?? m;
-  });
+  return decodeHTML(s);
 }
 
 export function htmlToText(html: string) {
@@ -114,11 +103,12 @@ function makeTurndown({ oldHosts }: ConvertOptions) {
   };
   const clean = (s: string) => s.replace(/\s+/g, " ").replace(/([[\]])/g, "\\$1").trim();
   const imgMarkdown = (img: HTMLElement, caption = "") => {
-    const src = img.getAttribute("src") ?? img.getAttribute("data-src") ?? "";
+    // Lazy-loading plugins put a placeholder in src and the real picture in data-src.
+    const src = img.getAttribute("data-src") || img.getAttribute("data-lazy-src") || img.getAttribute("src") || "";
     if (!src) return "";
     const alt = clean(img.getAttribute("alt") ?? "");
     const title = caption.replace(/"/g, "'").replace(/\s+/g, " ").trim();
-    return `![${alt}](${src.replace(/ /g, "%20")}${title ? ` "${title}"` : ""})`;
+    return `![${alt}](${src.replace(/ /g, "%20").replace(/\(/g, "%28").replace(/\)/g, "%29")}${title ? ` "${title}"` : ""})`;
   };
 
   td.addRule("figure", {

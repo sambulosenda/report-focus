@@ -73,6 +73,20 @@ function parseSince(value?: string) {
   return d;
 }
 
+/** Reads a response body, giving up as soon as it passes `limit` bytes. */
+async function readCapped(res: Response, limit: number) {
+  const declared = Number(res.headers.get("content-length"));
+  if (declared > limit) throw new Error("larger than 20 MB");
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
+    size += chunk.length;
+    if (size > limit) throw new Error("larger than 20 MB");
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
   if (!opts.source) {
@@ -118,7 +132,7 @@ async function main() {
   if (opts.defaultSection && !catBySlug.has(opts.defaultSection)) throw new Error(`There's no section with the slug "${opts.defaultSection}".`);
   for (const target of opts.sectionMap.values()) if (!catBySlug.has(target)) throw new Error(`There's no section with the slug "${target}" to map into.`);
 
-  const report = { created: 0, updated: 0, skipped: 0, sections: [] as string[], authors: [] as string[], images: 0, imageFailures: [] as string[], redirects: 0 };
+  const report = { created: 0, updated: 0, skipped: 0, sections: [] as string[], authors: [] as string[], images: 0, imageFailures: [] as string[], redirects: 0, conflicts: [] as string[] };
 
   // --- Sections ----------------------------------------------------------
   let nextSort = ((await db.select({ m: max(categories.sortOrder) }).from(categories).get())?.m ?? 0) + 1;
@@ -185,16 +199,20 @@ async function main() {
   const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
   const imageCache = new Map<string, string>();
   async function copyImage(url: string, alt: string, when: Date | null) {
-    if (!opts.images || opts.dryRun) return url;
-    const abs = url.startsWith("//") ? `https:${url}` : url.startsWith("/") && site.url ? new URL(url, site.url).href : url;
-    if (!/^https?:/i.test(abs)) return url;
+    // Root-relative and protocol-relative addresses only make sense on the old site.
+    let abs = url;
+    try {
+      abs = url.startsWith("//") ? `https:${url}` : url.startsWith("/") && site.url ? new URL(url, site.url).href : url;
+    } catch {}
+    if (!opts.images || opts.dryRun || !/^https?:/i.test(abs)) return abs;
     const cached = imageCache.get(abs);
     if (cached) return cached;
-    const d = when ?? new Date();
-    const dir = path.posix.join("wordpress", String(d.getUTCFullYear()), String(d.getUTCMonth() + 1).padStart(2, "0"));
-    const base = path.posix.basename(new URL(abs).pathname).replace(/\.[a-z0-9]+$/i, "").replace(/[^a-z0-9_-]+/gi, "-").slice(0, 60) || "image";
-    const hash = createHash("sha1").update(abs).digest("hex").slice(0, 8);
     try {
+      const pathname = new URL(abs).pathname;
+      const d = when ?? new Date();
+      const dir = path.posix.join("wordpress", String(d.getUTCFullYear()), String(d.getUTCMonth() + 1).padStart(2, "0"));
+      const base = path.posix.basename(pathname).replace(/\.[a-z0-9]+$/i, "").replace(/[^a-z0-9_-]+/gi, "-").slice(0, 60) || "image";
+      const hash = createHash("sha1").update(abs).digest("hex").slice(0, 8);
       // Same address, same file name: a second run finds the file and doesn't fetch it again.
       for (const ext of Object.values(IMAGE_EXT)) {
         const rel = path.posix.join(dir, `${base}-${hash}.${ext}`);
@@ -206,11 +224,10 @@ async function main() {
       const res = await fetch(abs, { headers: { "User-Agent": "ReportFocusImporter/1.0" } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const type = (res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
-      const fileExt = path.extname(new URL(abs).pathname).slice(1).toLowerCase().replace(/^jpg$/, "jpeg");
+      const fileExt = path.extname(pathname).slice(1).toLowerCase().replace(/^jpg$/, "jpeg");
       const ext = IMAGE_EXT[type] ?? (type.startsWith("image/") ? undefined : IMAGE_EXT[`image/${fileExt}`]);
       if (!ext) throw new Error(`not a supported image (${type || "unknown type"})`);
-      const data = Buffer.from(await res.arrayBuffer());
-      if (data.length > MAX_IMAGE_BYTES) throw new Error("larger than 20 MB");
+      const data = await readCapped(res, MAX_IMAGE_BYTES);
       const rel = path.posix.join(dir, `${base}-${hash}.${ext}`);
       mkdirSync(path.join(uploadDir, dir), { recursive: true });
       await writeFile(path.join(uploadDir, rel), data);
@@ -221,8 +238,8 @@ async function main() {
       return local;
     } catch (err) {
       report.imageFailures.push(`${abs} (${(err as Error).message})`);
-      imageCache.set(abs, url);
-      return url;
+      imageCache.set(abs, abs);
+      return abs;
     }
   }
 
@@ -234,12 +251,34 @@ async function main() {
     return s;
   }
 
+  // --- Old addresses -----------------------------------------------------
+  type Tx = Pick<typeof db, "insert" | "select">;
+  async function saveRedirects(tx: Tx, keys: Set<string>, articleId: number) {
+    for (const key of keys) {
+      const res = await tx.insert(legacyRedirects).values({ path: key, articleId }).onConflictDoNothing().run();
+      report.redirects += res.rowsAffected;
+      if (res.rowsAffected) continue;
+      // Two WordPress posts used the same address. The first one imported keeps it.
+      const owner = await tx.select({ articleId: legacyRedirects.articleId }).from(legacyRedirects).where(eq(legacyRedirects.path, key)).get();
+      if (owner && owner.articleId !== articleId) report.conflicts.push(`${key} already goes to story #${owner.articleId ?? "?"}, not #${articleId}`);
+    }
+  }
+
   // --- Posts -------------------------------------------------------------
   let preview: string | undefined;
   for (const [i, post] of posts.entries()) {
     const idKey = legacyPathKey("/", String(post.id));
+    const keys = new Set([idKey]);
+    if (post.link) {
+      try {
+        const u = new URL(post.link);
+        keys.add(legacyPathKey(u.pathname, u.searchParams.get("p")));
+      } catch {}
+    }
     const existingId = imported.get(idKey);
     if (existingId && !opts.update) {
+      // An earlier run that stopped part-way may have missed some of this post's old addresses.
+      if (!opts.dryRun) await saveRedirects(db, keys, existingId);
       report.skipped++;
       continue;
     }
@@ -296,26 +335,21 @@ async function main() {
       articleId = existingId;
       report.updated++;
     } else {
-      const row = await db
-        .insert(articles)
-        .values({ ...values, slug: uniqueSlug(post.slug || post.title), createdAt: post.date ?? new Date() })
-        .returning({ id: articles.id })
-        .get();
-      articleId = row.id;
+      // The story and its "/?p=ID" record are saved together, so a stopped run never leaves a story
+      // that the next run can't recognise and imports a second time.
+      articleId = await db.transaction(async (tx) => {
+        const row = await tx
+          .insert(articles)
+          .values({ ...values, slug: uniqueSlug(post.slug || post.title), createdAt: post.date ?? new Date() })
+          .returning({ id: articles.id })
+          .get();
+        await saveRedirects(tx, keys, row.id);
+        return row.id;
+      });
       report.created++;
+      continue;
     }
-
-    const keys = new Set([idKey]);
-    if (post.link) {
-      try {
-        const u = new URL(post.link);
-        keys.add(legacyPathKey(u.pathname, u.searchParams.get("p")));
-      } catch {}
-    }
-    for (const key of keys) {
-      const res = await db.insert(legacyRedirects).values({ path: key, articleId }).onConflictDoNothing().run();
-      report.redirects += res.rowsAffected;
-    }
+    await saveRedirects(db, keys, articleId);
   }
 
   // Old category pages (/category/politics/) go to their section.
@@ -342,6 +376,10 @@ async function main() {
   if (report.authors.length)
     console.log(`New writer accounts (switched off, so turn them on and set a password in Newsroom → Staff before they sign in): ${report.authors.join(", ")}`);
   if (!opts.dryRun) console.log(`Copied ${report.images} images. Added ${report.redirects} redirects from old WordPress addresses.`);
+  if (report.conflicts.length) {
+    console.log(`\n${report.conflicts.length} old addresses were used by more than one post. The first story keeps them:`);
+    for (const c of report.conflicts.slice(0, 20)) console.log(`  ${c}`);
+  }
   if (report.imageFailures.length) {
     console.log(`\n${report.imageFailures.length} images couldn't be copied and still point at the old site:`);
     for (const f of report.imageFailures.slice(0, 20)) console.log(`  ${f}`);

@@ -9,6 +9,7 @@ export function legacyPathKey(pathname: string, postId?: string | null) {
   } catch {}
   p = p.toLowerCase().replace(/\/{2,}/g, "/").replace(/\/+$/, "");
   if (!p.startsWith("/")) p = `/${p}`;
-  if (postId && /^\d+$/.test(postId)) return `${p === "/" ? "" : p}/?p=${postId}`;
+  // WordPress reads ?p= as a number, so ?p=0123 is post 123.
+  if (postId && /^\d+$/.test(postId)) return `${p === "/" ? "" : p}/?p=${Number(postId)}`;
   return p;
 }

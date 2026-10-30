@@ -74,7 +74,7 @@ The seed creates these accounts, all with the password `newsroom-demo-2026` (set
 
 ## Moving posts over from WordPress
 
-`npm run import:wordpress` copies an old WordPress site's posts into the newsroom. It brings over headlines, text, the excerpt as the summary, categories (as sections), tags, authors, featured and inline images, publish dates and slugs. Old WordPress addresses such as `/2024/03/14/my-story/`, `/?p=123` and `/category/politics/` keep working: they redirect to the new story or section page.
+`npm run import:wordpress` copies an old WordPress site's posts into the newsroom. It brings over headlines, text, the excerpt as the summary, categories (as sections), tags, authors, featured and inline images, publish dates and slugs. Old WordPress addresses such as `/2024/03/14/my-story/` and `/?p=123` keep working: they redirect to the new story page. Category pages such as `/category/politics/` redirect to the matching section. A category that was only ever a post's second or third category becomes a tag, not a section, so its old category page isn't redirected.
 
 ```bash
 # From an export file: WordPress dashboard → Tools → Export → All content → Download Export File

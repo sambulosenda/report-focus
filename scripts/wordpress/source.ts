@@ -47,6 +47,15 @@ function wpDate(value: unknown, gmt: boolean) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
+/** Slugs are stored percent-encoded; a stray "%" in one shouldn't stop the import. */
+function decodeSlug(slug: string) {
+  try {
+    return decodeURIComponent(slug);
+  } catch {
+    return slug;
+  }
+}
+
 const text = (v: unknown) => (v == null ? "" : typeof v === "object" ? String((v as Record<string, unknown>)["#text"] ?? "") : String(v));
 
 // ---------------------------------------------------------------------------
@@ -114,6 +123,10 @@ export async function readExportFile(file: string, { includePages = false } = {}
       count(skipped, `${status || "unknown"} posts`);
       continue;
     }
+    if (text(item["wp:post_password"]).trim()) {
+      count(skipped, "password-protected posts");
+      continue;
+    }
     const terms = (item.category as Record<string, unknown>[] | undefined) ?? [];
     const termsOf = (domain: string) =>
       terms
@@ -126,7 +139,7 @@ export async function readExportFile(file: string, { includePages = false } = {}
       id: Number(text(item["wp:post_id"])),
       type: type as "post" | "page",
       title: decodeEntities(text(item.title)).trim(),
-      slug: decodeURIComponent(text(item["wp:post_name"]).trim()),
+      slug: decodeSlug(text(item["wp:post_name"]).trim()),
       status: status as WpPost["status"],
       date: wpDate(item["wp:post_date_gmt"], true) ?? wpDate(item["wp:post_date"], false),
       modified: wpDate(item["wp:post_modified_gmt"], true),
@@ -213,7 +226,7 @@ export async function readFromSite(siteUrl: string, { includePages = false, log 
           id: p.id,
           type: kind === "pages" ? "page" : "post",
           title: htmlToText(p.title.rendered),
-          slug: decodeURIComponent(p.slug),
+          slug: decodeSlug(p.slug),
           status: (STATUSES.has(p.status) ? p.status : "publish") as WpPost["status"],
           date: wpDate(p.date_gmt, true),
           modified: wpDate(p.modified_gmt, true),
