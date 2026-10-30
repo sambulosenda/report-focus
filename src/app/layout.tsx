@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Libre_Bodoni, Libre_Franklin, Playfair_Display, Source_Serif_4 } from "next/font/google";
+import { Libre_Franklin, Newsreader, Playfair_Display, Source_Serif_4 } from "next/font/google";
 import { siteUrl } from "@/lib/utils";
 import "./globals.css";
 
-// Playfair for the masthead, Libre Bodoni for headlines, Source Serif 4 for body text, Libre Franklin for UI.
+// Playfair for the masthead, Newsreader for headlines, Source Serif 4 for body text, Libre Franklin for UI.
 const playfair = Playfair_Display({ subsets: ["latin"], weight: "600", variable: "--font-playfair", display: "swap" });
-const headline = Libre_Bodoni({
+const headline = Newsreader({
   subsets: ["latin"],
-  weight: ["600", "700"],
+  axes: ["opsz"],
   style: ["normal", "italic"],
-  variable: "--font-bodoni",
+  variable: "--font-newsreader",
   display: "swap",
 });
 const serif = Source_Serif_4({
