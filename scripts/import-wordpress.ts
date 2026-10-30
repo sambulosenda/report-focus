@@ -11,8 +11,9 @@
  *   --update                  Refresh stories already imported (otherwise they are skipped)
  *   --no-images               Leave images on the old site instead of copying them here
  *   --author=<email>          Credit every story to this existing staff account
- *   --section-map=a:b,c:d     Put WordPress category "a" into section "b" (by slug); unmapped ones become new sections
- *   --default-section=<slug>  Section for posts that are only "Uncategorized"
+ *   --section-map=a:b,c:d     Put WordPress category "a" into section "b" (by slug; "b" is created if needed).
+ *                             Unmapped categories become new sections of their own
+ *   --default-section=<slug>  Section for posts with no other category, such as only "Uncategorized" (created if needed)
  *   --include-pages           Also import WordPress pages (About, Contact…) as stories
  *   --since=<YYYY-MM-DD>      Only import posts published on or after this date (older ones are left out)
  *   --limit=<n>               Only import the first n posts (handy for a trial run)
@@ -32,6 +33,8 @@ import { readExportFile, readFromSite, type WpPost, type WpSite } from "./wordpr
 
 const PALETTE = ["#1d4ed8", "#0f766e", "#b91c1c", "#a16207", "#7c3aed", "#059669", "#15803d", "#c2410c", "#db2777"];
 const IMAGE_EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/avif": "avif" };
+/** Categories WordPress sites use as flags (or, for Opinion, a story type) rather than places in the site. They become tags, never sections. */
+const NOT_SECTIONS = new Set(["uncategorized", "featured", "breaking-news", "breaking", "top-stories", "trending", "opinion"]);
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 
 function parseArgs(argv: string[]) {
@@ -129,22 +132,24 @@ async function main() {
 
   const fixedAuthor = opts.author ? allUsers.find((u) => u.email.toLowerCase() === opts.author) : undefined;
   if (opts.author && !fixedAuthor) throw new Error(`No staff account has the email ${opts.author}.`);
-  if (opts.defaultSection && !catBySlug.has(opts.defaultSection)) throw new Error(`There's no section with the slug "${opts.defaultSection}".`);
-  for (const target of opts.sectionMap.values()) if (!catBySlug.has(target)) throw new Error(`There's no section with the slug "${target}" to map into.`);
 
   const report = { created: 0, updated: 0, skipped: 0, sections: [] as string[], authors: [] as string[], images: 0, imageFailures: [] as string[], redirects: 0, conflicts: [] as string[] };
 
   // --- Sections ----------------------------------------------------------
+  const categoryNames = new Map<string, string>();
+  for (const p of site.posts) for (const c of p.categories) if (!categoryNames.has(c.slug)) categoryNames.set(c.slug, c.name);
   let nextSort = ((await db.select({ m: max(categories.sortOrder) }).from(categories).get())?.m ?? 0) + 1;
   async function sectionFor(post: WpPost) {
-    const cats = post.categories.filter((c) => c.slug !== "uncategorized");
+    const cats = post.categories.filter((c) => !NOT_SECTIONS.has(c.slug));
     const first = cats[0];
-    if (!first) return opts.defaultSection ? catBySlug.get(opts.defaultSection)! : null;
-    const slug = opts.sectionMap.get(first.slug.toLowerCase()) ?? slugify(first.slug || first.name);
+    if (!first && !opts.defaultSection) return null;
+    const slug = first ? (opts.sectionMap.get(first.slug.toLowerCase()) ?? slugify(first.slug || first.name)) : opts.defaultSection!;
     const found = catBySlug.get(slug);
     if (found) return found;
-    const row = { name: first.name, slug, color: PALETTE[nextSort % PALETTE.length], sortOrder: nextSort++, inNav: false, description: null };
-    report.sections.push(`${first.name} (/${slug})`);
+    // A section that doesn't exist yet is named after the WordPress category with that slug, if there is one.
+    const name = categoryNames.get(slug) ?? first?.name ?? slug.replace(/-/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
+    const row = { name, slug, color: PALETTE[nextSort % PALETTE.length], sortOrder: nextSort++, inNav: false, description: null };
+    report.sections.push(`${name} (/${slug})`);
     if (opts.dryRun) {
       const fake = { ...row, id: -nextSort };
       catBySlug.set(slug, fake);
@@ -301,8 +306,11 @@ async function main() {
     const heroImage = hero ? await copyImage(hero.url, hero.alt, post.date) : null;
     if (heroImage) body = withoutImage(body, heroImage);
     preview ??= body;
-    const extraSections = post.categories.slice(1).filter((c) => c.slug !== "uncategorized").map((c) => c.name);
-    const tags = clip([...new Set([...post.tags, ...extraSections])].join(", "), 300).replace(/,[^,]*…$/, "");
+    const extraSections = post.categories.filter((c) => c.slug !== "uncategorized" && c.slug !== section?.slug).map((c) => c.name);
+    // One of each tag, ignoring case, and not the story's own section.
+    const tagSeen = new Set([section?.name.toLowerCase()]);
+    const tagList = [...post.tags, ...extraSections].filter((t) => !tagSeen.has(t.toLowerCase()) && tagSeen.add(t.toLowerCase()));
+    const tags = clip(tagList.join(", "), 300).replace(/,[^,]*…$/, "");
     const published = post.status === "publish" || post.status === "future";
     const values = {
       title: clip(post.title || "Untitled story", 200),
@@ -312,6 +320,8 @@ async function main() {
       heroCaption: hero?.caption ? clip(hero.caption, 300) : null,
       heroAlt: hero?.alt ? clip(hero.alt, 300) : null,
       tags,
+      // WordPress sites often file columns under an "Opinion" category; here that's a story type.
+      kind: post.categories.some((c) => c.slug === "opinion") ? ("opinion" as const) : ("news" as const),
       categoryId: section?.id ?? null,
       authorId,
       status: published ? ("published" as const) : post.status === "pending" ? ("review" as const) : ("draft" as const),

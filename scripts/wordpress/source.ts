@@ -56,6 +56,12 @@ function decodeSlug(slug: string) {
   }
 }
 
+/** Exports list a post's categories alphabetically. The primary one (when Yoast SEO set it) goes first. */
+function primaryFirst(cats: WpTerm[], primarySlug?: string) {
+  const i = primarySlug ? cats.findIndex((c) => c.slug === primarySlug) : -1;
+  return i > 0 ? [cats[i], ...cats.slice(0, i), ...cats.slice(i + 1)] : cats;
+}
+
 const text = (v: unknown) => (v == null ? "" : typeof v === "object" ? String((v as Record<string, unknown>)["#text"] ?? "") : String(v));
 
 // ---------------------------------------------------------------------------
@@ -76,6 +82,10 @@ export async function readExportFile(file: string, { includePages = false } = {}
   const doc = parser.parse(xml);
   const channel = doc?.rss?.channel;
   if (!channel) throw new Error(`${file} doesn't look like a WordPress export file (no <rss><channel>).`);
+
+  // Category IDs, so the primary category Yoast SEO records (by ID) can be found among a post's categories.
+  const categorySlugById = new Map<string, string>();
+  for (const c of channel["wp:category"] ?? []) categorySlugById.set(text(c["wp:term_id"]).trim(), text(c["wp:category_nicename"]).trim());
 
   const authors = new Map<string, WpAuthor>();
   for (const a of channel["wp:author"] ?? []) {
@@ -147,7 +157,7 @@ export async function readExportFile(file: string, { includePages = false } = {}
       html: text(item["content:encoded"]),
       excerpt: text(item["excerpt:encoded"]),
       author: authors.get(login) ?? (login ? { login, name: login, email: null, slug: login } : null),
-      categories: termsOf("category"),
+      categories: primaryFirst(termsOf("category"), categorySlugById.get(m._yoast_wpseo_primary_category ?? "")),
       tags: termsOf("post_tag").map((t) => t.name),
       featured: (m._thumbnail_id && attachments.get(m._thumbnail_id)) || null,
       sticky: text(item["wp:is_sticky"]) === "1",
