@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { donateUrl } from "@/lib/ads";
 import { navCategories } from "@/lib/queries";
 import { FOOTER_LINKS, SOCIAL } from "@/lib/site";
 import { Logo } from "./Logo";
@@ -71,7 +72,7 @@ export async function Footer() {
             </ul>
           </div>
           <LinkColumn title="Watch & listen" links={FOOTER_LINKS.watch} />
-          <LinkColumn title="Company" links={FOOTER_LINKS.company} />
+          <LinkColumn title="Company" links={donateUrl() ? [...FOOTER_LINKS.company, { label: "Support us", href: "/support" }] : FOOTER_LINKS.company} />
           <LinkColumn title="Standards & help" links={FOOTER_LINKS.help} />
         </nav>
       </div>
