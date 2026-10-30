@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { RiverStory } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
 import { latestStories } from "@/lib/queries";
-import { formatDate, formatTime } from "@/lib/utils";
+import { formatDate, formatTime, pageParam } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Latest News" };
 const PER_PAGE = 25;
 
 export default async function LatestPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const page = Math.max(1, Number((await searchParams).page) || 1);
+  const page = pageParam((await searchParams).page);
   const stories = await latestStories(PER_PAGE + 1, (page - 1) * PER_PAGE);
   const shown = stories.slice(0, PER_PAGE);
 

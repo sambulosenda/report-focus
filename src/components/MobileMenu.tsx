@@ -18,6 +18,7 @@ export function MobileMenu({ sections, live, signedIn }: Props) {
   const path = usePathname();
   const closeRef = useRef<HTMLButtonElement>(null);
   const openRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Close when the route changes.
   useEffect(() => setOpen(false), [path]);
@@ -27,13 +28,32 @@ export function MobileMenu({ sections, live, signedIn }: Props) {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") return setOpen(false);
+      // Keep Tab and Shift+Tab inside the menu while it is open.
+      if (e.key !== "Tab" || !dialogRef.current) return;
+      const items = dialogRef.current.querySelectorAll<HTMLElement>("a[href], button, input");
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
     window.addEventListener("keydown", onKey);
+    // The menu is phones only, so it closes if the window grows to tablet width.
+    const wide = window.matchMedia("(min-width: 768px)");
+    const onWide = () => wide.matches && setOpen(false);
+    wide.addEventListener("change", onWide);
     const opener = openRef.current;
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
-      opener?.focus();
+      wide.removeEventListener("change", onWide);
+      if (!wide.matches) opener?.focus();
     };
   }, [open]);
 
@@ -52,7 +72,7 @@ export function MobileMenu({ sections, live, signedIn }: Props) {
         <MenuIcon />
       </button>
       {open && (
-        <div role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-50 flex flex-col bg-white md:hidden">
+        <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-50 flex flex-col bg-white md:hidden">
           <div className="flex h-14 flex-none items-center justify-between border-b border-line px-1.5">
             <button ref={closeRef} type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-mist">
               <CloseIcon />

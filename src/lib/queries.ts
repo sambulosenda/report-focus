@@ -36,14 +36,17 @@ function storyQuery() {
     .$dynamic();
 }
 
+// Stories published in the same second keep a stable order, so paging never repeats or skips one.
+const newestFirst = [desc(articles.publishedAt), desc(articles.id)] as const;
+
 export async function latestStories(limit = 20, offset = 0) {
-  return storyQuery().where(isLive()).orderBy(desc(articles.publishedAt)).limit(limit).offset(offset);
+  return storyQuery().where(isLive()).orderBy(...newestFirst).limit(limit).offset(offset);
 }
 
 export async function storiesOfKind(kinds: Kind[], limit = 10, offset = 0) {
   return storyQuery()
     .where(and(isLive(), inArray(articles.kind, kinds)))
-    .orderBy(desc(articles.publishedAt))
+    .orderBy(...newestFirst)
     .limit(limit)
     .offset(offset);
 }
@@ -68,11 +71,13 @@ export async function trendingTags(limit = 6, categoryId?: number) {
     .limit(60);
   const counts = new Map<string, { label: string; n: number }>();
   for (const r of rows) {
+    const seen = new Set<string>();
     for (const raw of r.tags.split(",")) {
       const label = raw.trim();
       const key = label.toLowerCase();
-      // "sample" marks the demo stories; it is not a topic.
-      if (!label || key === "sample") continue;
+      // "sample" marks the demo stories; it is not a topic. A tag typed twice on one story counts once.
+      if (!label || key === "sample" || seen.has(key)) continue;
+      seen.add(key);
       const hit = counts.get(key);
       counts.set(key, { label: hit?.label ?? label, n: (hit?.n ?? 0) + 1 });
     }
@@ -91,9 +96,9 @@ export async function countInCategory(categoryId: number) {
   return Number(n);
 }
 
-/** Timeline for a live story: pinned posts first, then newest first. */
-export async function liveUpdatesFor(articleId: number) {
-  return db
+/** Timeline for a live story: pinned posts first, then newest first. Pass a limit to fetch only the top of it. */
+export async function liveUpdatesFor(articleId: number, limit?: number) {
+  const q = db
     .select({
       id: liveUpdates.id,
       title: liveUpdates.title,
@@ -105,7 +110,22 @@ export async function liveUpdatesFor(articleId: number) {
     .from(liveUpdates)
     .leftJoin(users, eq(users.id, liveUpdates.authorId))
     .where(eq(liveUpdates.articleId, articleId))
-    .orderBy(desc(liveUpdates.isPinned), desc(liveUpdates.createdAt), desc(liveUpdates.id));
+    .orderBy(desc(liveUpdates.isPinned), desc(liveUpdates.createdAt), desc(liveUpdates.id))
+    .$dynamic();
+  return limit ? q.limit(limit) : q;
+}
+
+/** How many updates a live story has, its newest update id and when the last one was posted. */
+export async function liveUpdateStats(articleId: number) {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)`, latestId: sql<number | null>`max(${liveUpdates.id})`, lastAt: sql<number | null>`max(${liveUpdates.createdAt})` })
+    .from(liveUpdates)
+    .where(eq(liveUpdates.articleId, articleId));
+  return {
+    count: Number(row?.count ?? 0),
+    latestId: Number(row?.latestId ?? 0),
+    lastAt: row?.lastAt ? new Date(Number(row.lastAt) * 1000) : null,
+  };
 }
 
 export async function featuredStories(limit = 5) {
@@ -124,18 +144,18 @@ export async function breakingStory() {
   return rows[0] ?? null;
 }
 
-export async function mostRead(limit = 6) {
+export async function mostRead(limit = 6, categoryId?: number) {
   const since = Math.floor((Date.now() - 7 * 864e5) / 1000);
   return storyQuery()
-    .where(and(isLive(), sql`${articles.publishedAt} >= ${since}`))
-    .orderBy(desc(articles.views))
+    .where(and(isLive(), sql`${articles.publishedAt} >= ${since}`, categoryId ? eq(articles.categoryId, categoryId) : undefined))
+    .orderBy(desc(articles.views), desc(articles.id))
     .limit(limit);
 }
 
 export async function storiesInCategory(categoryId: number, limit = 12, offset = 0) {
   return storyQuery()
     .where(and(isLive(), eq(articles.categoryId, categoryId)))
-    .orderBy(desc(articles.publishedAt))
+    .orderBy(...newestFirst)
     .limit(limit)
     .offset(offset);
 }
@@ -143,15 +163,22 @@ export async function storiesInCategory(categoryId: number, limit = 12, offset =
 export async function storiesByAuthor(authorId: number, limit = 30, offset = 0) {
   return storyQuery()
     .where(and(isLive(), eq(articles.authorId, authorId)))
-    .orderBy(desc(articles.publishedAt))
+    .orderBy(...newestFirst)
     .limit(limit)
     .offset(offset);
 }
 
-export async function relatedStories(articleId: number, categoryId: number | null, limit = 4) {
+export async function relatedStories(articleId: number, categoryId: number | null, limit = 4, excludeKind?: Kind) {
   return storyQuery()
-    .where(and(isLive(), ne(articles.id, articleId), categoryId ? eq(articles.categoryId, categoryId) : undefined))
-    .orderBy(desc(articles.publishedAt))
+    .where(
+      and(
+        isLive(),
+        ne(articles.id, articleId),
+        categoryId ? eq(articles.categoryId, categoryId) : undefined,
+        excludeKind ? ne(articles.kind, excludeKind) : undefined,
+      ),
+    )
+    .orderBy(...newestFirst)
     .limit(limit);
 }
 
@@ -168,7 +195,7 @@ export async function searchStories(q: string, { type = "all", sort = "relevance
   const [rows, [{ n }]] = await Promise.all([
     storyQuery()
       .where(where)
-      .orderBy(...(sort === "newest" ? [desc(articles.publishedAt)] : [rank, desc(articles.publishedAt)]))
+      .orderBy(...(sort === "newest" ? newestFirst : [rank, ...newestFirst]))
       .limit(limit)
       .offset(offset),
     db.select({ n: sql<number>`count(*)` }).from(articles).where(where),

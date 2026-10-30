@@ -10,7 +10,7 @@ import { RiverStory, SectionTitle } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
 import { storiesByAuthor } from "@/lib/queries";
 import { SITE_NAME } from "@/lib/site";
-import { formatDate } from "@/lib/utils";
+import { formatDate, pageParam } from "@/lib/utils";
 
 const PER_PAGE = 12;
 
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function AuthorPage({ params, searchParams }: Props) {
   const author = await getAuthor((await params).slug);
   if (!author) notFound();
-  const page = Math.max(1, Number((await searchParams).page) || 1);
+  const page = pageParam((await searchParams).page);
   const stories = await storiesByAuthor(author.id, PER_PAGE + 1, (page - 1) * PER_PAGE);
   const first = author.name.split(" ")[0];
 

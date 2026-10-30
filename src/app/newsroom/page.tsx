@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { and, desc, eq, gt, gte, lte, sql, type SQL } from "drizzle-orm";
-import { setBreaking } from "@/actions/articles";
+import { clearBreakingBanner, setBreaking } from "@/actions/articles";
 import { db } from "@/db";
 import { articles, categories, users } from "@/db/schema";
 import { Card, StatusBadge, SwitchButton, displayStatus } from "@/components/newsroom/ui";
 import { hasRole, requireUser } from "@/lib/auth";
 import { breakingStory } from "@/lib/queries";
-import { cn, formatTime, timeAgo } from "@/lib/utils";
+import { cn, dayOffset, formatDate, formatTime, timeAgo } from "@/lib/utils";
 
 const TABS = [
   { value: "", label: "All" },
@@ -34,8 +34,8 @@ function greeting(now: Date) {
 function when(d: Date | null, now: Date) {
   if (!d) return "";
   if (d > now) {
-    const sameDay = d.toDateString() === now.toDateString();
-    return `${sameDay ? "Today" : d.getTime() - now.getTime() < 2 * 864e5 ? "Tomorrow" : d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} ${formatTime(d)}`;
+    const days = dayOffset(d, now);
+    return `${days === 0 ? "Today" : days === 1 ? "Tomorrow" : formatDate(d).replace(/, \d{4}$/, "")} ${formatTime(d)}`;
   }
   return now.getTime() - d.getTime() < 12 * 3600e3 ? formatTime(d) : timeAgo(d);
 }
@@ -84,12 +84,12 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     db
       .select({
         publishedToday: sql<number>`sum(case when ${articles.status} = 'published' and ${articles.publishedAt} between ${Math.floor(dayStart.getTime() / 1000)} and ${Math.floor(now.getTime() / 1000)} then 1 else 0 end)`,
-        breakingToday: sql<number>`sum(case when ${articles.isBreaking} and ${articles.status} = 'published' and ${articles.publishedAt} >= ${Math.floor(dayStart.getTime() / 1000)} then 1 else 0 end)`,
+        breakingToday: sql<number>`sum(case when ${articles.isBreaking} and ${articles.status} = 'published' and ${articles.publishedAt} between ${Math.floor(dayStart.getTime() / 1000)} and ${Math.floor(now.getTime() / 1000)} then 1 else 0 end)`,
         oldestReview: sql<number | null>`min(case when ${articles.status} = 'review' then ${articles.updatedAt} end)`,
         nextScheduled: sql<number | null>`min(case when ${articles.status} = 'published' and ${articles.publishedAt} > ${Math.floor(now.getTime() / 1000)} then ${articles.publishedAt} end)`,
       })
       .from(articles)
-      .where(scope),
+      .where(and(scope, inSection)),
     db
       .select({ id: articles.id, title: articles.title, publishedAt: articles.publishedAt, author: users.name, section: categories.name })
       .from(articles)
@@ -169,9 +169,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             </span>
           </div>
           {breaking && (
-            <form action={setBreaking}>
-              <input type="hidden" name="id" value={breaking.id} />
-              <input type="hidden" name="on" value="0" />
+            <form action={clearBreakingBanner}>
               <SwitchButton on label="Show breaking banner on the site" />
             </form>
           )}

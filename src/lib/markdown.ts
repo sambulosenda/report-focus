@@ -10,7 +10,7 @@ function safeUrl(href: string) {
   return "#";
 }
 
-const marked = new Marked({
+const marked: Marked = new Marked({
   gfm: true,
   breaks: false,
   renderer: {
@@ -25,17 +25,21 @@ const marked = new Marked({
         external ? ' target="_blank" rel="noopener noreferrer"' : ""
       }>${text}</a>`;
     },
-    // "> **What to know**" on its own line turns a quote into the grey key-points box.
+    // "> **What to know**" as the first line turns a quote into the grey key-points box.
     // A quote whose last line starts with an em dash gets that line as its attribution.
-    blockquote({ tokens }: Tokens.Blockquote) {
+    blockquote({ tokens, text }: Tokens.Blockquote): string {
       const [first] = tokens;
-      if (first?.type === "paragraph" && /^\*\*what to know\*\*$/i.test((first as Tokens.Paragraph).text.trim())) {
-        return `<aside class="what-to-know"><p class="what-to-know-label">What to know</p>${this.parser.parse(tokens.slice(1))}</aside>`;
+      const label = /^\*\*what to know\*\*[ \t]*(?:\n|$)/i;
+      if (first?.type === "paragraph" && label.test((first as Tokens.Paragraph).text.trim())) {
+        // Points typed straight under the label, with no blank line, are parsed again on their own.
+        const rest = text.trim().replace(label, "");
+        return `<aside class="what-to-know"><p class="what-to-know-label">What to know</p>${marked.parse(rest, { async: false })}</aside>`;
       }
-      const last = tokens[tokens.length - 1];
-      if (tokens.length > 1 && last?.type === "paragraph" && /^(—|--)\s*/.test((last as Tokens.Paragraph).text)) {
-        const cite = this.parser.parseInline((last as Tokens.Paragraph).tokens).replace(/^(—|--)\s*/, "");
-        return `<blockquote>${this.parser.parse(tokens.slice(0, -1))}<footer>— ${cite}</footer></blockquote>`;
+      const lines = text.trim().split("\n");
+      const cite = lines[lines.length - 1].match(/^(?:—|--)\s*(.+)$/);
+      if (lines.length > 1 && cite) {
+        const quote = lines.slice(0, -1).join("\n");
+        return `<blockquote>${marked.parse(quote, { async: false })}<footer>— ${marked.parseInline(cite[1], { async: false })}</footer></blockquote>`;
       }
       return `<blockquote>${this.parser.parse(tokens)}</blockquote>`;
     },

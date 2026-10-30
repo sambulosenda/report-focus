@@ -8,7 +8,7 @@ import { LoadMore } from "@/components/StoryGrid";
 import { renderMarkdown } from "@/lib/markdown";
 import { categoryBySlug, mostRead, storiesInCategory, trendingTags } from "@/lib/queries";
 import { INFO_PAGES, SITE_NAME } from "@/lib/site";
-import { formatDate, formatTime, timeAgo } from "@/lib/utils";
+import { dayOffset, formatDate, formatTime, pageParam, timeAgo } from "@/lib/utils";
 
 const RIVER = 10;
 
@@ -22,12 +22,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return info ? { title: info.title, description: info.description } : {};
 }
 
-/** River time column: clock time today, "Yesterday", then the date. */
+/** River time column: clock time today, "Yesterday", then the date, by the site's calendar. */
 function riverTime(d: Date | null) {
   if (!d) return "";
-  const hours = (Date.now() - d.getTime()) / 3600e3;
-  if (hours < 18) return formatTime(d);
-  if (hours < 42) return "Yesterday";
+  const days = dayOffset(d);
+  if (days >= 0) return formatTime(d);
+  if (days === -1) return "Yesterday";
   return formatDate(d).replace(/, \d{4}$/, "");
 }
 
@@ -40,17 +40,16 @@ export default async function SectionPage({ params, searchParams }: Props) {
     return <InfoPage slug={slug} {...info} />;
   }
 
-  const page = Math.max(1, Number((await searchParams).page) || 1);
+  const page = pageParam((await searchParams).page);
   const topCount = page === 1 ? 3 : 0;
   const [stories, topics, popular] = await Promise.all([
     storiesInCategory(cat.id, topCount + RIVER + 1, page === 1 ? 0 : 3 + (page - 1) * RIVER),
     trendingTags(5, cat.id),
-    mostRead(20),
+    mostRead(5, cat.id),
   ]);
   const [lead, ...second] = stories.slice(0, topCount);
   const river = stories.slice(topCount, topCount + RIVER);
   const hasNext = stories.length > topCount + RIVER;
-  const popularHere = popular.filter((s) => s.category?.slug === cat.slug).slice(0, 5);
 
   return (
     <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-6 md:px-6 md:pt-8">
@@ -118,10 +117,10 @@ export default async function SectionPage({ params, searchParams }: Props) {
           <LoadMore base={`/${cat.slug}`} page={page} hasNext={hasNext} />
         </section>
         <aside className="flex min-w-0 flex-col gap-8 lg:max-w-[340px] lg:flex-[1_1_300px]">
-          {popularHere.length > 0 && (
+          {popular.length > 0 && (
             <div>
               <SectionTitle>Most read in {cat.name}</SectionTitle>
-              <NumberedList stories={popularHere} />
+              <NumberedList stories={popular} />
             </div>
           )}
           <AdSlot />

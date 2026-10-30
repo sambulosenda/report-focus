@@ -7,7 +7,7 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import { CopyLinkButton } from "@/components/ShareButtons";
 import { SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { renderMarkdown } from "@/lib/markdown";
-import { liveUpdatesFor, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
+import { liveUpdatesFor, liveUpdateStats, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
 import { formatTime, siteUrl, timeAgo } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ all?: string }> };
@@ -28,14 +28,17 @@ export default async function LiveUpdatesPage({ params, searchParams }: Props) {
   if (!row || row.article.kind !== "live") notFound();
   const { article, category, author } = row;
   const showAll = (await searchParams).all === "1";
-  const [updates, related, videos] = await Promise.all([
-    liveUpdatesFor(article.id),
+  // The first screen loads 20 updates; "Show earlier updates" loads the whole timeline.
+  const [shown, stats, related, videos] = await Promise.all([
+    liveUpdatesFor(article.id, showAll ? undefined : FIRST_PAGE + 1),
+    liveUpdateStats(article.id),
     relatedStories(article.id, article.categoryId, 4),
     storiesOfKind(["video"], 1),
   ]);
-  const shown = showAll ? updates : updates.slice(0, FIRST_PAGE);
-  const latestId = updates.reduce((m, u) => Math.max(m, u.id), 0);
-  const lastAt = updates.reduce<Date>((d, u) => (u.createdAt > d ? u.createdAt : d), article.updatedAt);
+  const firstHidden = showAll ? undefined : shown[FIRST_PAGE];
+  if (firstHidden) shown.length = FIRST_PAGE;
+  const latestId = stats.latestId;
+  const lastAt = stats.lastAt && stats.lastAt > article.updatedAt ? stats.lastAt : article.updatedAt;
   const storyUrl = `/${category?.slug ?? "news"}/${article.slug}`;
   const pageUrl = siteUrl(`/live/${article.slug}`);
   const video = videos[0];
@@ -101,9 +104,9 @@ export default async function LiveUpdatesPage({ params, searchParams }: Props) {
               </li>
             ))}
           </ol>
-          {!showAll && updates.length > FIRST_PAGE && (
+          {firstHidden && (
             <div className="mt-4 flex justify-center">
-              <Link href={`/live/${article.slug}?all=1#update-${updates[FIRST_PAGE].id}`} className="inline-flex h-[46px] items-center rounded-full border border-ink px-7 text-[15px] font-bold text-ink hover:bg-ink hover:text-white">
+              <Link href={`/live/${article.slug}?all=1#update-${firstHidden.id}`} className="inline-flex h-[46px] items-center rounded-full border border-ink px-7 text-[15px] font-bold text-ink hover:bg-ink hover:text-white">
                 Show earlier updates
               </Link>
             </div>

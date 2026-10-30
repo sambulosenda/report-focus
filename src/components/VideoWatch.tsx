@@ -1,12 +1,16 @@
 import Link from "next/link";
 import type { StoryCard } from "@/lib/queries";
+import { renderMarkdown } from "@/lib/markdown";
 import { formatDate } from "@/lib/utils";
+import { videoEmbedUrl } from "@/lib/video";
 import { SectionTitle, StoryImage, VideoCard, storyHref } from "./Story";
 import { AutoplaySwitch, VideoPlayer } from "./VideoPlayer";
 
 type Video = {
   title: string;
   summary: string;
+  /** Description or transcript, shown under the player. */
+  body?: string;
   videoUrl: string | null;
   videoDuration: string | null;
   heroImage: string | null;
@@ -17,6 +21,9 @@ type Video = {
 /** The watch page: dark player band with Up next, then more videos. */
 export function VideoWatch({ video, upNext, more, moreTitle = "More videos", headingLevel = "h1" }: { video: Video; upNext: StoryCard[]; more: StoryCard[]; moreTitle?: string; headingLevel?: "h1" | "h2" }) {
   const Heading = headingLevel;
+  // Only an uploaded file can tell us it has ended, so the Autoplay switch is shown for those alone.
+  const nativeFile = !!video.videoUrl && !videoEmbedUrl(video.videoUrl);
+  const body = video.body?.trim();
   return (
     <>
       <section className="bg-teal-deep text-white">
@@ -40,7 +47,7 @@ export function VideoWatch({ video, upNext, more, moreTitle = "More videos", hea
             <aside className="min-w-0 lg:flex-[1_1_300px]" aria-labelledby="up-next">
               <div className="mb-2 flex items-center justify-between">
                 <h2 id="up-next" className="text-lg font-extrabold">Up next</h2>
-                <AutoplaySwitch />
+                {nativeFile && <AutoplaySwitch />}
               </div>
               <ol>
                 {upNext.map((v) => (
@@ -64,6 +71,14 @@ export function VideoWatch({ video, upNext, more, moreTitle = "More videos", hea
           )}
         </div>
       </section>
+      {body && (
+        <section aria-labelledby="about-video" className="mx-auto max-w-[1280px] px-4 pt-10 md:px-6">
+          <SectionTitle id="about-video" className="mb-5">
+            About this video
+          </SectionTitle>
+          <div className="article-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }} />
+        </section>
+      )}
       {more.length > 0 && (
         <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-10 md:px-6">
           <SectionTitle className="mb-5">{moreTitle}</SectionTitle>

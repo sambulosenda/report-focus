@@ -15,5 +15,5 @@ export async function signUp(_prev: SignupState, formData: FormData): Promise<Si
   const parsed = Signup.safeParse({ email: formData.get("email"), list: formData.get("list") || undefined });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Enter a valid email address." };
   await db.insert(newsletterSignups).values(parsed.data).onConflictDoNothing();
-  return { ok: "You’re signed up. Look for the first issue in your inbox." };
+  return { ok: "Thanks, you’re signed up." };
 }

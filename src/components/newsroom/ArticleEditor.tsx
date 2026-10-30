@@ -42,6 +42,8 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
   const [hero, setHero] = useState(article?.heroImage ?? "");
   const [credit, setCredit] = useState(article?.heroCredit ?? "");
   const [alt, setAlt] = useState(article?.heroAlt ?? "");
+  const [videoUrl, setVideoUrl] = useState(article?.videoUrl ?? "");
+  const [videoDuration, setVideoDuration] = useState(article?.videoDuration ?? "");
   const [breaking, setBreaking] = useState(article?.isBreaking ?? false);
   const [featured, setFeatured] = useState(article?.isFeatured ?? false);
   const [slug, setSlug] = useState(article?.slug ?? "");
@@ -55,6 +57,9 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
   const bodyRef = useRef<HTMLTextAreaElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const intentRef = useRef<HTMLInputElement>(null);
+  // Counts edits, so a save that finishes after newer typing does not mark that typing as saved.
+  const editVersion = useRef(0);
+  const submittedVersion = useRef(0);
   // Record which action button was pressed in a hidden field, so it reliably reaches the server.
   const setIntent = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (intentRef.current) intentRef.current.value = e.currentTarget.value;
@@ -65,7 +70,7 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
 
   useEffect(() => {
     if (state?.savedAt) {
-      setDirty(false);
+      if (editVersion.current === submittedVersion.current) setDirty(false);
       setSavedAt(new Date(state.savedAt));
     }
   }, [state?.savedAt]);
@@ -88,7 +93,10 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
     };
   }, [dirty]);
 
-  const touch = () => setDirty(true);
+  const touch = () => {
+    editVersion.current += 1;
+    setDirty(true);
+  };
 
   function wrap(before: string, after = before, placeholder = "text") {
     const el = bodyRef.current;
@@ -155,7 +163,7 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
     { label: "Lead image and alt text", ok: !!hero && alt.trim().length > 0 },
     { label: "Photo credit", ok: !hero || credit.trim().length > 0 },
     { label: "Section and tags", ok: !!categoryId && tags.length > 0 },
-    { label: kind === "video" ? "Video link" : "Body text", ok: kind === "video" ? true : words >= 50 },
+    { label: kind === "video" ? "Video link" : "Body text", ok: kind === "video" ? videoUrl.trim().length > 0 : words >= 50 },
   ];
   const missing = checks.filter((c) => !c.ok).length;
 
@@ -173,7 +181,7 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
   const field = "h-10 rounded-lg border border-line-2 bg-white px-2.5 text-sm text-ink outline-none focus:border-teal";
 
   return (
-    <form ref={formRef} action={action} onChange={touch}>
+    <form ref={formRef} action={action} onChange={touch} onSubmit={() => (submittedVersion.current = editVersion.current)}>
       {article && <input type="hidden" name="id" value={article.id} />}
       <input type="hidden" name="heroImage" value={hero} />
       <input type="hidden" name="publishAt" value={scheduleIso} />
@@ -356,11 +364,11 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
               <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_140px]">
                 <label className="flex flex-col gap-1.5 text-[13px] font-bold">
                   Video link
-                  <input name="videoUrl" type="url" defaultValue={article?.videoUrl ?? ""} placeholder="https://" className={cn(field, "font-normal")} />
+                  <input name="videoUrl" type="text" inputMode="url" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="https://" className={cn(field, "font-normal")} />
                 </label>
                 <label className="flex flex-col gap-1.5 text-[13px] font-bold">
                   Length
-                  <input name="videoDuration" defaultValue={article?.videoDuration ?? ""} placeholder="1:38" className={cn(field, "font-normal tabular")} />
+                  <input name="videoDuration" value={videoDuration} onChange={(e) => setVideoDuration(e.target.value)} placeholder="1:38" className={cn(field, "font-normal tabular")} />
                 </label>
               </div>
             </section>

@@ -40,10 +40,13 @@ export async function addLiveUpdate(_prev: FormState, formData: FormData): Promi
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the update and try again." };
   const ctx = await liveStoryFor(parsed.data.articleId);
   if (!ctx) return { error: "You can’t post updates to this story." };
-  if (parsed.data.isPinned) await db.update(liveUpdates).set({ isPinned: false }).where(eq(liveUpdates.articleId, ctx.story.id));
-  await db.insert(liveUpdates).values({ ...parsed.data, authorId: ctx.user.id });
-  // Touch the story so "Updated" times and sitemaps move with the timeline.
-  await db.update(articles).set({ updatedAt: new Date() }).where(eq(articles.id, ctx.story.id));
+  await db.transaction(async (tx) => {
+    // Only one update is pinned at a time.
+    if (parsed.data.isPinned) await tx.update(liveUpdates).set({ isPinned: false }).where(eq(liveUpdates.articleId, ctx.story.id));
+    await tx.insert(liveUpdates).values({ ...parsed.data, authorId: ctx.user.id });
+    // Touch the story so its "Updated" time moves with the timeline.
+    await tx.update(articles).set({ updatedAt: new Date() }).where(eq(articles.id, ctx.story.id));
+  });
   refresh(ctx.story.slug);
   return { ok: "Update posted." };
 }
@@ -53,7 +56,10 @@ export async function deleteLiveUpdate(formData: FormData) {
   const articleId = Number(formData.get("articleId"));
   const ctx = await liveStoryFor(articleId);
   if (!ctx) return;
-  await db.delete(liveUpdates).where(and(eq(liveUpdates.id, id), eq(liveUpdates.articleId, articleId)));
+  await db.transaction(async (tx) => {
+    await tx.delete(liveUpdates).where(and(eq(liveUpdates.id, id), eq(liveUpdates.articleId, articleId)));
+    await tx.update(articles).set({ updatedAt: new Date() }).where(eq(articles.id, articleId));
+  });
   refresh(ctx.story.slug);
 }
 
@@ -63,7 +69,9 @@ export async function pinLiveUpdate(formData: FormData) {
   const pin = formData.get("pin") === "1";
   const ctx = await liveStoryFor(articleId);
   if (!ctx) return;
-  await db.update(liveUpdates).set({ isPinned: false }).where(eq(liveUpdates.articleId, articleId));
-  if (pin) await db.update(liveUpdates).set({ isPinned: true }).where(and(eq(liveUpdates.id, id), eq(liveUpdates.articleId, articleId)));
+  await db.transaction(async (tx) => {
+    await tx.update(liveUpdates).set({ isPinned: false }).where(eq(liveUpdates.articleId, articleId));
+    if (pin) await tx.update(liveUpdates).set({ isPinned: true }).where(and(eq(liveUpdates.id, id), eq(liveUpdates.articleId, articleId)));
+  });
   refresh(ctx.story.slug);
 }

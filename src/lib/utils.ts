@@ -52,6 +52,21 @@ export function formatDateTime(date: Date | null | undefined) {
   });
 }
 
+/** Calendar days from today to `d` in the site time zone: 0 is today, 1 tomorrow, -1 yesterday. */
+export function dayOffset(d: Date, now = new Date()) {
+  const key = (x: Date) => {
+    const [y, m, day] = x.toLocaleDateString("en-CA", { timeZone: SITE_TIMEZONE }).split("-").map(Number);
+    return Date.UTC(y, m - 1, day) / 864e5;
+  };
+  return Math.round(key(d) - key(now));
+}
+
+/** A ?page= value as a whole number from 1 to 10,000. Anything else means page 1. */
+export function pageParam(value: string | undefined) {
+  const n = Number(value);
+  return Number.isInteger(n) && n >= 1 && n <= 10_000 ? n : 1;
+}
+
 export function initials(name: string) {
   return name
     .split(/\s+/)

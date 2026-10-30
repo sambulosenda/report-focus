@@ -24,7 +24,8 @@ function LinkColumn({ title, links }: { title: string; links: { label: string; h
 
 /** The one footer used on every reader page. */
 export async function Footer() {
-  const cats = await navCategories();
+  // Kept working during a database outage, since the footer also frames error and 404 pages.
+  const cats = await navCategories().catch(() => []);
   // Two columns, filled top to bottom.
   const half = Math.ceil(cats.length / 2);
   const ordered = cats.slice(0, half).flatMap((c, i) => [c, cats[half + i]]).filter(Boolean);

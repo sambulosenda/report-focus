@@ -58,7 +58,7 @@ export default async function HomePage() {
     return out;
   };
   const textStories = latest.filter((s) => s.kind !== "video");
-  const bullets = (await relatedStories(lead.id, lead.categoryId, 2)).filter((s) => s.kind !== "video");
+  const bullets = await relatedStories(lead.id, lead.categoryId, 2, "video");
   bullets.forEach((s) => used.add(s.id));
   const stack = take(textStories, 5);
   const top = popular.slice(0, 8);
@@ -66,7 +66,7 @@ export default async function HomePage() {
   const rails = await sectionRails(cats, 4);
   const blocks = cats.map((c) => ({ cat: c, stories: rails.get(c.id) ?? [] })).filter((b) => b.stories.length > 0);
   const row1 = blocks.slice(0, 3);
-  const row2 = blocks.slice(3, 6);
+  const row2 = blocks.slice(3);
 
   return (
     <>

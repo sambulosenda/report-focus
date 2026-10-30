@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
-import { KINDS, articles, media } from "@/db/schema";
+import { KINDS, articles, liveUpdates, media } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { canDeleteArticle, canEditArticle, canPublish } from "@/lib/permissions";
 import { saveImage } from "@/lib/storage";
@@ -27,7 +27,7 @@ const ArticleInput = z.object({
   heroAlt: z.string().trim().max(300).optional(),
   kind: z.enum(KINDS).default("news"),
   videoUrl: z.string().trim().max(500).optional(),
-  videoDuration: z.string().trim().regex(/^(\d{1,2}:)?\d{1,2}:\d{2}$/, "Write the video length like 1:38.").optional(),
+  videoDuration: z.string().trim().regex(/^(?:\d{1,2}:[0-5]\d|[0-5]?\d):[0-5]\d$/, "Write the video length like 1:38.").optional(),
   tags: z.string().trim().max(300).default(""),
   categoryId: z.coerce.number().int().positive().optional(),
   isBreaking: z.boolean(),
@@ -178,7 +178,8 @@ export async function deleteArticle(formData: FormData) {
   const id = Number(formData.get("id"));
   const existing = await db.select().from(articles).where(eq(articles.id, id)).get();
   if (!existing || !canDeleteArticle(user, existing)) redirect("/newsroom/articles?error=delete");
-  await db.delete(articles).where(eq(articles.id, id));
+  // Remove the timeline explicitly: SQLite only cascades when foreign keys are switched on.
+  await db.batch([db.delete(liveUpdates).where(eq(liveUpdates.articleId, id)), db.delete(articles).where(eq(articles.id, id))]);
   revalidatePath("/", "layout");
   redirect("/newsroom/articles?deleted=1");
 }
@@ -207,5 +208,13 @@ export async function setBreaking(formData: FormData) {
   const on = formData.get("on") === "1";
   if (!Number.isInteger(id)) return;
   await db.update(articles).set({ isBreaking: on }).where(eq(articles.id, id));
+  revalidatePath("/", "layout");
+}
+
+/** The dashboard's banner switch: takes every story off breaking, so an older one doesn't take its place. */
+export async function clearBreakingBanner() {
+  const user = await requireUser();
+  if (!canPublish(user)) return;
+  await db.update(articles).set({ isBreaking: false }).where(eq(articles.isBreaking, true));
   revalidatePath("/", "layout");
 }

@@ -14,6 +14,7 @@ import { renderMarkdown } from "@/lib/markdown";
 import { incrementViews, liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
 import { SITE_NAME } from "@/lib/site";
 import { formatDateTime, formatTime, readingTime, siteUrl, timeAgo } from "@/lib/utils";
+import { videoEmbedUrl } from "@/lib/video";
 
 type Props = { params: Promise<{ section: string; slug: string }> };
 
@@ -56,13 +57,30 @@ export default async function ArticlePage({ params }: Props) {
   if (article.kind === "video") {
     const videos = (await storiesOfKind(["video"], 10)).filter((v) => v.id !== article.id);
     const moreVideos = videos.slice(5, 9);
+    const abs = (u: string) => (u.startsWith("/") ? siteUrl(u) : u);
+    const embed = article.videoUrl ? videoEmbedUrl(article.videoUrl) : null;
+    const videoLd = {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      name: article.title,
+      description: article.summary || article.title,
+      thumbnailUrl: article.heroImage ? [abs(article.heroImage)] : undefined,
+      uploadDate: article.publishedAt?.toISOString(),
+      duration: isoDuration(article.videoDuration),
+      embedUrl: embed ?? undefined,
+      contentUrl: article.videoUrl && !embed ? abs(article.videoUrl) : undefined,
+      publisher: { "@type": "NewsMediaOrganization", name: SITE_NAME, url: siteUrl() },
+    };
     return (
+      <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(videoLd).replace(/</g, "\\u003c") }} />
       <VideoWatch
         video={{ ...article, categoryName: category?.name }}
         upNext={videos.slice(0, 5)}
         more={moreVideos.length ? moreVideos : await relatedStories(article.id, article.categoryId, 4)}
         moreTitle={moreVideos.length ? "More videos" : `More from ${category?.name ?? SITE_NAME}`}
       />
+      </>
     );
   }
 
@@ -244,4 +262,12 @@ export default async function ArticlePage({ params }: Props) {
       </article>
     </>
   );
+}
+
+/** "4:12" or "1:02:30" as an ISO 8601 duration for search engines. */
+function isoDuration(d: string | null) {
+  const parts = d?.split(":").map(Number);
+  if (!parts || parts.some(Number.isNaN)) return undefined;
+  const [h, m, sec] = parts.length === 3 ? parts : [0, ...parts];
+  return `PT${h ? `${h}H` : ""}${m}M${sec}S`;
 }

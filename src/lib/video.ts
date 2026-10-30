@@ -3,10 +3,17 @@ export function videoEmbedUrl(url: string): string | null {
   try {
     const u = new URL(url);
     const host = u.hostname.replace(/^www\./, "");
-    if (host === "youtu.be") return `https://www.youtube-nocookie.com/embed/${u.pathname.slice(1)}`;
+    const youtube = (id: string | undefined | null) => {
+      if (!id) return null;
+      // Keep a start time from links like ?t=90 or ?t=1m30s.
+      const t = u.searchParams.get("t") ?? u.searchParams.get("start");
+      const m = t?.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s?)?$/);
+      const start = m ? Number(m[1] ?? 0) * 3600 + Number(m[2] ?? 0) * 60 + Number(m[3] ?? 0) : 0;
+      return `https://www.youtube-nocookie.com/embed/${id}${start ? `?start=${start}` : ""}`;
+    };
+    if (host === "youtu.be") return youtube(u.pathname.slice(1).split("/")[0]);
     if (host === "youtube.com" || host === "m.youtube.com") {
-      const id = u.searchParams.get("v") ?? u.pathname.match(/^\/(?:embed|shorts|live)\/([\w-]+)/)?.[1];
-      return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+      return youtube(u.searchParams.get("v") ?? u.pathname.match(/^\/(?:embed|shorts|live)\/([\w-]+)/)?.[1]);
     }
     if (host === "vimeo.com") {
       const id = u.pathname.match(/^\/(\d+)/)?.[1];

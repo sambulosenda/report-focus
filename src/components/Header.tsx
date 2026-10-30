@@ -9,7 +9,12 @@ import { SearchIcon } from "./icons";
 import { storyHref } from "./Story";
 
 export async function Header() {
-  const [cats, user, live] = await Promise.all([navCategories(), getCurrentUser(), currentLiveStory()]);
+  // The header also frames error and 404 pages, so a database outage leaves it with just the basics.
+  const [cats, user, live] = await Promise.all([
+    navCategories().catch(() => []),
+    getCurrentUser().catch(() => null),
+    currentLiveStory().catch(() => null),
+  ]);
   const sections = cats.map((c) => ({ label: c.name, href: `/${c.slug}` }));
   const nav = [{ label: "Video", href: "/video" }, ...sections];
 

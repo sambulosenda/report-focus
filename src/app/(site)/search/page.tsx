@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AutoSubmitSelect } from "@/components/AutoSubmitSelect";
 import { SearchIcon } from "@/components/icons";
 import { RiverStory } from "@/components/Story";
 import { Pagination } from "@/components/StoryGrid";
 import { navCategories, searchStories, type SearchSort, type SearchType } from "@/lib/queries";
-import { timeAgo } from "@/lib/utils";
-import { cn } from "@/lib/utils";
+import { cn, pageParam, timeAgo } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Search", robots: { index: false } };
 
@@ -33,7 +33,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const q = (sp.q ?? "").trim().slice(0, 100);
   const type = (TYPES.some((t) => t.value === sp.type) ? sp.type : "all") as SearchType;
   const sort: SearchSort = sp.sort === "newest" ? "newest" : "relevance";
-  const page = Math.max(1, Number(sp.page) || 1);
+  const page = pageParam(sp.page);
   const [{ rows, total }, cats] = await Promise.all([
     q ? searchStories(q, { type, sort, limit: PER_PAGE, offset: (page - 1) * PER_PAGE }) : Promise.resolve({ rows: [], total: 0 }),
     navCategories(),
@@ -44,6 +44,8 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     for (const [k, v] of Object.entries(merged)) if (v) p.set(k, v);
     return `/search?${p.toString()}`;
   };
+  // A page past the end (an old link after stories were unpublished) goes to the first page of results.
+  if (page > 1 && rows.length === 0 && total > 0) redirect(qs({}));
 
   return (
     <div className="mx-auto max-w-[880px] px-4 pb-16 pt-6 md:px-6 md:pb-[72px] md:pt-10">

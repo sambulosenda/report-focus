@@ -1,12 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { videoEmbedUrl } from "@/lib/video";
 import { PlayIcon } from "./icons";
 
 const AUTOPLAY_KEY = "rf-autoplay";
+// The choice made on this page load wins, so it still holds when storage is blocked.
+let autoplayChoice: boolean | undefined;
 const readAutoplay = () => {
+  if (autoplayChoice !== undefined) return autoplayChoice;
   try {
     return localStorage.getItem(AUTOPLAY_KEY) !== "off";
   } catch {
@@ -14,18 +17,32 @@ const readAutoplay = () => {
   }
 };
 
+/** Link to the next video that asks it to start playing on arrival. */
+const withAutoplay = (href: string) => `${href}${href.includes("?") ? "&" : "?"}autoplay=1`;
+
 type Props = { src?: string | null; poster?: string | null; title: string; nextHref?: string };
 
 /** Plays an uploaded file with native controls, or embeds YouTube and Vimeo links. */
 export function VideoPlayer({ src, poster, title, nextHref }: Props) {
   const router = useRouter();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  // Set when the reader arrived here from the end of the previous video.
+  const [autoStart, setAutoStart] = useState(false);
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("autoplay") === "1" && readAutoplay()) setAutoStart(true);
+  }, []);
+  useEffect(() => {
+    if (autoStart) videoRef.current?.play().catch(() => {});
+  }, [autoStart]);
+
   const embed = src ? videoEmbedUrl(src) : null;
   const frame = "relative aspect-video w-full overflow-hidden rounded-md bg-black";
 
   if (embed) {
+    const url = autoStart ? withAutoplay(embed) : embed;
     return (
       <div className={frame}>
-        <iframe src={embed} title={title} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen className="absolute inset-0 h-full w-full" />
+        <iframe src={url} title={title} allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen className="absolute inset-0 h-full w-full" />
       </div>
     );
   }
@@ -33,13 +50,14 @@ export function VideoPlayer({ src, poster, title, nextHref }: Props) {
     return (
       <div className={frame}>
         <video
+          ref={videoRef}
           src={src}
           poster={poster ?? undefined}
           controls
           playsInline
           preload="metadata"
           className="absolute inset-0 h-full w-full"
-          onEnded={() => nextHref && readAutoplay() && router.push(nextHref)}
+          onEnded={() => nextHref && readAutoplay() && router.push(withAutoplay(nextHref))}
         >
           Your browser can’t play this video.
         </video>
@@ -68,6 +86,7 @@ export function AutoplaySwitch() {
   const toggle = () => {
     const next = !on;
     setOn(next);
+    autoplayChoice = next;
     try {
       localStorage.setItem(AUTOPLAY_KEY, next ? "on" : "off");
     } catch {

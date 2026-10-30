@@ -298,7 +298,7 @@ const SAMPLES: Sample[] = [
   },
   {
     title: "Why this autumn has been so wet across the South",
-    section: "climate", author: 4, hoursAgo: 18, tags: "weather, sample", kind: "video", image: "smoke", duration: "4:20",
+    section: "climate", author: 4, hoursAgo: 18, tags: "weather, sample", kind: "video", image: "storm", duration: "4:20",
     summary: "A meteorologist explains the pattern behind weeks of heavy rain.",
     body: ["A stalled jet stream has steered storm after storm across the region.", "This is a sample video story included with Report Focus so the site has content to display."],
   },
