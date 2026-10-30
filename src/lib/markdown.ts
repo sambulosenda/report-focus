@@ -67,3 +67,27 @@ function imageSrc(url: string) {
 export function renderMarkdown(source: string) {
   return marked.parse(source, { async: false }) as string;
 }
+
+/**
+ * A story body with `insert` placed between paragraphs: after the third paragraph, then every
+ * sixth, at most three times, and never with fewer than two paragraphs left below it.
+ */
+export function renderMarkdownWithBreaks(source: string, insert: string) {
+  if (!insert) return renderMarkdown(source);
+  const tokens = marked.lexer(source);
+  const total = tokens.filter((t) => t.type === "paragraph").length;
+  let html = "";
+  let seen = 0;
+  let placed = 0;
+  let start = 0;
+  tokens.forEach((t, i) => {
+    if (t.type !== "paragraph") return;
+    seen++;
+    if (placed < 3 && seen >= 3 && (seen - 3) % 6 === 0 && total - seen >= 2) {
+      html += marked.parser(Object.assign(tokens.slice(start, i + 1), { links: tokens.links })) + insert;
+      start = i + 1;
+      placed++;
+    }
+  });
+  return html + marked.parser(Object.assign(tokens.slice(start), { links: tokens.links }));
+}

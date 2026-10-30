@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { excerpt, formatTime } from "@/lib/utils";
+import { AdSlot } from "@/components/AdSlot";
 import { BreakingBanner } from "@/components/BreakingBanner";
 import { NewsletterBand } from "@/components/NewsletterForm";
 import {
@@ -184,6 +185,8 @@ export default async function HomePage() {
           ))}
         </div>
       )}
+
+      <AdSlot placement="home" className="mx-auto mt-8 max-w-[970px] px-4 md:mt-4 md:px-6" />
 
       {opinion.length > 0 && (
         <section aria-labelledby="opinion" className="mx-auto mt-6 max-w-[1280px] px-4 md:mt-10 md:px-6">

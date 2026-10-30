@@ -1,15 +1,28 @@
+import { adConfig, type AdPlacement } from "@/lib/ads";
+import { cn } from "@/lib/utils";
+
 /**
- * Reserved 300 × 250 space for an ad. Hidden unless NEXT_PUBLIC_AD_SLOTS=on,
- * so readers never see an empty box before an ad partner is set up.
+ * One ad space. Renders nothing until AdSense is configured for this placement
+ * (see src/lib/ads.ts), and hides itself if Google has no ad to fill it with.
  */
-export function AdSlot() {
-  if (process.env.NEXT_PUBLIC_AD_SLOTS !== "on") return null;
+export function AdSlot({ placement = "sidebar", className }: { placement?: AdPlacement; className?: string }) {
+  const ad = adConfig(placement);
+  if (!ad) return null;
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Advertisement</span>
-      <div data-ad-slot="300x250" className="flex h-[250px] w-[300px] items-center justify-center border border-dashed border-line-2 bg-mist text-[13px] text-muted">
-        Ad slot 300 × 250
-      </div>
-    </div>
+    <aside aria-label="Advertisement" className={cn("ad-slot", `ad-${placement}`, className)}>
+      <span className="ad-label">Advertisement</span>
+      {ad.mode === "live" ? (
+        <ins
+          className="adsbygoogle"
+          style={{ display: "block" }}
+          data-ad-client={ad.client}
+          data-ad-slot={ad.slot}
+          data-ad-format={placement === "sidebar" ? "rectangle" : "auto"}
+          data-full-width-responsive="true"
+        />
+      ) : (
+        <div className="ad-placeholder">Ad slot</div>
+      )}
+    </aside>
   );
 }

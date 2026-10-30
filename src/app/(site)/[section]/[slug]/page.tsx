@@ -3,16 +3,19 @@ import Image from "next/image";
 import Link from "next/link";
 import { after } from "next/server";
 import { notFound, permanentRedirect } from "next/navigation";
+import { AdSlot } from "@/components/AdSlot";
 import { Avatar } from "@/components/Avatar";
 import { LiveBadge } from "@/components/LiveBadge";
 import { NewsletterCard } from "@/components/NewsletterForm";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { ShareButtons } from "@/components/ShareButtons";
+import { SupportCard } from "@/components/SupportCard";
 import { CardStory, NumberedList, SectionTitle } from "@/components/Story";
 import { VideoWatch } from "@/components/VideoWatch";
 import { KIND_LABEL } from "@/db/schema";
+import { inlineAdHtml } from "@/lib/ads";
 import { canOptimize } from "@/lib/images";
-import { renderMarkdown } from "@/lib/markdown";
+import { renderMarkdownWithBreaks } from "@/lib/markdown";
 import { incrementViews, liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
 import { SITE_NAME } from "@/lib/site";
 import { formatDateTime, formatTime, readingTime, siteUrl, timeAgo } from "@/lib/utils";
@@ -225,7 +228,7 @@ export default async function ArticlePage({ params }: Props) {
               </section>
             )}
 
-            <div className="article-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(article.body) }} />
+            <div className="article-body" dangerouslySetInnerHTML={{ __html: renderMarkdownWithBreaks(article.body, inlineAdHtml()) }} />
 
             {tags.length > 0 && (
               <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-1" aria-label="Topics">
@@ -249,6 +252,8 @@ export default async function ArticlePage({ params }: Props) {
                 </Link>
               </div>
             </div>
+
+            <SupportCard className="mt-8" />
           </div>
 
           <aside className="min-w-0 lg:max-w-[320px] lg:flex-[1_1_280px]">
@@ -257,6 +262,7 @@ export default async function ArticlePage({ params }: Props) {
                 <SectionTitle>Most Read</SectionTitle>
                 <NumberedList stories={popular} numberSize="lg" />
               </div>
+              <AdSlot placement="sidebar" />
               <NewsletterCard text="Five stories before 8 a.m., every weekday." />
             </div>
           </aside>
