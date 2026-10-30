@@ -1,6 +1,7 @@
 import Script from "next/script";
 import { Suspense } from "react";
 import { AdsLoader } from "@/components/AdsLoader";
+import { Analytics } from "@/components/Analytics";
 import { BreakingBanner } from "@/components/BreakingBanner";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
@@ -41,6 +42,7 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
           </Suspense>
         </>
       )}
+      <Analytics />
     </>
   );
 }

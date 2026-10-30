@@ -1,4 +1,5 @@
 import { Marked, type Tokens } from "marked";
+import { canOptimize } from "@/lib/images";
 
 function escapeHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -45,12 +46,23 @@ const marked: Marked = new Marked({
     },
     image({ href, title, text }: Tokens.Image) {
       const caption = title || "";
-      return `<figure><img src="${escapeHtml(safeUrl(href))}" alt="${escapeHtml(text)}" loading="lazy" />${
+      return `<figure><img ${imageSrc(safeUrl(href))} alt="${escapeHtml(text)}" loading="lazy" decoding="async" />${
         caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ""
       }</figure>`;
     },
   },
 });
+
+// Pictures in the story body are at most 680px wide, so phones get a 640px copy and big screens a 1080px one.
+const BODY_WIDTHS = [640, 828, 1080];
+
+/** src and srcset for a body picture, sent through the Next.js image resizer when it can take it. */
+function imageSrc(url: string) {
+  if (!canOptimize(url)) return `src="${escapeHtml(url)}"`;
+  const resized = (w: number) => `/_next/image?url=${encodeURIComponent(url)}&w=${w}&q=75`;
+  const srcset = BODY_WIDTHS.map((w) => `${resized(w)} ${w}w`).join(", ");
+  return `src="${escapeHtml(resized(1080))}" srcset="${escapeHtml(srcset)}" sizes="(min-width: 680px) 680px, 100vw"`;
+}
 
 export function renderMarkdown(source: string) {
   return marked.parse(source, { async: false }) as string;

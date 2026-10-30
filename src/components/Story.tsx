@@ -1,6 +1,8 @@
+import Image from "next/image";
 import Link from "next/link";
 import { KIND_LABEL } from "@/db/schema";
 import type { StoryCard } from "@/lib/queries";
+import { canOptimize } from "@/lib/images";
 import { cn, timeAgo } from "@/lib/utils";
 import { PlayIcon } from "./icons";
 
@@ -21,23 +23,36 @@ export function Kicker({ story, className, dark }: { story: StoryCard; className
 
 const RATIO = { "16/9": "aspect-video", "3/2": "aspect-[3/2]", "4/3": "aspect-[4/3]" } as const;
 
+/** Sizes hint for a picture in a card that is full width on phones and part of a grid on bigger screens. */
+export const CARD_SIZES = "(min-width: 1280px) 400px, (min-width: 768px) 33vw, 100vw";
+
 export function StoryImage({
   story,
   ratio = "16/9",
   className,
   priority,
+  sizes = CARD_SIZES,
 }: {
   story: StoryCard;
   ratio?: keyof typeof RATIO;
   className?: string;
   priority?: boolean;
+  /** How wide the picture is drawn, so phones download a small copy. */
+  sizes?: string;
 }) {
   // No picture means no picture: a story without art runs as text rather than behind a placeholder.
   if (!story.heroImage) return null;
   return (
     <span className={cn("relative block overflow-hidden bg-mist", RATIO[ratio], className)}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={story.heroImage} alt={story.heroAlt ?? ""} loading={priority ? "eager" : "lazy"} className="h-full w-full object-cover" />
+      <Image
+        src={story.heroImage}
+        alt={story.heroAlt ?? ""}
+        fill
+        sizes={sizes}
+        priority={priority}
+        unoptimized={!canOptimize(story.heroImage)}
+        className="object-cover"
+      />
     </span>
   );
 }
@@ -99,7 +114,7 @@ export function ThumbStory({ story }: { story: StoryCard }) {
       </span>
       {story.heroImage && (
         <span className="relative flex-none">
-          <StoryImage story={story} ratio="4/3" className="w-[104px]" />
+          <StoryImage story={story} ratio="4/3" className="w-[104px]" sizes="104px" />
         </span>
       )}
     </Link>
@@ -129,7 +144,7 @@ export function VideoCard({ story, dark = true, className }: { story: StoryCard;
   return (
     <Link href={storyHref(story)} className={cn("story-link group flex flex-col gap-1.5 md:gap-2", dark ? "text-white" : "text-ink", className)}>
       <span className="relative block">
-        <StoryImage story={story} />
+        <StoryImage story={story} sizes="(min-width: 768px) 300px, 240px" />
         <Duration story={story} />
       </span>
       <span className={cn("kicker block text-[11px] md:text-xs", dark && "text-on-teal-pink")}>{story.category?.name ?? "Video"}</span>
@@ -183,7 +198,7 @@ export function RiverStory({
       </span>
       {story.heroImage && (
         <span className={cn("relative w-[104px] flex-none sm:w-[140px]", imageWidth, imageFirst && "sm:order-first")}>
-          <StoryImage story={story} ratio="3/2" />
+          <StoryImage story={story} ratio="3/2" sizes="(min-width: 768px) 180px, (min-width: 640px) 140px, 104px" />
           <span className="hidden sm:block">
             <Duration story={story} />
           </span>
@@ -222,7 +237,7 @@ export function SectionBlock({ title, href, stories, layout = "stacked" }: { tit
         </Link>
       ) : (
         <Link href={storyHref(lead)} className="story-link group flex items-start gap-3.5 pb-3">
-          <StoryImage story={lead} ratio="4/3" className="w-[132px] flex-none" />
+          <StoryImage story={lead} ratio="4/3" className="w-[132px] flex-none" sizes="132px" />
           <span className="story-title headline text-xl leading-[1.25]">{lead.title}</span>
         </Link>
       )}

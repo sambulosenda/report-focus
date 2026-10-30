@@ -107,7 +107,7 @@ export default async function HomePage() {
           <article className="flex min-w-0 flex-col gap-2.5 md:col-span-2 md:gap-3 lg:order-2 lg:col-span-1">
             {lead.heroImage ? (
               <Link href={storyHref(lead)} aria-label={lead.title} className="relative -mx-4 block md:mx-0">
-                <StoryImage story={lead} priority />
+                <StoryImage story={lead} priority sizes="(min-width: 1280px) 600px, (min-width: 1024px) 48vw, 100vw" />
                 {lead.kind === "live" && <LiveBadge className="absolute left-3 top-3 md:left-3.5 md:top-3.5" />}
               </Link>
             ) : (

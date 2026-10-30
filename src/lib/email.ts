@@ -49,6 +49,6 @@ export const emailIsLive = () => emailProvider() !== "console";
 
 export async function sendEmails(messages: EmailMessage[]) {
   if (messages.length === 0) return;
-  const from = process.env.EMAIL_FROM || "Report Focus News <news@reportfocus.news>";
+  const from = process.env.EMAIL_FROM || "Report Focus News <news@reportfocusnews.com>";
   await PROVIDERS[emailProvider()](from, messages);
 }
