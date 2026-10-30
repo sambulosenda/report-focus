@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { canOptimize } from "@/lib/images";
 import { videoEmbedUrl } from "@/lib/video";
 import { PlayIcon } from "./icons";
 
@@ -67,8 +69,7 @@ export function VideoPlayer({ src, poster, title, nextHref }: Props) {
   return (
     <div className={frame}>
       {poster && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={poster} alt="" className="absolute inset-0 h-full w-full object-cover opacity-85" />
+        <Image src={poster} alt="" fill sizes="(min-width: 1080px) 1080px, 100vw" unoptimized={!canOptimize(poster)} className="object-cover opacity-85" />
       )}
       <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
         <span aria-hidden className="inline-flex h-[84px] w-[84px] items-center justify-center rounded-full bg-brand opacity-70">

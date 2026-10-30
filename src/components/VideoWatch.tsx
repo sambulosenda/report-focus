@@ -55,7 +55,7 @@ export function VideoWatch({ video, upNext, more, moreTitle = "More videos", hea
                     <Link href={storyHref(v)} className="story-link group flex gap-3 py-3 text-white">
                       {v.heroImage && (
                         <span className="relative block w-32 flex-none">
-                          <StoryImage story={v} />
+                          <StoryImage story={v} sizes="128px" />
                           {v.videoDuration && (
                             <span className="absolute bottom-1 right-1 bg-black/80 px-[5px] py-0.5 text-[11px] font-bold">{v.videoDuration}</span>
                           )}

@@ -651,7 +651,7 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
                 <div className="aspect-[1.91/1] bg-mist" />
               )}
               <div className="px-3 py-2.5">
-                <p className="text-xs uppercase text-muted">reportfocus.news</p>
+                <p className="text-xs uppercase text-muted">reportfocusnews.com</p>
                 <p className="line-clamp-2 text-sm font-bold leading-snug">{title || "Your headline"}</p>
                 <p className="mt-0.5 line-clamp-2 text-xs text-muted">{summary || "Your summary"}</p>
               </div>
