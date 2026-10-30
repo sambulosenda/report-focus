@@ -13,6 +13,8 @@ type Props = {
   article?: Article;
   categories: Category[];
   library: Pick<Media, "id" | "url" | "alt">[];
+  /** Tags already on live stories, most used first. */
+  knownTags?: string[];
   role: Role;
   authorName: string;
   publicUrl?: string;
@@ -29,7 +31,7 @@ function toLocalInput(d: Date | null | undefined) {
 
 const clock = (d: Date) => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TZ });
 
-export function ArticleEditor({ article, categories, library, role, authorName, publicUrl }: Props) {
+export function ArticleEditor({ article, categories, library, knownTags = [], role, authorName, publicUrl }: Props) {
   const [state, action, pending] = useActionState(saveArticle, undefined);
   const editor = role !== "journalist";
   const [title, setTitle] = useState(article?.title ?? "");
@@ -144,8 +146,11 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
     touch();
   }
 
+  // "Load-shedding", "loadshedding" and "Load shedding" are one topic: use the spelling already on the site.
+  const tagKey = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "");
   function addTag(raw: string) {
-    const t = raw.trim().replace(/,+$/, "");
+    const typed = raw.trim().replace(/,+$/, "");
+    const t = knownTags.find((k) => tagKey(k) === tagKey(typed)) ?? typed;
     if (t && !tags.some((x) => x.toLowerCase() === t.toLowerCase())) setTags([...tags, t]);
     setTagDraft("");
     touch();
@@ -625,6 +630,7 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
             </label>
             <input
               id="ed-tag"
+              list="ed-tag-options"
               value={tagDraft}
               onChange={(e) => (e.target.value.endsWith(",") ? addTag(e.target.value) : setTagDraft(e.target.value))}
               onKeyDown={(e) => {
@@ -637,6 +643,12 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
               placeholder="Add a tag and press Enter"
               className={field}
             />
+            <datalist id="ed-tag-options">
+              {knownTags.map((t) => (
+                <option key={t} value={t} />
+              ))}
+            </datalist>
+            <p className="text-xs text-muted">Pick 3 to 5 topics the site already covers. A new tag for one story makes a thin page.</p>
           </section>
 
           <section className="flex flex-col gap-3 rounded-xl border border-line bg-white p-[18px]" aria-labelledby="social">
