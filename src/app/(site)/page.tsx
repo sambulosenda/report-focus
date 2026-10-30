@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { excerpt, formatTime, siteUrl } from "@/lib/utils";
-import { ldJson, publisherLd } from "@/lib/seo";
-import { SITE_NAME, SOCIAL } from "@/lib/site";
+import { ldJson, organizationLd, orgId, pageMeta } from "@/lib/seo";
+import { tagHref } from "@/lib/tags";
+import { HOME_DESCRIPTION, HOME_TITLE, SITE_NAME } from "@/lib/site";
 import { AdSlot } from "@/components/AdSlot";
 import { NewsletterBand } from "@/components/NewsletterForm";
 import {
@@ -29,13 +30,16 @@ import {
   trendingTags,
 } from "@/lib/queries";
 
-export const metadata: Metadata = { alternates: { canonical: "/" } };
+export const metadata: Metadata = pageMeta({ title: HOME_TITLE, absoluteTitle: true, description: HOME_DESCRIPTION, path: "/" });
 
-/** Tells Google the site's name and who publishes it. */
-const siteLd = [
-  { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: siteUrl() },
-  { "@context": "https://schema.org", ...publisherLd(), sameAs: SOCIAL.map((s) => s.url).filter(Boolean) },
-];
+/** Tells Google and AI answer engines the site's name, who publishes it and the newsroom's policies. */
+const siteLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    { "@type": "WebSite", "@id": siteUrl("/#website"), name: SITE_NAME, url: siteUrl("/"), inLanguage: "en", publisher: { "@id": orgId() } },
+    organizationLd(),
+  ],
+};
 
 export default async function HomePage() {
   const [front, popular, cats, videos, opinion, live, chips] = await Promise.all([
@@ -81,7 +85,7 @@ export default async function HomePage() {
             {chips.map((c) => (
               <Link
                 key={c.slug}
-                href={`/tag/${encodeURIComponent(c.slug)}`}
+                href={tagHref(c.slug)}
                 className="flex-none py-1 text-[13px] font-semibold capitalize text-ink hover:underline"
               >
                 {c.label}

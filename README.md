@@ -16,7 +16,8 @@ A fast, modern news site with a built-in newsroom. Readers get an ABC News–sty
 - Standing pages linked from the footer (about, contact, standards, privacy and so on) live in `src/lib/site.ts`
 - Pictures are resized and served as AVIF or WebP at the size each screen needs, and load only as they scroll into view
 - Visitor stats with Plausible or Umami (no cookies): set `PLAUSIBLE_DOMAIN` or `UMAMI_WEBSITE_ID`. Reader pages only; the newsroom is never counted
-- SEO built in: NewsArticle structured data, Open Graph and Twitter cards, canonical URLs, `sitemap.xml`, `robots.txt` and an RSS feed at `/feed.xml`
+- SEO built in: NewsArticle structured data, Open Graph and Twitter cards, canonical URLs, `sitemap.xml`, `news-sitemap.xml`, `robots.txt`, an RSS feed at `/feed.xml`, and `/llms.txt` and `/llms-full.txt` for AI assistants
+- `npm run sections:review` lists stories that may be filed in the wrong section (writes `reports/section-review.csv`, changes nothing)
 - Mobile-first layout, keyboard and screen-reader friendly, and respects reduced motion
 
 **Newsroom (`/newsroom`)**

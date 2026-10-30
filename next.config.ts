@@ -45,14 +45,28 @@ const nextConfig: NextConfig = {
       // Old WordPress addresses that news apps, feed readers and Google still have on file.
       { source: "/feed/:rest*", destination: "/feed.xml", permanent: true },
       { source: "/page/:n(\\d+)", destination: "/latest?page=:n", permanent: true },
+      // Old WordPress pages that search engines still show for the site's name.
+      { source: "/editorial-staff", destination: "/about", permanent: true },
+      { source: "/about-us", destination: "/about", permanent: true },
+      { source: "/contact-us", destination: "/contact", permanent: true },
+      { source: "/privacy-policy", destination: "/privacy", permanent: true },
+      // Only the old section pages: a story under /news/world/... may have its own redirect.
+      { source: "/news/world", destination: "/world", permanent: true },
+      { source: "/news/world/middleeast", destination: "/world", permanent: true },
     ];
   },
   async rewrites() {
     return {
       // WordPress links like /?p=123 point at the homepage, so they are checked before it renders.
       beforeFiles: [{ source: "/", has: [{ type: "query", key: "p", value: "\\d+" }], destination: "/wp-redirect" }],
-      // Anything no page matches may be an old WordPress address. Unknown ones still get the 404 page.
-      fallback: [{ source: "/:path((?!_next/|media/|api/).+)", destination: "/wp-redirect/:path" }],
+      fallback: [
+        // Old dated story addresses: moved stories redirect, the rest answer 410 Gone.
+        { source: "/:path(\\d{4}/\\d{2}/\\d{2}/.+)", destination: "/wp-gone/:path" },
+        // Anything else deeper than any page may be an old WordPress address (/category/news/politics).
+        // Addresses of one or two parts are looked up by the section and story pages themselves. A rewrite that could
+        // also match a story or tag address would stop Next.js caching those pages, so this one never can.
+        { source: "/:path((?!_next/|media/|api/|live/|newsroom/|login/)[^/]+/[^/]+/.+)", destination: "/wp-redirect/:path" },
+      ],
     };
   },
   images: {

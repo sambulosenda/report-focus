@@ -3,9 +3,10 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { CardStory, RiverStory } from "@/components/Story";
 import { storiesByTag } from "@/lib/queries";
-import { pageMeta } from "@/lib/seo";
+import { collectionLd, ldJson, pageMeta } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
-import { timeAgo } from "@/lib/utils";
+import { tagName, tagSlug } from "@/lib/tags";
+import { siteUrl, timeAgo } from "@/lib/utils";
 
 type Props = { params: Promise<{ tag: string }> };
 export const generateStaticParams = () => [];
@@ -14,40 +15,50 @@ export const generateStaticParams = () => [];
 const MIN_INDEXED = 3;
 
 /**
- * The stories for a tag address. Old WordPress tag links write spaces as hyphens
- * (/tag/emmerson-mnangagwa), so when the address as typed finds nothing, the spaced form is tried.
+ * The stories for a tag address. A tag's address joins its words with hyphens (/tag/cyril-ramaphosa), as the old
+ * WordPress links did, so both the hyphenated tag ("zanu-pf") and the spaced one ("cyril ramaphosa") are looked up.
  */
 const findTag = cache(async (param: string) => {
-  const tag = decodeURIComponent(param);
-  const stories = await storiesByTag(tag);
-  if (stories.length || !tag.includes("-")) return { tag, stories, moved: false };
-  const spaced = tag.replace(/-+/g, " ");
-  return { tag: spaced, stories: await storiesByTag(spaced), moved: true };
+  const typed = decodeURIComponent(param);
+  const slug = tagSlug(typed);
+  const spaced = slug.replace(/-+/g, " ");
+  const [hyphened, withSpaces] = await Promise.all([storiesByTag(slug), spaced === slug ? [] : storiesByTag(spaced)]);
+  const stories = [...new Map([...hyphened, ...withSpaces].map((s) => [s.id, s])).values()]
+    .sort((a, b) => (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0))
+    .slice(0, 30);
+  // Use whichever spelling the newsroom typed for the heading.
+  const tag = withSpaces.length > hyphened.length ? spaced : slug;
+  return { tag, slug, stories, moved: typed !== slug };
 });
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { tag, stories } = await findTag((await params).tag);
+  const { tag, slug, stories } = await findTag((await params).tag);
   if (!stories.length) return {};
-  const title = tag.charAt(0).toUpperCase() + tag.slice(1);
+  const name = tagName(tag);
   return pageMeta({
-    title,
-    description: `Full coverage of ${tag} from ${SITE_NAME}.`,
-    path: `/tag/${encodeURIComponent(tag.toLowerCase())}`,
+    title: `${name} News`,
+    description: `The latest news and analysis on ${name} from ${SITE_NAME}.`,
+    path: `/tag/${encodeURIComponent(slug)}`,
     noindex: stories.length < MIN_INDEXED,
   });
 }
 
 export default async function TagPage({ params }: Props) {
-  const { tag, stories, moved } = await findTag((await params).tag);
+  const { tag, slug, stories, moved } = await findTag((await params).tag);
   // An empty topic page is a "soft 404" to Google, so unknown tags get the real not-found page.
   if (!stories.length) notFound();
-  if (moved) permanentRedirect(`/tag/${encodeURIComponent(tag.toLowerCase())}`);
+  // /tag/Cyril%20Ramaphosa and other spellings go to the one address.
+  if (moved) permanentRedirect(`/tag/${encodeURIComponent(slug)}`);
+  const name = tagName(tag);
+  const url = siteUrl(`/tag/${encodeURIComponent(slug)}`);
+  const ld = collectionLd({ name, url, description: `The latest news and analysis on ${name} from ${SITE_NAME}.`, stories });
   const [first, second, ...rest] = stories;
   return (
     <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-6 md:px-6 md:pt-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(ld) }} />
       <header className="border-b-[3px] border-ink pb-[18px]">
         <p className="kicker">Full coverage</p>
-        <h1 className="mt-2 text-[32px] font-extrabold capitalize leading-none tracking-[-0.02em] md:text-[44px]">{tag}</h1>
+        <h1 className="mt-2 text-[32px] font-extrabold leading-none tracking-[-0.02em] md:text-[44px]">{name}</h1>
       </header>
       {first && (
         <div className="mt-7 grid gap-8 md:grid-cols-2">

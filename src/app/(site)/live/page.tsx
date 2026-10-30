@@ -5,7 +5,8 @@ import { currentLiveStory, latestStories, storiesOfKind } from "@/lib/queries";
 import { pageMeta } from "@/lib/seo";
 import { timeAgo } from "@/lib/utils";
 
-export const metadata: Metadata = pageMeta({ title: "Live", description: "Live coverage of breaking news from Report Focus News.", path: "/live" });
+// Only ever a list of past coverage here (a live story is opened at its own address), so it stays out of search results.
+export const metadata: Metadata = pageMeta({ title: "Live", description: "Live coverage of breaking news from Report Focus News.", path: "/live", noindex: true });
 
 /** "Live" in the nav: open the current live story, or list recent live coverage when nothing is live. */
 export default async function LivePage() {

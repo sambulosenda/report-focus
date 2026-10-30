@@ -7,7 +7,7 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import { CopyLinkButton } from "@/components/ShareButtons";
 import { Duration, SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { renderMarkdown } from "@/lib/markdown";
-import { pageMeta } from "@/lib/seo";
+import { metaDescription, pageMeta } from "@/lib/seo";
 import { liveUpdatesFor, liveUpdateStats, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
 import { excerpt, formatTime, siteUrl, timeAgo } from "@/lib/utils";
 
@@ -19,7 +19,7 @@ export async function liveMetadata(slug: string): Promise<Metadata> {
   const { article } = row;
   return pageMeta({
     title: `Live updates: ${article.title}`,
-    description: article.summary || excerpt(article.body, 160),
+    description: metaDescription(article.summary || excerpt(article.body, 300)),
     path: `/live/${article.slug}`,
     image: article.heroImage ? { url: article.heroImage, alt: article.heroAlt } : null,
     openGraph: { type: "article", publishedTime: article.publishedAt?.toISOString(), modifiedTime: article.updatedAt.toISOString() },

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { currentLiveStory, navCategories } from "@/lib/queries";
+import { currentLiveStory, navCategories, storiesOfKind } from "@/lib/queries";
 import { formatLongDate } from "@/lib/utils";
 import { Logo } from "./Logo";
 import { MobileMenu } from "./MobileMenu";
@@ -10,9 +10,15 @@ import { storyHref } from "./Story";
 export async function Header() {
   // The header also frames error and 404 pages, so a database outage leaves it with just the basics.
   // It reads no sign-in cookie, so reader pages can be cached for everyone. Staff signed in already are sent on from /login.
-  const [cats, live] = await Promise.all([navCategories().catch(() => []), currentLiveStory().catch(() => null)]);
+  const [cats, live, videos] = await Promise.all([
+    navCategories().catch(() => []),
+    currentLiveStory().catch(() => null),
+    // If the lookup fails, keep the link rather than hide it until the next rebuild.
+    storiesOfKind(["video"], 1).catch(() => null),
+  ]);
   const sections = cats.map((c) => ({ label: c.name, href: `/${c.slug}` }));
-  const nav = [{ label: "Video", href: "/video" }, ...sections];
+  // The Video link appears once there is a video to watch.
+  const nav = videos === null || videos.length ? [{ label: "Video", href: "/video" }, ...sections] : sections;
 
   return (
     <header className="border-b border-line bg-white">

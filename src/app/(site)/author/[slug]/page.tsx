@@ -9,9 +9,9 @@ import { MailIcon } from "@/components/icons";
 import { RiverStory, SectionTitle } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
 import { storiesByAuthor } from "@/lib/queries";
-import { pagedPath, pageMeta } from "@/lib/seo";
+import { absoluteUrl, authorLd, isDeskByline, ldJson, orgId, pagedPath, pageMeta } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
-import { formatDate, pageParam } from "@/lib/utils";
+import { formatDate, pageParam, siteUrl } from "@/lib/utils";
 
 const PER_PAGE = 12;
 
@@ -27,6 +27,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     title: a.name,
     description: a.bio ?? `Stories by ${a.name} for ${SITE_NAME}.`,
     path: pagedPath(`/author/${a.slug}`, pageParam((await searchParams).page)),
+    // "Staff Reporter" or "Reuters" is not a person with a profile, so those pages stay out of search results.
+    noindex: isDeskByline(a.name),
     openGraph: { type: "profile" },
   });
 }
@@ -37,9 +39,27 @@ export default async function AuthorPage({ params, searchParams }: Props) {
   const page = pageParam((await searchParams).page);
   const stories = await storiesByAuthor(author.id, PER_PAGE + 1, (page - 1) * PER_PAGE);
   const first = author.name.split(" ")[0];
+  const person = authorLd(author);
+  // A profile page for each named writer, so search engines can tie their stories to them.
+  const ld =
+    person["@type"] === "Person"
+      ? {
+          "@context": "https://schema.org",
+          "@type": "ProfilePage",
+          url: siteUrl(`/author/${author.slug}`),
+          mainEntity: {
+            ...person,
+            jobTitle: author.title ?? undefined,
+            description: author.bio ?? undefined,
+            image: author.avatarUrl ? absoluteUrl(author.avatarUrl) : undefined,
+            worksFor: { "@id": orgId() },
+          },
+        }
+      : null;
 
   return (
     <div className="mx-auto max-w-[1080px] px-4 pb-16 pt-8 md:px-6 md:pb-[72px] md:pt-12">
+      {ld && <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(ld) }} />}
       <section aria-label={`About ${author.name}`} className="flex flex-col items-start gap-5 border-b-[3px] border-ink pb-8 sm:flex-row sm:gap-7">
         {author.avatarUrl && (
           <>
