@@ -240,9 +240,11 @@ export async function searchStories(q: string, { type = "all", sort = "relevance
   return { rows, total: Number(n) };
 }
 
+/** Stories carrying this exact tag (any case), so "ai" doesn't also match "Ukraine". */
 export async function storiesByTag(tag: string, limit = 30) {
+  const needle = `%,${tag.trim().toLowerCase().replace(/[%_]/g, "")},%`;
   return storyQuery()
-    .where(and(isLive(), like(articles.tags, `%${tag.replace(/[%_]/g, "")}%`)))
+    .where(and(isLive(), like(sql`',' || replace(lower(${articles.tags}), ', ', ',') || ','`, needle)))
     .orderBy(desc(articles.publishedAt))
     .limit(limit);
 }

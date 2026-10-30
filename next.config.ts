@@ -40,6 +40,13 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    return [
+      // Old WordPress addresses that news apps, feed readers and Google still have on file.
+      { source: "/feed/:rest*", destination: "/feed.xml", permanent: true },
+      { source: "/page/:n(\\d+)", destination: "/latest?page=:n", permanent: true },
+    ];
+  },
   async rewrites() {
     return {
       // WordPress links like /?p=123 point at the homepage, so they are checked before it renders.
