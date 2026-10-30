@@ -6,6 +6,7 @@ import { SITE_NAME } from "@/lib/site";
 import { timeAgo } from "@/lib/utils";
 
 type Props = { params: Promise<{ tag: string }> };
+export const generateStaticParams = () => [];
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const tag = decodeURIComponent((await params).tag);

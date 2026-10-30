@@ -287,7 +287,3 @@ export async function sectionRails(cats: { id: number }[], perSection = 4) {
   }
   return map;
 }
-
-export async function incrementViews(id: number) {
-  await db.update(articles).set({ views: sql`${articles.views} + 1` }).where(eq(articles.id, id));
-}

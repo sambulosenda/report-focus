@@ -16,5 +16,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     .select({ n: sql<number>`count(*)` })
     .from(liveUpdates)
     .where(and(eq(liveUpdates.articleId, id), gt(liveUpdates.id, since)));
-  return Response.json({ newCount: Number(n) }, { headers: { "Cache-Control": "no-store" } });
+  // A few seconds of CDN caching turns thousands of readers polling at once into one database call.
+  return Response.json({ newCount: Number(n) }, { headers: { "Cache-Control": "public, max-age=0, s-maxage=10" } });
 }

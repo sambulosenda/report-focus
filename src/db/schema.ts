@@ -156,6 +156,15 @@ export const emailSends = sqliteTable(
   (t) => [index("email_sends_list_idx").on(t.list, t.createdAt), uniqueIndex("email_sends_alert_idx").on(t.list, t.articleId), uniqueIndex("email_sends_edition_idx").on(t.list, t.edition)],
 );
 
+/** Failed sign-ins per email and per IP address, kept in the database so the limit holds across restarts and servers. */
+export const loginAttempts = sqliteTable("login_attempts", {
+  /** "email:<address>" or "ip:<address>". */
+  key: text("key").primaryKey(),
+  count: integer("count").notNull().default(0),
+  /** When this count runs out and the key starts again from zero. */
+  resetAt: integer("reset_at", { mode: "timestamp" }).notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Article = typeof articles.$inferSelect;

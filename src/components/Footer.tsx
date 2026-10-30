@@ -46,15 +46,9 @@ export async function Footer() {
               const circle = "inline-flex h-10 w-10 items-center justify-center text-white";
               return (
                 <li key={name}>
-                  {url ? (
-                    <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`Report Focus News on ${name}`} className={`${circle} hover:bg-teal-line`}>
-                      <Icon size={name === "YouTube" ? 17 : 15} />
-                    </a>
-                  ) : (
-                    <span role="img" aria-label={name} className={circle}>
-                      <Icon size={name === "YouTube" ? 17 : 15} />
-                    </span>
-                  )}
+                  <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`Report Focus News on ${name}`} className={`${circle} hover:bg-teal-line`}>
+                    <Icon size={name === "YouTube" ? 17 : 15} />
+                  </a>
                 </li>
               );
             })}
