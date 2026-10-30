@@ -50,7 +50,9 @@ const nextConfig: NextConfig = {
       { source: "/about-us", destination: "/about", permanent: true },
       { source: "/contact-us", destination: "/contact", permanent: true },
       { source: "/privacy-policy", destination: "/privacy", permanent: true },
-      { source: "/news/world/:rest*", destination: "/world", permanent: true },
+      // Only the old section pages: a story under /news/world/... may have its own redirect.
+      { source: "/news/world", destination: "/world", permanent: true },
+      { source: "/news/world/middleeast", destination: "/world", permanent: true },
     ];
   },
   async rewrites() {

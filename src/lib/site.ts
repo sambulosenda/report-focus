@@ -46,6 +46,11 @@ export const CONTACT = {
   privacy: "privacy@reportfocusnews.com",
 };
 const mail = (address: string) => `[${address}](mailto:${address})`;
+/** "[X](…), [Facebook](…) and [LinkedIn](…)", from the same accounts as the footer. */
+const socialLinks = () => {
+  const links = SOCIAL.map((s) => `[${s.name}](${s.url})`);
+  return links.length > 1 ? `${links.slice(0, -1).join(", ")} and ${links.at(-1)}` : links.join("");
+};
 
 /** A standing page. Unfinished ones are kept out of search results and the footer with noindex. */
 export type InfoPage = { title: string; description: string; body: string; noindex?: boolean };
@@ -106,7 +111,7 @@ For questions about your information, email ${mail(CONTACT.privacy)}.
 
 ## Social media
 
-You can also find us on [X](https://x.com/reportfocus), [Facebook](https://www.facebook.com/reportfocusnews), [Instagram](https://www.instagram.com/reportfocusnews) and [LinkedIn](https://www.linkedin.com/company/report-focus).
+You can also find us on ${socialLinks()}.
 
 ## Where we are
 
