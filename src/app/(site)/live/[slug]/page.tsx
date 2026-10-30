@@ -116,10 +116,12 @@ export default async function LiveUpdatesPage({ params, searchParams }: Props) {
         <aside className="flex min-w-0 flex-col gap-7 lg:max-w-[340px] lg:flex-[1_1_300px]">
           {video && (
             <Link href={storyHref(video)} className="story-link group flex flex-col gap-2">
-              <span className="relative block">
-                <StoryImage story={video} />
-                <Duration story={video} />
-              </span>
+              {video.heroImage && (
+                <span className="relative block">
+                  <StoryImage story={video} />
+                  <Duration story={video} />
+                </span>
+              )}
               <span className="kicker block">Video</span>
               <span className="story-title headline text-lg leading-[1.28]">{video.title}</span>
             </Link>
