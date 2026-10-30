@@ -7,12 +7,12 @@ export function LoginForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(login, undefined);
   const [show, setShow] = useState(false);
   const [forgot, setForgot] = useState(false);
-  const field = "h-[46px] rounded-lg border border-[#9ca3af] px-3 text-base font-normal outline-none focus:border-teal";
+  const field = "h-[46px] border border-[#9ca3af] px-3 text-base font-normal outline-none focus:border-teal";
   return (
     <form action={action} className="mt-[18px] flex flex-col gap-[18px]">
       <input type="hidden" name="next" value={next ?? ""} />
       {state?.error && (
-        <p role="alert" className="rounded-lg border border-[#f3b7bf] bg-[#fdecee] px-3 py-2.5 text-sm text-[#8a0f22]">
+        <p role="alert" className="border border-[#f3b7bf] bg-[#fdecee] px-3 py-2.5 text-sm text-[#8a0f22]">
           {state.error}
         </p>
       )}
@@ -27,7 +27,7 @@ export function LoginForm({ next }: { next?: string }) {
             Forgot password?
           </button>
         </span>
-        <span className="flex h-[46px] items-center rounded-lg border border-[#9ca3af] pl-3 pr-1 focus-within:border-teal">
+        <span className="flex h-[46px] items-center border border-[#9ca3af] pl-3 pr-1 focus-within:border-teal">
           <input id="login-pw" name="password" type={show ? "text" : "password"} required autoComplete="current-password" className="min-w-0 flex-1 text-base font-normal outline-none" />
           <button type="button" onClick={() => setShow((s) => !s)} aria-pressed={show} className="h-[38px] px-2.5 text-[13px] font-bold text-teal">
             {show ? "Hide" : "Show"}
@@ -40,7 +40,7 @@ export function LoginForm({ next }: { next?: string }) {
         <input type="checkbox" name="remember" defaultChecked className="h-5 w-5 accent-teal" />
         Keep me signed in on this device
       </label>
-      <button disabled={pending} className="h-12 rounded-lg bg-teal text-base font-extrabold text-white hover:bg-teal-hover disabled:opacity-60">
+      <button disabled={pending} className="h-12 bg-teal text-base font-extrabold text-white hover:bg-teal-hover disabled:opacity-60">
         {pending ? "Signing in…" : "Sign in"}
       </button>
     </form>

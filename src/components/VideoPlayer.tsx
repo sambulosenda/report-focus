@@ -36,7 +36,7 @@ export function VideoPlayer({ src, poster, title, nextHref }: Props) {
   }, [autoStart]);
 
   const embed = src ? videoEmbedUrl(src) : null;
-  const frame = "relative aspect-video w-full overflow-hidden rounded-md bg-black";
+  const frame = "relative aspect-video w-full overflow-hidden bg-black";
 
   if (embed) {
     const url = autoStart ? withAutoplay(embed) : embed;
@@ -74,7 +74,7 @@ export function VideoPlayer({ src, poster, title, nextHref }: Props) {
         <span aria-hidden className="inline-flex h-[84px] w-[84px] items-center justify-center rounded-full bg-brand opacity-70">
           <PlayIcon size={26} color="#fff" />
         </span>
-        <span className="rounded bg-black/65 px-3 py-1.5 text-[13px] font-semibold text-white">Video not attached yet</span>
+        <span className="bg-black/65 px-3 py-1.5 text-[13px] font-semibold text-white">Video not attached yet</span>
       </div>
     </div>
   );

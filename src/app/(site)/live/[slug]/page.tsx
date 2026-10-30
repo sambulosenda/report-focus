@@ -5,7 +5,7 @@ import { AdSlot } from "@/components/AdSlot";
 import { LiveBadge } from "@/components/LiveBadge";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { CopyLinkButton } from "@/components/ShareButtons";
-import { SectionTitle, StoryImage, storyHref } from "@/components/Story";
+import { Duration, SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { renderMarkdown } from "@/lib/markdown";
 import { liveUpdatesFor, liveUpdateStats, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
 import { formatTime, siteUrl, timeAgo } from "@/lib/utils";
@@ -74,7 +74,7 @@ export default async function LiveUpdatesPage({ params, searchParams }: Props) {
       <div className="mt-8 flex flex-col gap-12 lg:flex-row lg:items-start">
         <section id="updates" aria-label="Updates" className="min-w-0 max-w-[760px] scroll-mt-4 lg:flex-[999_1_560px]">
           {article.body.trim() && (
-            <div className="rounded-[10px] bg-mist px-[22px] py-5">
+            <div className="border-t-2 border-ink pb-2 pt-3.5">
               <h2 className="mb-2.5 text-xs font-extrabold uppercase tracking-[0.1em] text-brand">What we know</h2>
               <div className="live-summary text-base leading-[1.55] [&_li+li]:mt-1.5 [&_p+p]:mt-2 [&_ul]:list-disc [&_ul]:pl-[18px]" dangerouslySetInnerHTML={{ __html: renderMarkdown(whatWeKnow(article.body)) }} />
             </div>
@@ -106,7 +106,7 @@ export default async function LiveUpdatesPage({ params, searchParams }: Props) {
           </ol>
           {firstHidden && (
             <div className="mt-4 flex justify-center">
-              <Link href={`/live/${article.slug}?all=1#update-${firstHidden.id}`} className="inline-flex h-[46px] items-center rounded-full border border-ink px-7 text-[15px] font-bold text-ink hover:bg-ink hover:text-white">
+              <Link href={`/live/${article.slug}?all=1#update-${firstHidden.id}`} className="inline-flex h-[46px] items-center border border-ink px-7 text-[15px] font-bold text-ink hover:bg-ink hover:text-white">
                 Show earlier updates
               </Link>
             </div>
@@ -115,15 +115,15 @@ export default async function LiveUpdatesPage({ params, searchParams }: Props) {
 
         <aside className="flex min-w-0 flex-col gap-7 lg:max-w-[340px] lg:flex-[1_1_300px]">
           {video && (
-            <Link href={storyHref(video)} className="story-link group flex flex-col gap-2.5 overflow-hidden rounded-[10px] bg-teal text-white">
-              <span className="relative block">
-                <StoryImage story={video} rounded={false} />
-                <span className="absolute left-2.5 top-2.5 rounded bg-brand px-2 py-1 text-[11px] font-extrabold tracking-[0.06em]">▶ VIDEO</span>
-              </span>
-              <span className="flex flex-col gap-1 px-4 pb-4">
-                <span className="text-xs font-extrabold tracking-[0.06em] text-on-teal-pink">REPORT FOCUS VIDEO</span>
-                <span className="story-title text-base font-bold">{video.title}</span>
-              </span>
+            <Link href={storyHref(video)} className="story-link group flex flex-col gap-2">
+              {video.heroImage && (
+                <span className="relative block">
+                  <StoryImage story={video} />
+                  <Duration story={video} />
+                </span>
+              )}
+              <span className="kicker block">Video</span>
+              <span className="story-title headline text-lg leading-[1.28]">{video.title}</span>
             </Link>
           )}
           {related.length > 0 && (

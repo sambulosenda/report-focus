@@ -34,18 +34,22 @@ export default async function AuthorPage({ params, searchParams }: Props) {
   return (
     <div className="mx-auto max-w-[1080px] px-4 pb-16 pt-8 md:px-6 md:pb-[72px] md:pt-12">
       <section aria-label={`About ${author.name}`} className="flex flex-col items-start gap-5 border-b-[3px] border-ink pb-8 sm:flex-row sm:gap-7">
-        <span className="hidden sm:block">
-          <Avatar name={author.name} url={author.avatarUrl} size={128} />
-        </span>
-        <span className="sm:hidden">
-          <Avatar name={author.name} url={author.avatarUrl} size={88} />
-        </span>
+        {author.avatarUrl && (
+          <>
+            <span className="hidden sm:block">
+              <Avatar name={author.name} url={author.avatarUrl} size={128} />
+            </span>
+            <span className="sm:hidden">
+              <Avatar name={author.name} url={author.avatarUrl} size={88} />
+            </span>
+          </>
+        )}
         <div className="flex min-w-0 flex-1 flex-col gap-2.5">
           <h1 className="text-[32px] font-extrabold leading-[1.05] tracking-[-0.02em] md:text-[44px]">{author.name}</h1>
           {author.title && <p className="text-base font-semibold text-ink-2">{author.title}</p>}
           {author.bio && <p className="mt-1 max-w-[640px] font-serif text-lg leading-[1.6]">{author.bio}</p>}
           <div className="mt-1.5 flex flex-wrap gap-2">
-            <Link href="/tips" className="inline-flex h-10 items-center gap-2 rounded-full border border-line-2 px-4 text-sm font-bold hover:border-ink">
+            <Link href="/tips" className="inline-flex h-10 items-center gap-2 border border-line-2 px-4 text-sm font-bold hover:border-ink">
               <MailIcon size={16} className="text-teal" />
               Send a tip
             </Link>

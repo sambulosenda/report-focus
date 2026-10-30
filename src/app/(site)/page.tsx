@@ -1,6 +1,6 @@
 import Link from "next/link";
+import { excerpt, formatTime } from "@/lib/utils";
 import { BreakingBanner } from "@/components/BreakingBanner";
-import { PlayIcon } from "@/components/icons";
 import { NewsletterBand } from "@/components/NewsletterForm";
 import {
   Kicker,
@@ -19,6 +19,7 @@ import {
   currentLiveStory,
   featuredStories,
   latestStories,
+  newestLiveUpdate,
   mostRead,
   navCategories,
   relatedStories,
@@ -26,7 +27,6 @@ import {
   storiesOfKind,
   trendingTags,
 } from "@/lib/queries";
-import { initials } from "@/lib/utils";
 
 export default async function HomePage() {
   const [breaking, featured, latest, popular, cats, videos, opinion, live, chips] = await Promise.all([
@@ -62,6 +62,8 @@ export default async function HomePage() {
   bullets.forEach((s) => used.add(s.id));
   const stack = take(textStories, 5);
   const top = popular.slice(0, 8);
+  // When the live story is already the lead, point to its newest post instead of repeating the headline.
+  const liveLatest = live && live.id === lead.id ? await newestLiveUpdate(live.id) : undefined;
 
   const rails = await sectionRails(cats, 4);
   const blocks = cats.map((c) => ({ cat: c, stories: rails.get(c.id) ?? [] })).filter((b) => b.stories.length > 0);
@@ -74,13 +76,13 @@ export default async function HomePage() {
 
       {chips.length > 0 && (
         <div className="border-b border-line">
-          <div className="no-scrollbar mx-auto flex max-w-[1280px] items-center gap-2.5 overflow-x-auto px-4 py-2.5 md:flex-wrap md:overflow-visible md:px-6">
-            <span className="mr-1.5 flex-none text-xs font-extrabold uppercase tracking-[0.08em] text-ink">Full coverage</span>
+          <div className="no-scrollbar mx-auto flex max-w-[1280px] items-center gap-5 overflow-x-auto px-4 py-2.5 md:flex-wrap md:overflow-visible md:px-6">
+            <span className="flex-none text-xs font-extrabold uppercase tracking-[0.08em] text-muted">Full coverage</span>
             {chips.map((c) => (
               <Link
                 key={c.slug}
                 href={`/tag/${encodeURIComponent(c.slug)}`}
-                className="flex-none rounded-full border border-line-2 px-[13px] py-[7px] text-[13px] font-semibold capitalize text-ink hover:border-ink"
+                className="flex-none py-1 text-[13px] font-semibold capitalize text-ink hover:underline"
               >
                 {c.label}
               </Link>
@@ -94,15 +96,14 @@ export default async function HomePage() {
         <section className="grid gap-y-5 md:grid-cols-2 md:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,2.1fr)_minmax(0,1.1fr)]">
           {/* Lead story */}
           <article className="flex min-w-0 flex-col gap-2.5 md:col-span-2 md:gap-3 lg:order-2 lg:col-span-1">
-            <Link href={storyHref(lead)} aria-label={lead.title} className="relative -mx-4 block md:mx-0">
-              <StoryImage story={lead} priority rounded={false} className="md:rounded" />
-              {lead.kind === "live" && (
-                <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded bg-brand px-2 py-1 text-[11px] font-extrabold tracking-[0.06em] text-white md:left-3.5 md:top-3.5 md:px-2.5 md:py-[5px] md:text-xs">
-                  <span className="live-dot h-1.5 w-1.5 rounded-full bg-white md:h-[7px] md:w-[7px]" aria-hidden />
-                  LIVE
-                </span>
-              )}
-            </Link>
+            {lead.heroImage ? (
+              <Link href={storyHref(lead)} aria-label={lead.title} className="relative -mx-4 block md:mx-0">
+                <StoryImage story={lead} priority />
+                {lead.kind === "live" && <LiveBadge className="absolute left-3 top-3 md:left-3.5 md:top-3.5" />}
+              </Link>
+            ) : (
+              lead.kind === "live" && <LiveBadge className="self-start" />
+            )}
             <Kicker story={lead} />
             <h2>
               <Link href={storyHref(lead)} className="story-title headline block text-[30px] leading-[1.12] tracking-[-0.01em] md:text-[44px] md:leading-[1.06] md:tracking-[-0.015em]">
@@ -114,31 +115,24 @@ export default async function HomePage() {
               <ul className="flex flex-col md:mt-0.5 md:gap-[9px]">
                 {bullets.map((b) => (
                   <li key={b.id} className="border-t border-line md:border-0">
-                    <Link href={storyHref(b)} className="story-title headline flex min-h-11 items-center gap-2.5 text-base leading-[1.28] md:min-h-0 md:items-start md:text-lg md:leading-[1.3]">
-                      <span aria-hidden className="font-sans text-xs text-brand md:leading-[1.9]">■</span>
+                    <Link href={storyHref(b)} className="story-title headline flex min-h-11 items-center text-base leading-[1.28] md:min-h-0 md:items-start md:text-lg md:leading-[1.3]">
                       {b.title}
                     </Link>
                   </li>
                 ))}
               </ul>
             )}
-            {live && (
-              <Link href={storyHref(live)} className="group mt-2 flex items-center gap-3 rounded-md bg-teal px-3.5 py-3 text-white hover:no-underline md:mt-1.5 md:flex-wrap md:gap-x-[18px] md:gap-y-2.5 md:px-4 md:py-3.5">
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5 md:flex-row md:items-center md:gap-[18px]">
-                  <span className="inline-flex flex-none items-center gap-1.5 whitespace-nowrap text-[11px] font-extrabold tracking-[0.06em] text-on-teal-pink md:text-xs">
-                    <span className="live-dot h-[7px] w-[7px] rounded-full bg-[#ff5a6e]" aria-hidden />
-                    REPORT FOCUS LIVE
-                  </span>
-                  <span className="truncate text-sm font-semibold md:font-normal">
-                    <b className="hidden md:inline">Now: </b>
-                    <span className="md:hidden">Now: </span>
-                    {live.title}
-                  </span>
+            {live && (live.id !== lead.id || liveLatest) && (
+              <Link
+                href={liveLatest ? `/live/${live.slug}#update-${liveLatest.id}` : storyHref(live)}
+                className="story-link group mt-2 flex items-baseline gap-2.5 border-t border-line pt-3 md:mt-1.5"
+              >
+                <span className="kicker inline-flex flex-none items-center gap-1.5">
+                  <span className="live-dot h-[7px] w-[7px] rounded-full bg-brand" aria-hidden />
+                  Live
                 </span>
-                <span className="inline-flex h-9 flex-none items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] font-extrabold text-teal group-hover:bg-on-teal md:ml-auto md:text-sm md:text-ink">
-                  <PlayIcon color="#004666" />
-                  Follow
-                </span>
+                {liveLatest && <time dateTime={liveLatest.createdAt.toISOString()} className="flex-none text-[13px] font-bold text-muted tabular">{formatTime(liveLatest.createdAt)}</time>}
+                <span className="story-title text-[15px] font-semibold leading-snug text-ink">{liveLatest ? liveLatest.title || excerpt(liveLatest.body) : live.title}</span>
               </Link>
             )}
           </article>
@@ -171,7 +165,7 @@ export default async function HomePage() {
             <div className="mb-3.5 flex items-baseline justify-between px-4 md:mb-[18px] md:px-0">
               <h2 id="trending-videos" className="text-xl font-extrabold md:text-[22px]">Trending videos</h2>
               <Link href="/video" className="inline-flex min-h-11 items-center text-[13px] font-bold text-white hover:underline md:min-h-0 md:text-sm">
-                See all <span aria-hidden className="ml-1 hidden md:inline">→</span>
+                See all
               </Link>
             </div>
             <div className="no-scrollbar flex gap-3 overflow-x-auto px-4 md:grid md:grid-cols-[repeat(auto-fit,minmax(210px,1fr))] md:gap-5 md:overflow-visible md:px-0">
@@ -193,11 +187,11 @@ export default async function HomePage() {
 
       {opinion.length > 0 && (
         <section aria-labelledby="opinion" className="mx-auto mt-6 max-w-[1280px] px-4 md:mt-10 md:px-6">
-          <div className="flex flex-col gap-1.5 rounded-[10px] bg-cream px-4 py-[18px] md:gap-5 md:p-7">
-            <h2 id="opinion" className="text-xl font-extrabold text-ink">Analysis &amp; Opinion</h2>
+          <div className="flex flex-col gap-1.5 md:gap-5">
+            <SectionTitle id="opinion">Analysis &amp; Opinion</SectionTitle>
             <div className="flex flex-col md:grid md:grid-cols-[repeat(auto-fit,minmax(240px,1fr))] md:gap-6">
               {opinion.map((o) => (
-                <OpinionStory key={o.id} story={o} initials={initials(o.author.name)} />
+                <OpinionStory key={o.id} story={o} />
               ))}
             </div>
           </div>
@@ -216,5 +210,14 @@ export default async function HomePage() {
         <NewsletterBand />
       </div>
     </>
+  );
+}
+
+function LiveBadge({ className }: { className: string }) {
+  return (
+    <span className={`${className} inline-flex items-center gap-1.5 bg-brand px-2 py-1 text-[11px] font-extrabold tracking-[0.06em] text-white md:px-2.5 md:py-[5px] md:text-xs`}>
+      <span className="live-dot h-1.5 w-1.5 rounded-full bg-white md:h-[7px] md:w-[7px]" aria-hidden />
+      LIVE
+    </span>
   );
 }

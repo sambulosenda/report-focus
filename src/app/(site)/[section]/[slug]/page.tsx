@@ -118,7 +118,7 @@ export default async function ArticlePage({ params }: Props) {
           <nav aria-label="Breadcrumb" className="mb-2.5 flex flex-wrap items-center gap-2 text-xs font-bold md:mb-3.5 md:gap-2.5 md:text-[13px]">
             {article.kind === "live" && <LiveBadge />}
             {article.isBreaking && article.kind !== "live" && (
-              <span className="rounded bg-brand px-[9px] py-1 text-[11px] font-extrabold tracking-[0.08em] text-white">BREAKING</span>
+              <span className="bg-brand px-[9px] py-1 text-[11px] font-extrabold tracking-[0.08em] text-white">BREAKING</span>
             )}
             {category && (
               <Link href={`/${category.slug}`} className="text-ink hover:underline">
@@ -137,12 +137,16 @@ export default async function ArticlePage({ params }: Props) {
 
           <div className="mt-4 md:mt-6 md:flex md:flex-wrap md:items-center md:gap-x-5 md:gap-y-3.5 md:border-y md:border-line md:py-4">
             <div className="flex items-center gap-2.5 md:flex-[1_1_260px] md:gap-3">
-              <span className="hidden md:block">
-                <Avatar name={author.name} url={author.avatarUrl} size={44} />
-              </span>
-              <span className="md:hidden">
-                <Avatar name={author.name} url={author.avatarUrl} size={40} />
-              </span>
+              {author.avatarUrl && (
+                <>
+                  <span className="hidden md:block">
+                    <Avatar name={author.name} url={author.avatarUrl} size={44} />
+                  </span>
+                  <span className="md:hidden">
+                    <Avatar name={author.name} url={author.avatarUrl} size={40} />
+                  </span>
+                </>
+              )}
               <div className="text-[13px] leading-[1.4] md:text-sm md:leading-[1.45]">
                 <p>
                   By{" "}
@@ -169,7 +173,7 @@ export default async function ArticlePage({ params }: Props) {
         {article.heroImage && (
           <figure className="-mx-4 mt-4 md:mx-auto md:mt-[30px] md:max-w-[1080px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={article.heroImage} alt={article.heroAlt ?? ""} className="block aspect-video w-full object-cover md:rounded" />
+            <img src={article.heroImage} alt={article.heroAlt ?? ""} className="block aspect-video w-full object-cover " />
             {(article.heroCaption || article.heroCredit) && (
               <figcaption className="px-4 pt-2 text-xs leading-[1.45] text-muted md:mt-2.5 md:px-0 md:pt-0 md:text-[13px]">
                 {article.heroCaption}
@@ -182,14 +186,14 @@ export default async function ArticlePage({ params }: Props) {
         <div className="mt-5 flex flex-col gap-14 md:mt-10 lg:flex-row lg:justify-center">
           <div className="min-w-0 lg:max-w-[680px] lg:flex-[999_1_560px]">
             {latestUpdates.length > 0 && (
-              <section aria-labelledby="latest-updates" className="mb-5 rounded-lg border border-line p-3.5 md:mb-8 md:px-5 md:py-[18px]">
+              <section aria-labelledby="latest-updates" className="mb-5 border border-line p-3.5 md:mb-8 md:px-5 md:py-[18px]">
                 <div className="mb-1.5 flex items-center justify-between md:mb-3">
                   <h2 id="latest-updates" className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.08em] text-brand md:text-xs">
                     <span aria-hidden className="live-dot h-[7px] w-[7px] rounded-full bg-brand" />
                     Latest updates
                   </h2>
                   <Link href={`/live/${article.slug}`} className="hidden text-[13px] font-bold text-ink hover:underline md:inline">
-                    All updates →
+                    All updates
                   </Link>
                 </div>
                 <ol>
@@ -205,7 +209,7 @@ export default async function ArticlePage({ params }: Props) {
                   ))}
                 </ol>
                 <Link href={`/live/${article.slug}`} className="flex min-h-11 items-center border-t border-[#f0f1f3] text-sm font-bold md:hidden">
-                  See all updates →
+                  See all updates
                 </Link>
               </section>
             )}
@@ -213,10 +217,10 @@ export default async function ArticlePage({ params }: Props) {
             <div className="article-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(article.body) }} />
 
             {tags.length > 0 && (
-              <ul className="mt-6 flex flex-wrap gap-2" aria-label="Topics">
+              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-1" aria-label="Topics">
                 {tags.map((t) => (
                   <li key={t}>
-                    <Link href={`/tag/${encodeURIComponent(t.toLowerCase())}`} className="inline-flex rounded-full border border-line-2 px-3.5 py-2 text-[13px] font-bold capitalize text-ink hover:border-ink">
+                    <Link href={`/tag/${encodeURIComponent(t.toLowerCase())}`} className="inline-flex py-1 text-[13px] font-bold capitalize text-ink underline decoration-line-2 underline-offset-4 hover:decoration-ink">
                       {t}
                     </Link>
                   </li>
@@ -224,13 +228,13 @@ export default async function ArticlePage({ params }: Props) {
               </ul>
             )}
 
-            <div className="mt-8 flex items-start gap-4 rounded-lg border border-line p-5">
-              <Avatar name={author.name} url={author.avatarUrl} size={52} />
+            <div className="mt-8 flex items-start gap-4 border-t border-line pt-5">
+              {author.avatarUrl && <Avatar name={author.name} url={author.avatarUrl} size={52} />}
               <div className="text-[15px] leading-normal">
                 <p className="font-extrabold text-ink">{author.name}</p>
                 <p className="text-muted">{author.bio ?? `${author.name} reports for ${SITE_NAME}.`}</p>
-                <Link href={`/author/${author.slug}`} className="mt-1.5 inline-block text-sm font-bold text-brand hover:underline">
-                  More from {author.name.split(" ")[0]} →
+                <Link href={`/author/${author.slug}`} className="mt-1.5 inline-block text-sm font-bold text-ink underline underline-offset-4 hover:text-teal">
+                  More from {author.name.split(" ")[0]}
                 </Link>
               </div>
             </div>
