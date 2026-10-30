@@ -1,0 +1,13 @@
+{
+  "surface": "Chrome phone 390x844 devicePixelRatio 3, slow 4G (150ms latency, 1.6 Mbps down), production next start, first visit",
+  "beforeColdLoadMs": [3165, 3186],
+  "afterColdLoadMs": [1628, 1619, 1640, 1624, 1627],
+  "beforeColdMedianMs": 3176,
+  "afterColdMedianMs": 1627,
+  "beforeWarmMedianMs": 219,
+  "afterWarmMedianMs": 205,
+  "warmVerdict": "no measurable difference",
+  "beforeLimiter": "Newsreader italic 148KB and Newsreader roman variable 133KB",
+  "afterLimiter": "74KB lead image at w=1280 on the same throttled link",
+  "imageErrors": 0
+}

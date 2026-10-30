@@ -6,12 +6,12 @@ import { siteUrl } from "@/lib/utils";
 import "./globals.css";
 
 // Playfair for the masthead, Newsreader for headlines, Source Serif 4 for body text, Libre Franklin for UI.
-// Only the headline and UI fonts are preloaded, so the lead picture isn't kept waiting behind four font files.
+// Headlines are Newsreader roman at weight 600. The italic cut and the variable weight range were
+// preloaded as two files of about 140KB each, and those two requests were the slowest on a phone.
 const playfair = Playfair_Display({ subsets: ["latin"], weight: "600", variable: "--font-playfair", display: "swap", preload: false });
 const headline = Newsreader({
   subsets: ["latin"],
-  axes: ["opsz"],
-  style: ["normal", "italic"],
+  weight: "600",
   variable: "--font-newsreader",
   display: "swap",
 });
