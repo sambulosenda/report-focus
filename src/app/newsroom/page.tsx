@@ -1,15 +1,15 @@
 import Link from "next/link";
 import { and, desc, eq, gt, gte, lte, sql, type SQL } from "drizzle-orm";
-import { clearBreakingBanner, setBreaking } from "@/actions/articles";
+import { clearBreakingBanner, pinStory, setBreaking, unpinSlot } from "@/actions/articles";
 import { emailBreakingAlert } from "@/actions/newsletter";
 import { db } from "@/db";
-import { articles, categories, emailSends, users } from "@/db/schema";
+import { HOME_PIN_HOURS, HOME_SLOTS, HOME_SLOT_LABEL, articles, categories, emailSends, users } from "@/db/schema";
 import { ActionForm } from "@/components/newsroom/ActionForm";
 import { ConfirmButton } from "@/components/newsroom/ConfirmButton";
 import { Card, StatusBadge, SwitchButton, btnBrand, displayStatus } from "@/components/newsroom/ui";
 import { hasRole, requireUser } from "@/lib/auth";
 import { BREAKING, subscriberCount } from "@/lib/newsletters";
-import { breakingStory } from "@/lib/queries";
+import { breakingStory, homeTop, isLive } from "@/lib/queries";
 import { cn, dayOffset, formatDate, formatTime, timeAgo } from "@/lib/utils";
 
 const TABS = [
@@ -44,7 +44,16 @@ function when(d: Date | null, now: Date) {
   return now.getTime() - d.getTime() < 12 * 3600e3 ? formatTime(d) : timeAgo(d);
 }
 
-export default async function Dashboard({ searchParams }: { searchParams: Promise<{ denied?: string; tab?: string; section?: string }> }) {
+const PIN_HOURS_LABEL: Record<(typeof HOME_PIN_HOURS)[number], string> = {
+  "3": "3 hours",
+  "6": "6 hours",
+  "12": "12 hours",
+  "24": "24 hours",
+  "48": "2 days",
+  "0": "Until I change it",
+};
+
+export default async function Dashboard({ searchParams }: { searchParams: Promise<{ denied?: string; tab?: string; section?: string; pin?: string }> }) {
   const user = await requireUser();
   const editor = hasRole(user, "editor");
   const sp = await searchParams;
@@ -55,7 +64,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const scope = editor ? undefined : eq(articles.authorId, user.id);
   const inSection = sectionId ? eq(articles.categoryId, sectionId) : undefined;
 
-  const [rows, cats, [counts], [stats], upNext, activity, breaking] = await Promise.all([
+  const pinId = Number(sp.pin) || undefined;
+
+  const [rows, cats, [counts], [stats], upNext, activity, breaking, front, pinnable] = await Promise.all([
     db
       .select({
         id: articles.id,
@@ -110,6 +121,16 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       .orderBy(desc(articles.updatedAt))
       .limit(5),
     editor ? breakingStory() : Promise.resolve(null),
+    editor ? homeTop(3) : Promise.resolve(null),
+    editor
+      ? db
+          .select({ id: articles.id, title: articles.title })
+          .from(articles)
+          .where(isLive())
+          // A story sent here from its editor ("Pin to home page") comes first, even if it is older.
+          .orderBy(sql`${articles.id} = ${pinId ?? 0} desc`, desc(articles.publishedAt))
+          .limit(40)
+      : Promise.resolve([]),
   ]);
 
   const [alertSent, alertReaders] = breaking
@@ -203,6 +224,86 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             </form>
           )}
         </section>
+      )}
+
+      {front && (
+        <Card className="p-[18px]">
+          <section id="home-page" aria-labelledby="home-page-title" className="flex flex-col gap-4">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h2 id="home-page-title" className="text-base font-extrabold">
+                Top of the home page
+              </h2>
+              <p className="text-[13px] text-muted">Pin the stories you want on top. Any spot you leave open fills with the newest stories.</p>
+            </div>
+            <ol className="flex flex-col">
+              {HOME_SLOTS.map((slot) => {
+                const story = slot === 1 ? front.lead : front.stack[slot - 2];
+                const pin = front.pinned.get(slot);
+                return (
+                  <li key={slot} className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-[#f0f1f3] py-2.5">
+                    <span className="w-[92px] flex-none text-[13px] font-extrabold">{HOME_SLOT_LABEL[slot]}</span>
+                    <span className="flex min-w-0 flex-[1_1_260px] flex-col gap-0.5">
+                      {story ? (
+                        <Link href={`/newsroom/articles/${story.id}`} className="text-sm font-semibold leading-[1.35] hover:underline">
+                          {story.title}
+                        </Link>
+                      ) : (
+                        <span className="text-sm text-muted">Empty until more stories are published</span>
+                      )}
+                      <span className={cn("text-xs", pin ? "font-bold text-teal" : "text-muted")}>
+                        {pin ? (pin.expiresAt ? `Pinned until ${when(pin.expiresAt, now)}` : "Pinned until someone changes it") : "Automatic"}
+                      </span>
+                    </span>
+                    {pin && (
+                      <form action={unpinSlot}>
+                        <input type="hidden" name="slot" value={slot} />
+                        <button className="h-[34px] rounded-lg border border-line-2 px-3 text-[13px] font-bold hover:border-ink">Unpin</button>
+                      </form>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+            {pinnable.length > 0 && (
+              <ActionForm action={pinStory} className="flex flex-wrap items-end gap-2.5 border-t border-line pt-4 [&>p]:basis-full">
+                <label className="flex min-w-0 flex-[1_1_300px] flex-col gap-1.5 text-[13px] font-bold">
+                  Story
+                  <select name="id" defaultValue={pinId ?? ""} required className="h-[38px] min-w-0 rounded-lg border border-[#9ca3af] bg-white px-2.5 text-sm font-normal text-ink">
+                    <option value="" disabled>
+                      Choose a published story
+                    </option>
+                    {pinnable.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title.length > 90 ? `${p.title.slice(0, 89)}…` : p.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1.5 text-[13px] font-bold">
+                  Spot
+                  <select name="slot" defaultValue="1" className="h-[38px] rounded-lg border border-[#9ca3af] bg-white px-2.5 text-sm font-normal text-ink">
+                    {HOME_SLOTS.map((slot) => (
+                      <option key={slot} value={slot}>
+                        {HOME_SLOT_LABEL[slot]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1.5 text-[13px] font-bold">
+                  Keep it there for
+                  <select name="hours" defaultValue="24" className="h-[38px] rounded-lg border border-[#9ca3af] bg-white px-2.5 text-sm font-normal text-ink">
+                    {HOME_PIN_HOURS.map((h) => (
+                      <option key={h} value={h}>
+                        {PIN_HOURS_LABEL[h]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button className={btnBrand}>Pin</button>
+              </ActionForm>
+            )}
+          </section>
+        </Card>
       )}
 
       <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
