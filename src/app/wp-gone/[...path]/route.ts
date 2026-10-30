@@ -5,12 +5,13 @@ import { SITE_NAME } from "@/lib/site";
 // Stories from before 2025 were not brought over, so an address with no new home answers "410 Gone":
 // search engines drop it sooner than a 404, and readers following an old link are told the story was retired.
 export async function GET(_req: Request, { params }: { params: Promise<{ path: string[] }> }) {
-  const path = `/${(await params).path.map((p) => decodeURIComponent(p)).join("/")}`;
+  // Next.js has already decoded each part of the address.
+  const path = `/${(await params).path.join("/")}`;
   const target = await legacyDestination(path);
   if (target) return new Response(null, { status: 308, headers: { Location: target } });
   return new Response(GONE_PAGE, {
     status: 410,
-    headers: { "Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex", "Cache-Control": "public, max-age=3600" },
+    headers: { "Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex", "Cache-Control": "no-store" },
   });
 }
 

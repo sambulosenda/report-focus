@@ -55,7 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // The same address as the homepage's canonical link.
     { url: siteUrl(), lastModified: latest },
     { url: siteUrl("/latest"), lastModified: latest },
-    ...cats.filter((c) => bySection.has(c.slug)).map((c) => ({ url: siteUrl(`/${c.slug}`), lastModified: bySection.get(c.slug) })),
+    ...cats.map((c) => ({ url: siteUrl(`/${c.slug}`), lastModified: bySection.get(c.slug) })),
     ...listed.map((s) => ({
       url: siteUrl(`/${s.section ?? "news"}/${s.slug}`),
       lastModified: s.updatedAt,

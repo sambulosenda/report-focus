@@ -20,13 +20,14 @@ const RULES: [RegExp, string][] = [
   [/\b(kenya|nigeria|ghana|uganda|tanzania|zambia|malawi|mozambique|botswana|namibia|eswatini|lesotho|congo|drc|rwanda|ethiopia|sudan|egypt|sadc|au|african union)\b/i, "africa"],
   [/\b(ebola|cholera|mpox|covid|hospital|health|disease|outbreak|vaccine)\b/i, "health"],
   [/\b(climate|drought|flood|cyclone|weather|environment)\b/i, "climate"],
-  [/\b(football|soccer|cricket|rugby|fifa|premier league|afcon|bafana|warriors|olympic|tennis|athletics)\b/i, "sports"],
+  [/\b(football|soccer|cricket|rugby|fifa|premier league|afcon|bafana|warriors|olympics?|tennis|athletics)\b/i, "sports"],
   [/\b(music|film|movie|celebrity|actor|actress|singer|album|award|entertainment)\b/i, "entertainment"],
   [/\b(economy|business|rand|inflation|bank|market|fuel|mining|investment|budget|tax)\b/i, "business"],
   [/\b(ramaphosa|anc|eff|mk party|saps|npa|idac|dirco|johannesburg|cape town|durban|pretoria|gauteng|madlanga|mkhwanazi|zuma)\b/i, "south-africa"],
 ];
 
-const csv = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+// A cell starting with = + - @ would run as a formula in a spreadsheet, so it gets a leading tab.
+const csv = (v: unknown) => `"${String(v ?? "").replace(/^[=+\-@\t\r]/, "\t$&").replace(/"/g, '""')}"`;
 
 async function main() {
   const arg = process.argv.find((a) => a.startsWith("--sections="));

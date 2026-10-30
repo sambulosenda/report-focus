@@ -65,6 +65,7 @@ export async function llmsFullTxt() {
       .map((p) => p.trim())
       .filter((p) => p && !p.startsWith("!["))
       .slice(0, 2)
+      .map((p) => (p.length > 1500 ? `${p.slice(0, 1500)}…` : p))
       .join("\n\n");
   return [
     short,

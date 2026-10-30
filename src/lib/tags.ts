@@ -21,6 +21,12 @@ export function tagName(tag: string) {
   return tag
     .trim()
     .split(/\s+/)
-    .map((w) => (ACRONYMS.has(w.toLowerCase()) ? w.toUpperCase() : w === w.toLowerCase() ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+    .map((w) =>
+      ACRONYMS.has(w.toLowerCase())
+        ? w.toUpperCase()
+        : w === w.toLowerCase()
+          ? w.split("-").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join("-")
+          : w,
+    )
     .join(" ");
 }

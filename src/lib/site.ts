@@ -6,8 +6,6 @@ export const HOME_TITLE = "Report Focus News | Zimbabwe, South Africa and Africa
 export const HOME_DESCRIPTION =
   "Independent reporting and analysis on Zimbabwe, South Africa and the rest of Africa: politics, crime, business and more.";
 
-/** The X account, shown on share cards. */
-export const TWITTER_HANDLE = "@ReportFocus";
 export const TAGLINE = "Independent reporting. Fast when it breaks, thorough when it matters.";
 
 /**
@@ -25,6 +23,12 @@ export const SOCIAL: { name: SocialName; url: string }[] = [
   social("YouTube", process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE),
   social("TikTok", process.env.NEXT_PUBLIC_SOCIAL_TIKTOK),
 ].filter((s) => s.url);
+
+/** The X account shown on share cards, taken from the X profile link above (x.com/reportfocus is @reportfocus). */
+export const TWITTER_HANDLE = (() => {
+  const name = SOCIAL.find((s) => s.name === "X")?.url.match(/(?:x|twitter)\.com\/@?([A-Za-z0-9_]+)/)?.[1];
+  return name ? `@${name}` : undefined;
+})();
 
 /**
  * Newsroom contact details used on the standing pages. Change an address here and every page that

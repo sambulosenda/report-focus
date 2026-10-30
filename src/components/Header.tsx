@@ -13,11 +13,12 @@ export async function Header() {
   const [cats, live, videos] = await Promise.all([
     navCategories().catch(() => []),
     currentLiveStory().catch(() => null),
-    storiesOfKind(["video"], 1).catch(() => []),
+    // If the lookup fails, keep the link rather than hide it until the next rebuild.
+    storiesOfKind(["video"], 1).catch(() => null),
   ]);
   const sections = cats.map((c) => ({ label: c.name, href: `/${c.slug}` }));
   // The Video link appears once there is a video to watch.
-  const nav = videos.length ? [{ label: "Video", href: "/video" }, ...sections] : sections;
+  const nav = videos === null || videos.length ? [{ label: "Video", href: "/video" }, ...sections] : sections;
 
   return (
     <header className="border-b border-line bg-white">
