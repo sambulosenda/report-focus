@@ -6,28 +6,25 @@ import { db } from "@/db";
 import { sessions, users } from "@/db/schema";
 import { createSession, destroySession, hashPassword, requireUser, verifyPassword } from "@/lib/auth";
 import { userForLink } from "@/lib/invites";
+import { clearLoginFailures, clientIp, isLoginBlocked, loginKeys, recordLoginFailure } from "@/lib/rate-limit";
 
 /** `link` carries a sign-in link for an admin to copy and send. */
 export type FormState = { error?: string; ok?: string; link?: string } | undefined;
 
-// Simple per-process throttle against password guessing.
-const attempts = new Map<string, { count: number; until: number }>();
-
 export async function login(_prev: FormState, formData: FormData): Promise<FormState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  const rec = attempts.get(email);
-  if (rec && rec.count >= 5 && rec.until > Date.now()) {
-    return { error: "Too many attempts. Please wait a few minutes and try again." };
+  const keys = loginKeys(email, await clientIp());
+  if (await isLoginBlocked(keys)) {
+    return { error: "Too many attempts. Please wait 15 minutes and try again." };
   }
   const user = await db.select().from(users).where(eq(users.email, email)).get();
   const ok = user && user.active && (await verifyPassword(password, user.passwordHash));
   if (!ok) {
-    const next = { count: (rec && rec.until > Date.now() ? rec.count : 0) + 1, until: Date.now() + 10 * 60e3 };
-    attempts.set(email, next);
+    await recordLoginFailure(keys);
     return { error: "That email and password don’t match. Check them and try again." };
   }
-  attempts.delete(email);
+  await clearLoginFailures(keys);
   await createSession(user.id, formData.get("remember") === "on");
   const next = String(formData.get("next") ?? "");
   redirect(next.startsWith("/newsroom") ? next : "/newsroom");

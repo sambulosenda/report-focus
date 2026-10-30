@@ -9,11 +9,10 @@ import { ChevronRightIcon, CloseIcon, MenuIcon, SearchIcon } from "./icons";
 type Props = {
   sections: { label: string; href: string }[];
   live?: { title: string; href: string } | null;
-  signedIn: boolean;
 };
 
 /** Full-screen section menu for phones. */
-export function MobileMenu({ sections, live, signedIn }: Props) {
+export function MobileMenu({ sections, live }: Props) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -103,8 +102,8 @@ export function MobileMenu({ sections, live, signedIn }: Props) {
             ))}
           </nav>
           <div className="flex flex-none flex-col gap-2.5 border-t border-line bg-white p-4">
-            <Link href={signedIn ? "/newsroom" : "/login"} className="flex h-[46px] items-center justify-center bg-teal text-[15px] font-bold text-white hover:bg-teal-hover">
-              {signedIn ? "Go to the newsroom" : "Sign in"}
+            <Link href="/login" className="flex h-[46px] items-center justify-center bg-teal text-[15px] font-bold text-white hover:bg-teal-hover">
+              Sign in
             </Link>
             <Link href="/newsletters" className="flex h-[46px] items-center justify-center border border-[#9ca3af] text-[15px] font-bold text-ink">
               Get The Morning Focus newsletter
