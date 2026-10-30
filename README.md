@@ -69,7 +69,41 @@ The seed creates these accounts, all with the password `newsroom-demo-2026` (set
 | `npm run db:generate` | Create a migration after editing `src/db/schema.ts` |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Load sample staff, sections and stories into an empty database |
+| `npm run import:wordpress -- <file or URL>` | Import posts from a WordPress site (see below) |
 | `npm run typecheck` / `npm run lint` | Checks |
+
+## Moving posts over from WordPress
+
+`npm run import:wordpress` copies an old WordPress site's posts into the newsroom. It brings over headlines, text, the excerpt as the summary, categories (as sections), tags, authors, featured and inline images, publish dates and slugs. Old WordPress addresses such as `/2024/03/14/my-story/`, `/?p=123` and `/category/politics/` keep working: they redirect to the new story or section page.
+
+```bash
+# From an export file: WordPress dashboard → Tools → Export → All content → Download Export File
+npm run import:wordpress -- ~/Downloads/oldsite.WordPress.2026-10-30.xml --dry-run   # preview first
+npm run import:wordpress -- ~/Downloads/oldsite.WordPress.2026-10-30.xml
+
+# Or straight from the live site (published posts only)
+npm run import:wordpress -- https://old-site.com
+```
+
+| Option | What it does |
+| --- | --- |
+| `--dry-run` | Show what would be imported, and how the first story will look, without changing anything |
+| `--update` | Refresh stories that were already imported (they're skipped otherwise) |
+| `--no-images` | Leave images on the old site instead of copying them into `UPLOAD_DIR` |
+| `--author=<email>` | Credit every story to one existing staff account |
+| `--section-map=news:us,sport:sports` | Put a WordPress category into an existing section (by slug) |
+| `--default-section=<slug>` | Section for posts that are only "Uncategorized" (otherwise they go under `/news/…`) |
+| `--include-pages` | Also import WordPress pages such as About |
+| `--limit=<n>` | Only import the first n posts |
+
+Good to know:
+
+- Running it twice is safe. Posts are matched by their WordPress ID.
+- Published and scheduled posts arrive published with their original dates; drafts arrive as drafts and "pending" posts as In review. Private and password-protected posts are left out.
+- Categories that don't match an existing section become new sections, hidden from the menu until you switch them on.
+- Writers are matched to staff by email or name. Anyone new gets a switched-off journalist account: an admin turns it on and sets a password before they can sign in.
+- Galleries, contact forms and page-builder shortcodes can't be carried over and are dropped. Embedded videos become their link.
+- Imported lead images have no photo credit, so the editor asks for one the next time someone edits that story.
 
 ## Deploying
 

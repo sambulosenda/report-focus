@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
 import { NewsletterCard, NewsletterForm } from "@/components/NewsletterForm";
 import { Kicker, NumberedList, RiverStory, SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
+import { redirectLegacyOrNotFound } from "@/lib/legacy-redirect";
 import { renderMarkdown } from "@/lib/markdown";
 import { categoryBySlug, mostRead, storiesInCategory, trendingTags } from "@/lib/queries";
 import { INFO_PAGES, SITE_NAME } from "@/lib/site";
@@ -36,7 +36,7 @@ export default async function SectionPage({ params, searchParams }: Props) {
   const cat = await categoryBySlug(slug);
   if (!cat) {
     const info = INFO_PAGES[slug];
-    if (!info) notFound();
+    if (!info) return redirectLegacyOrNotFound(`/${slug}`);
     return <InfoPage slug={slug} {...info} />;
   }
 
