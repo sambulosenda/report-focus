@@ -8,7 +8,10 @@ import { storyHref } from "@/components/Story";
 import { adsenseClient } from "@/lib/ads";
 import { breakingStory } from "@/lib/queries";
 
-export const dynamic = "force-dynamic";
+// Reader pages are cached and rebuilt at most once a minute (live pages sooner), so a traffic spike reaches the
+// database once a minute instead of once per reader. Newsroom actions refresh the cache straight away on publish.
+// Pages that read the address bar (?page=, search) are still built for each visit.
+export const revalidate = 60;
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
   const adClient = adsenseClient();

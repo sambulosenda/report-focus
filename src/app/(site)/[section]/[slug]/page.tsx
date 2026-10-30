@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { after } from "next/server";
 import { notFound, permanentRedirect } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
 import { Avatar } from "@/components/Avatar";
@@ -11,16 +10,20 @@ import { ShareButtons } from "@/components/ShareButtons";
 import { SupportCard } from "@/components/SupportCard";
 import { CardStory, NumberedList, SectionTitle } from "@/components/Story";
 import { VideoWatch } from "@/components/VideoWatch";
+import { ViewBeacon } from "@/components/ViewBeacon";
 import { KIND_LABEL } from "@/db/schema";
 import { inlineAdHtml } from "@/lib/ads";
 import { renderMarkdownWithBreaks } from "@/lib/markdown";
-import { incrementViews, liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
+import { liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
 import { absoluteUrl, ldJson, pageMeta, publisherLd, SHARE_IMAGE } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
 import { excerpt, formatDateTime, formatTime, readingTime, siteUrl, timeAgo } from "@/lib/utils";
 import { videoEmbedUrl } from "@/lib/video";
 
 type Props = { params: Promise<{ section: string; slug: string }> };
+
+// No stories are built ahead of time: each is built on its first visit, then cached like every reader page.
+export const generateStaticParams = () => [];
 
 /** A story's tags as a list, without the placeholder "sample" tag. */
 function storyTags(tags: string) {
@@ -58,8 +61,6 @@ export default async function ArticlePage({ params }: Props) {
   const canonicalSection = category?.slug ?? "news";
   if (section !== canonicalSection) permanentRedirect(`/${canonicalSection}/${article.slug}`);
 
-  after(() => incrementViews(article.id));
-
   const url = siteUrl(`/${canonicalSection}/${article.slug}`);
 
   if (article.kind === "video") {
@@ -81,6 +82,7 @@ export default async function ArticlePage({ params }: Props) {
     return (
       <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(videoLd) }} />
+      <ViewBeacon articleId={article.id} />
       <VideoWatch
         video={{ ...article, categoryName: category?.name }}
         upNext={videos.slice(0, 5)}
@@ -124,6 +126,7 @@ export default async function ArticlePage({ params }: Props) {
   return (
     <>
       <ReadingProgress targetId="story" />
+      <ViewBeacon articleId={article.id} />
       <article id="story" className="mx-auto max-w-[1280px] px-4 pb-16 pt-[18px] md:px-6 md:pb-[72px] md:pt-9">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(jsonLd) }} />
         <header className="mx-auto max-w-[780px]">

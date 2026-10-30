@@ -44,3 +44,6 @@ next-env.d.ts
 /data/
 /uploads/
 !.env.example
+
+# Database backups (npm run db:backup)
+/backups

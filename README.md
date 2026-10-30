@@ -82,6 +82,8 @@ npm run admin:create -- --name "Your Name" --email you@example.com --replace-dem
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Load sample staff, sections and stories into an empty database |
 | `npm run admin:create` | Create your own admin account (see above) |
+| `npm run db:backup` | Save the whole database to `backups/*.sql` (and to `BACKUP_S3_BUCKET` when set) |
+| `npm run uploads:move` | Copy images from `UPLOAD_DIR` to the S3/R2 bucket and point stories at the copies |
 | `npm run typecheck` / `npm run lint` | Checks |
 
 ## Email
@@ -105,8 +107,28 @@ An edition goes out at most once a day, and an alert at most once per story, so 
 
 The app needs a database and somewhere to keep uploaded images.
 
-- **Simplest:** a single server or container with a persistent disk (Railway, Render, Fly.io, a VPS). Keep `DATABASE_URL=file:./data/report-focus.db` and `UPLOAD_DIR` on the persistent volume, then run `npm run build && npm run db:migrate && npm start`.
-- **Vercel / serverless:** the filesystem isn't persistent, so use [Turso](https://turso.tech) for `DATABASE_URL` / `DATABASE_AUTH_TOKEN`, and replace `saveImage` in `src/lib/storage.ts` with S3, Cloudflare R2 or Vercel Blob.
+- **Database:** [Turso](https://turso.tech) (`DATABASE_URL` / `DATABASE_AUTH_TOKEN`) is recommended: it keeps automatic backups you can restore to any point in time. A SQLite file on a persistent disk also works on a single server.
+- **Images:** set the `S3_*` settings in `.env.example` to store uploads in Cloudflare R2 or S3. Most hosts wipe the server's own disk on each deploy, so `UPLOAD_DIR` is only for local work or a server with a persistent volume. Moving later? Run `npm run uploads:move` once.
+- **Order:** run `npm run db:migrate && npm run build && npm start`. The build reads the database to prepare the homepage, so `DATABASE_URL` must be set at build time too.
+
+### Caching and traffic spikes
+
+Reader pages are cached and rebuilt at most once a minute (live pages every 15 seconds). Publishing, editing or posting a live update refreshes them straight away. Each page is sent with `Cache-Control: s-maxage=…`, so a CDN can serve it too:
+
+- Put [Cloudflare](https://www.cloudflare.com) (free plan) in front of the site, and add a Cache Rule that caches everything except `/newsroom*`, `/login*` and `/api/newsletter*`, respecting the origin's cache headers.
+- Pages that read the address bar (`?page=2`, search, newsletter links) are still built for each visit.
+- Story views are counted by a small request from the reader's browser to `/api/views/<id>` and written to the database in batches every 10 seconds.
+
+### Monitoring and backups
+
+- **Errors:** create a free project on [Sentry](https://sentry.io) and set `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` (the second one before building). Nothing is sent while they are empty.
+- **Uptime:** point an uptime checker (Better Stack, UptimeRobot) at `/api/health`. It answers 200 when the site can reach its database and 503 when it can't.
+- **Backups:** besides Turso's own backups, schedule `npm run db:backup` nightly with `BACKUP_S3_BUCKET` set to a private bucket. Restore with `sqlite3 new.db < backups/<file>.sql`. Try a restore once before launch.
+
+### Security
+
+- Security headers (no framing by other sites, HSTS, no plugins, forms post only to this site) are set in `next.config.ts`.
+- Sign-in allows 5 wrong passwords per account and 20 per IP address in 15 minutes. Counts are kept in the database, so they hold across restarts.
 
 Set `SITE_URL` to your public address so RSS, sitemap and share links are correct.
 
