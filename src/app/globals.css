@@ -37,7 +37,7 @@
   --font-sans: var(--font-franklin), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --font-serif: var(--font-source-serif), Georgia, Cambria, "Times New Roman", serif;
   --font-display: var(--font-playfair), Georgia, serif;
-  --font-headline: var(--font-bodoni), "Didot", "Bodoni 72", Georgia, serif;
+  --font-headline: var(--font-newsreader), Georgia, Cambria, "Times New Roman", serif;
 }
 
 html {
@@ -75,7 +75,7 @@ ol,
   white-space: nowrap;
 }
 
-/* Every story headline uses Libre Bodoni SemiBold in ink. */
+/* Every story headline uses Newsreader SemiBold in ink. */
 .headline {
   font-family: var(--font-headline);
   font-weight: 600;
