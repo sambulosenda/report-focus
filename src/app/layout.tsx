@@ -33,6 +33,8 @@ export const metadata: Metadata = {
   openGraph: { siteName: "Report Focus News", locale: "en_ZA", type: "website", images: [SHARE_IMAGE] },
   twitter: { card: "summary_large_image", site: TWITTER_HANDLE, images: [SHARE_IMAGE] },
   alternates: { types: RSS_ALTERNATE },
+  // Proves to Google Search Console that this site belongs to the newsroom's account.
+  verification: { google: "Ht1qagqS6RXNU4R7Z9y4Q0IGeht5_Nj0VlQY1g73pfE" },
 };
 
 export const viewport: Viewport = { themeColor: "#004666" };
