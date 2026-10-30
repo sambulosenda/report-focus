@@ -1,60 +1,44 @@
 import Link from "next/link";
-import { navCategories, latestStories } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
+import { currentLiveStory, navCategories } from "@/lib/queries";
+import { formatLongDate } from "@/lib/utils";
 import { Logo } from "./Logo";
 import { MobileMenu } from "./MobileMenu";
-import { Ticker } from "./Ticker";
+import { SiteNav } from "./SiteNav";
+import { SearchIcon } from "./icons";
+import { storyHref } from "./Story";
 
 export async function Header() {
-  const [cats, latest, user] = await Promise.all([navCategories(), latestStories(8), getCurrentUser()]);
-  const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  const [cats, user, live] = await Promise.all([navCategories(), getCurrentUser(), currentLiveStory()]);
+  const sections = cats.map((c) => ({ label: c.name, href: `/${c.slug}` }));
+  const nav = [{ label: "Video", href: "/video" }, ...sections];
 
   return (
     <header className="border-b border-line bg-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <MobileMenu categories={cats.map((c) => ({ name: c.name, slug: c.slug }))} />
-          <Link href="/" aria-label="Report Focus home">
-            <Logo />
-          </Link>
+      <div className="mx-auto flex h-14 max-w-[1280px] items-center justify-between px-1.5 md:h-auto md:flex-wrap md:gap-x-5 md:gap-y-2.5 md:px-6 md:pb-2.5 md:pt-4">
+        <div className="md:flex-[1_1_180px]">
+          <MobileMenu sections={nav} live={live ? { title: live.title, href: storyHref(live) } : null} signedIn={!!user} />
+          <div className="hidden text-[13px] leading-snug text-muted md:block">
+            <p className="font-bold text-ink">{formatLongDate(new Date())}</p>
+            <p>U.S. edition</p>
+          </div>
         </div>
-        <p className="hidden text-sm text-muted md:block">{today}</p>
-        <div className="flex items-center gap-2">
-          <form action="/search" className="hidden sm:block" role="search">
-            <label className="sr-only" htmlFor="site-search">Search</label>
-            <input
-              id="site-search"
-              name="q"
-              placeholder="Search news"
-              className="w-44 rounded-full border border-line bg-mist px-4 py-1.5 text-sm outline-none focus:border-navy focus:bg-white lg:w-56"
-            />
-          </form>
+        <Link href="/" aria-label="Report Focus News home" className="hover:no-underline">
+          <Logo className="text-2xl md:text-[clamp(34px,5vw,58px)]" />
+        </Link>
+        <div className="flex items-center justify-end gap-2.5 md:flex-[1_1_180px]">
+          <Link href="/search" aria-label="Search" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-mist md:bg-mist md:hover:bg-line">
+            <SearchIcon />
+          </Link>
           <Link
             href={user ? "/newsroom" : "/login"}
-            className="rounded-full border border-navy px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-navy hover:bg-navy hover:text-white"
+            className="hidden h-11 items-center rounded-full bg-teal px-[18px] text-sm font-bold text-white hover:bg-teal-hover md:inline-flex"
           >
             {user ? "Newsroom" : "Sign in"}
           </Link>
         </div>
       </div>
-      <nav aria-label="Sections" className="bg-navy">
-        <ul className="mx-auto flex max-w-7xl items-center gap-1 overflow-x-auto px-2 text-sm font-semibold text-white [scrollbar-width:none]">
-          <li>
-            <Link href="/" className="block whitespace-nowrap px-3 py-3 hover:bg-navy-2">Home</Link>
-          </li>
-          <li>
-            <Link href="/latest" className="flex items-center gap-1.5 whitespace-nowrap px-3 py-3 hover:bg-navy-2">
-              <span className="live-dot inline-block h-2 w-2 rounded-full bg-brand" /> Latest
-            </Link>
-          </li>
-          {cats.map((c) => (
-            <li key={c.id}>
-              <Link href={`/${c.slug}`} className="block whitespace-nowrap px-3 py-3 hover:bg-navy-2">{c.name}</Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-      {latest.length > 0 && <Ticker items={latest.map((s) => ({ title: s.title, href: `/${s.category?.slug ?? "news"}/${s.slug}` }))} />}
+      <SiteNav items={nav} />
     </header>
   );
 }

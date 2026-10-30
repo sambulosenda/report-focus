@@ -23,10 +23,10 @@ export async function login(_prev: FormState, formData: FormData): Promise<FormS
   if (!ok) {
     const next = { count: (rec && rec.until > Date.now() ? rec.count : 0) + 1, until: Date.now() + 10 * 60e3 };
     attempts.set(email, next);
-    return { error: "That email and password don’t match an active newsroom account." };
+    return { error: "That email and password don’t match. Check them and try again." };
   }
   attempts.delete(email);
-  await createSession(user.id);
+  await createSession(user.id, formData.get("remember") === "on");
   const next = String(formData.get("next") ?? "");
   redirect(next.startsWith("/newsroom") ? next : "/newsroom");
 }

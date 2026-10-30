@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
-import { articles, media } from "@/db/schema";
+import { KINDS, articles, media } from "@/db/schema";
 import { requireUser } from "@/lib/auth";
 import { canDeleteArticle, canEditArticle, canPublish } from "@/lib/permissions";
 import { saveImage } from "@/lib/storage";
@@ -23,6 +23,11 @@ const ArticleInput = z.object({
   body: z.string().max(200_000).default(""),
   heroImage: z.string().trim().max(500).optional(),
   heroCaption: z.string().trim().max(300).optional(),
+  heroCredit: z.string().trim().max(200).optional(),
+  heroAlt: z.string().trim().max(300).optional(),
+  kind: z.enum(KINDS).default("news"),
+  videoUrl: z.string().trim().max(500).optional(),
+  videoDuration: z.string().trim().regex(/^(\d{1,2}:)?\d{1,2}:\d{2}$/, "Write the video length like 1:38.").optional(),
   tags: z.string().trim().max(300).default(""),
   categoryId: z.coerce.number().int().positive().optional(),
   isBreaking: z.boolean(),
@@ -57,6 +62,11 @@ export async function saveArticle(_prev: ArticleFormState, formData: FormData): 
     body: formData.get("body") ?? "",
     heroImage: blankToUndefined(formData.get("heroImage")),
     heroCaption: blankToUndefined(formData.get("heroCaption")),
+    heroCredit: blankToUndefined(formData.get("heroCredit")),
+    heroAlt: blankToUndefined(formData.get("heroAlt")),
+    kind: formData.get("kind") || "news",
+    videoUrl: blankToUndefined(formData.get("videoUrl")),
+    videoDuration: blankToUndefined(formData.get("videoDuration")),
     tags: formData.get("tags") ?? "",
     categoryId: blankToUndefined(formData.get("categoryId")),
     isBreaking: formData.get("isBreaking") === "on",
@@ -80,6 +90,9 @@ export async function saveArticle(_prev: ArticleFormState, formData: FormData): 
     if (!input.summary) return { error: "Add a summary before sending this story on." };
     if (!input.body.trim()) return { error: "The story body is empty." };
     if (!input.categoryId) return { error: "Choose a section for this story." };
+    if (input.heroImage && !input.heroCredit) return { error: "Add a photo credit for the lead image." };
+    if (input.heroImage && !input.heroAlt) return { error: "Add alt text describing the lead image." };
+    if (input.videoUrl && !/^(https?:\/\/|\/)/i.test(input.videoUrl)) return { error: "The video link must start with https:// or /." };
   }
 
   let status = existing?.status ?? "draft";
@@ -112,6 +125,11 @@ export async function saveArticle(_prev: ArticleFormState, formData: FormData): 
     body: input.body,
     heroImage: input.heroImage ?? null,
     heroCaption: input.heroCaption ?? null,
+    heroCredit: input.heroCredit ?? null,
+    heroAlt: input.heroAlt ?? null,
+    kind: input.kind,
+    videoUrl: input.videoUrl ?? null,
+    videoDuration: input.videoDuration ?? null,
     tags: input.tags
       .split(",")
       .map((t) => t.trim())
@@ -179,4 +197,15 @@ export async function uploadImage(formData: FormData): Promise<UploadResult> {
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Upload failed." };
   }
+}
+
+/** Editors switch the red breaking banner on or off for a published story from the dashboard. */
+export async function setBreaking(formData: FormData) {
+  const user = await requireUser();
+  if (!canPublish(user)) return;
+  const id = Number(formData.get("id"));
+  const on = formData.get("on") === "1";
+  if (!Number.isInteger(id)) return;
+  await db.update(articles).set({ isBreaking: on }).where(eq(articles.id, id));
+  revalidatePath("/", "layout");
 }

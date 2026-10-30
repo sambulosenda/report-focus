@@ -15,6 +15,6 @@ export async function GET() {
       }<pubDate>${s.publishedAt?.toUTCString()}</pubDate></item>`;
     })
     .join("");
-  const xml = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Report Focus</title><link>${siteUrl()}</link><description>Latest news from Report Focus</description>${items}</channel></rss>`;
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Report Focus News</title><link>${siteUrl()}</link><description>Latest news from Report Focus News</description>${items}</channel></rss>`;
   return new Response(xml, { headers: { "Content-Type": "application/rss+xml; charset=utf-8", "Cache-Control": "public, max-age=300" } });
 }

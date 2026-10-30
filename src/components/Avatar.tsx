@@ -1,21 +1,17 @@
-export function Avatar({ name, url, size = 40 }: { name: string; url?: string | null; size?: number }) {
-  const initials = name
-    .split(/\s+/)
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+import { initials } from "@/lib/utils";
+
+export function Avatar({ name, url, size = 40, className }: { name: string; url?: string | null; size?: number; className?: string }) {
   if (url) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={url} alt="" width={size} height={size} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />;
+    return <img src={url} alt="" width={size} height={size} className={`shrink-0 rounded-full object-cover ${className ?? ""}`} style={{ width: size, height: size }} />;
   }
   return (
     <span
       aria-hidden="true"
-      className="grid shrink-0 place-items-center rounded-full bg-navy font-bold text-white"
-      style={{ width: size, height: size, fontSize: size * 0.38 }}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-teal font-extrabold text-white ${className ?? ""}`}
+      style={{ width: size, height: size, fontSize: Math.round(size * 0.34) }}
     >
-      {initials}
+      {initials(name)}
     </span>
   );
 }

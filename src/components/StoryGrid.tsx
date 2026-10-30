@@ -1,38 +1,50 @@
-import { CardStory, RowStory } from "./Story";
-import type { StoryCard } from "@/lib/queries";
 import Link from "next/link";
 
-export function StoryGrid({ stories }: { stories: StoryCard[] }) {
-  if (stories.length === 0) return <p className="py-10 text-muted">No stories here yet.</p>;
-  const [first, ...rest] = stories;
+/** "Load more stories" for paged lists. Links to the next page, so it works without JavaScript. */
+export function LoadMore({ base, page, hasNext }: { base: string; page: number; hasNext: boolean }) {
+  if (!hasNext && page <= 1) return null;
+  const sep = base.includes("?") ? "&" : "?";
   return (
-    <div>
-      <div className="grid gap-8 md:grid-cols-2">
-        <CardStory story={first} />
-        <div className="flex flex-col gap-5">
-          {rest.slice(0, 4).map((s) => (
-            <RowStory key={s.id} story={s} />
-          ))}
-        </div>
-      </div>
-      {rest.length > 4 && (
-        <div className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {rest.slice(4).map((s) => (
-            <CardStory key={s.id} story={s} />
-          ))}
-        </div>
+    <nav aria-label="More stories" className="mt-6 flex flex-wrap items-center justify-center gap-3">
+      {page > 1 && (
+        <Link href={page === 2 ? base : `${base}${sep}page=${page - 1}`} className="inline-flex h-[46px] items-center rounded-full border border-line-2 px-6 text-[15px] font-bold text-ink hover:border-ink">
+          ← Newer stories
+        </Link>
       )}
-    </div>
+      {hasNext && (
+        <Link href={`${base}${sep}page=${page + 1}`} className="inline-flex h-[46px] items-center rounded-full border border-ink px-7 text-[15px] font-bold text-ink hover:bg-ink hover:text-white">
+          Load more stories
+        </Link>
+      )}
+    </nav>
   );
 }
 
-export function Pager({ base, page, hasNext }: { base: string; page: number; hasNext: boolean }) {
-  if (page <= 1 && !hasNext) return null;
+/** Numbered pages for search results. */
+export function Pagination({ base, page, pages }: { base: string; page: number; pages: number }) {
+  if (pages <= 1) return null;
   const sep = base.includes("?") ? "&" : "?";
+  const href = (p: number) => (p === 1 ? base : `${base}${sep}page=${p}`);
+  const start = Math.max(1, Math.min(page - 1, pages - 2));
+  const nums = Array.from({ length: Math.min(3, pages) }, (_, i) => start + i);
+  const circle = "inline-flex h-11 w-11 items-center justify-center rounded-full font-bold";
   return (
-    <nav className="mt-12 flex justify-between text-sm font-bold" aria-label="Pagination">
-      {page > 1 ? <Link href={`${base}${sep}page=${page - 1}`} className="text-brand hover:underline">← Newer stories</Link> : <span />}
-      {hasNext && <Link href={`${base}${sep}page=${page + 1}`} className="text-brand hover:underline">Older stories →</Link>}
+    <nav aria-label="Pages" className="mt-7 flex justify-center gap-1.5">
+      {page > 1 && (
+        <Link href={href(page - 1)} className="inline-flex h-11 items-center rounded-full border border-line-2 px-[18px] font-bold hover:border-ink">
+          Previous
+        </Link>
+      )}
+      {nums.map((n) => (
+        <Link key={n} href={href(n)} aria-current={n === page ? "page" : undefined} className={n === page ? `${circle} bg-ink text-white` : `${circle} border border-line-2 hover:border-ink`}>
+          {n}
+        </Link>
+      ))}
+      {page < pages && (
+        <Link href={href(page + 1)} className="inline-flex h-11 items-center rounded-full border border-line-2 px-[18px] font-bold hover:border-ink">
+          Next
+        </Link>
+      )}
     </nav>
   );
 }

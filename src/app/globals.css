@@ -1,17 +1,42 @@
 @import "tailwindcss";
 
+/*
+ * Report Focus News design tokens.
+ * Teal is for chrome (buttons, bands, footer, sidebar). Headlines and body copy are always ink.
+ * Red is for kickers, Live and Breaking.
+ */
 @theme {
-  --color-ink: #0b1220;
-  --color-navy: #0a1a33;
-  --color-navy-2: #12284d;
-  --color-brand: #d0142c;
-  --color-brand-dark: #a50e22;
+  --color-ink: #111827;
+  --color-ink-2: #374151;
+  --color-muted: #4b5563;
+  --color-line: #e5e7eb;
+  --color-line-2: #d1d5db;
+  --color-mist: #f4f5f7;
   --color-paper: #ffffff;
-  --color-mist: #f3f5f8;
-  --color-line: #e3e7ee;
-  --color-muted: #5b6475;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-serif: Georgia, Cambria, "Times New Roman", Times, serif;
+  --color-cream: #f6f1e9;
+  --color-rust: #8a3a12;
+  --color-moss: #2f5d45;
+  --color-ok: #2f7a46;
+  --color-highlight: #fdecc8;
+
+  --color-teal: #004666;
+  --color-teal-hover: #0b5a7e;
+  --color-teal-deep: #00303f;
+  --color-teal-line: #13566f;
+  --color-on-teal: #d3e3e9;
+  --color-on-teal-muted: #a7c3ce;
+  --color-on-teal-pink: #ff8a98;
+
+  --color-brand: #c8102e;
+  --color-brand-dark: #a00d25;
+
+  /* Older names kept so newsroom screens pick up the new palette. */
+  --color-navy: #004666;
+  --color-navy-2: #0b5a7e;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-serif: var(--font-source-serif), Georgia, Cambria, "Times New Roman", serif;
+  --font-display: var(--font-playfair), Georgia, serif;
 }
 
 html {
@@ -22,67 +47,153 @@ body {
   background: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
+  font-kerning: normal;
+  text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+table,
+time,
+ol,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:where(a, button, input, select, textarea, summary):focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+@layer components {
+/* Masthead: Playfair Display SemiBold, text only. */
+.masthead {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+/* Every story headline uses Source Serif 4 Bold in ink. */
 .headline {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.kicker {
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: -0.015em;
-  line-height: 1.12;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-brand);
 }
 
 .story-link:hover .story-title,
-.story-link:focus-visible .story-title {
+.story-link:focus-visible .story-title,
+a.story-title:hover {
   text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+}
+
+/* Article body typography: 20px serif on desktop, 18px on mobile, 680px measure. */
+.article-body {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--color-ink);
+  max-width: 680px;
+}
+@media (min-width: 768px) {
+  .article-body {
+    font-size: 20px;
+  }
+}
+.article-body > * + * {
+  margin-top: 1.1em;
+}
+.article-body h2 {
+  font-family: var(--font-serif);
+  font-size: 1.4em;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-top: 1.6em;
+}
+.article-body h3 {
+  font-family: var(--font-serif);
+  font-size: 1.15em;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-top: 1.4em;
+}
+.article-body a {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--color-brand);
   text-decoration-thickness: 2px;
   text-underline-offset: 3px;
 }
-
-/* Article body typography */
-.article-body {
-  font-family: var(--font-serif);
-  font-size: 1.15rem;
-  line-height: 1.75;
-  color: #1a2233;
-}
-.article-body > * + * {
-  margin-top: 1.25em;
-}
-.article-body h2 {
-  font-family: var(--font-sans);
-  font-size: 1.5rem;
-  font-weight: 800;
-  line-height: 1.25;
-  margin-top: 1.8em;
-}
-.article-body h3 {
-  font-family: var(--font-sans);
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin-top: 1.5em;
-}
-.article-body a {
-  color: var(--color-brand-dark);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
 .article-body blockquote {
-  border-left: 4px solid var(--color-brand);
-  padding: 0.25em 0 0.25em 1.1em;
-  font-size: 1.3rem;
+  position: relative;
+  margin: 1.6em 0;
+  padding: 0.2em 0 0 2.2rem;
+  font-size: 1.2em;
   font-style: italic;
-  color: var(--color-navy);
+  line-height: 1.4;
+}
+.article-body blockquote::before {
+  content: "\201C";
+  position: absolute;
+  left: 0;
+  top: -0.15em;
+  font-family: var(--font-serif);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--color-brand);
+}
+.article-body blockquote footer {
+  margin-top: 10px;
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-size: 14px;
+  color: var(--color-muted);
+}
+.article-body .what-to-know {
+  margin: 1.6em 0;
+  padding: 20px 22px;
+  border-radius: 8px;
+  background: var(--color-mist);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+}
+.article-body .what-to-know > * + * {
+  margin-top: 0.6em;
+}
+.article-body .what-to-know-label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-brand);
 }
 .article-body ul {
   list-style: disc;
-  padding-left: 1.4em;
+  padding-left: 1.3em;
 }
 .article-body ol {
   list-style: decimal;
-  padding-left: 1.4em;
+  padding-left: 1.3em;
 }
 .article-body li + li {
   margin-top: 0.4em;
+}
+.article-body li::marker {
+  color: var(--color-brand);
 }
 .article-body figure img {
   width: 100%;
@@ -90,32 +201,39 @@ body {
 }
 .article-body figcaption {
   font-family: var(--font-sans);
-  font-size: 0.85rem;
+  font-size: 13px;
+  line-height: 1.45;
   color: var(--color-muted);
-  margin-top: 0.5em;
+  margin-top: 0.6em;
 }
 .article-body hr {
   border-color: var(--color-line);
 }
 
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 @keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.35; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
 }
 .live-dot {
   animation: pulse-dot 1.4s ease-in-out infinite;
 }
-
-@keyframes ticker {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-.ticker-track {
-  animation: ticker 60s linear infinite;
-}
-.ticker-track:hover {
-  animation-play-state: paused;
-}
 @media (prefers-reduced-motion: reduce) {
-  .ticker-track, .live-dot { animation: none; }
+  .live-dot {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }

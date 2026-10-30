@@ -22,9 +22,21 @@ export function timeAgo(date: Date | null | undefined) {
   return formatDate(date);
 }
 
+/** Dates and times on the site are shown in the newsroom's time zone, not the server's. */
+export const SITE_TIMEZONE = process.env.SITE_TIMEZONE ?? "America/New_York";
+
 export function formatDate(date: Date | null | undefined) {
   if (!date) return "";
-  return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  return date.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: SITE_TIMEZONE });
+}
+
+export function formatLongDate(date: Date) {
+  return date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: SITE_TIMEZONE });
+}
+
+export function formatTime(date: Date | null | undefined) {
+  if (!date) return "";
+  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: SITE_TIMEZONE });
 }
 
 export function formatDateTime(date: Date | null | undefined) {
@@ -36,7 +48,17 @@ export function formatDateTime(date: Date | null | undefined) {
     hour: "numeric",
     minute: "2-digit",
     timeZoneName: "short",
+    timeZone: SITE_TIMEZONE,
   });
+}
+
+export function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 }
 
 export function siteUrl(path = "") {

@@ -11,23 +11,22 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   if (await getCurrentUser()) redirect("/newsroom");
   const { next } = await searchParams;
   return (
-    <div className="grid min-h-screen lg:grid-cols-2">
-      <div className="hidden flex-col justify-between bg-navy p-12 text-white lg:flex">
-        <Link href="/"><Logo dark /></Link>
-        <div>
-          <p className="headline text-4xl">The newsroom.</p>
-          <p className="mt-3 max-w-md text-white/70">Write, edit and publish stories for Report Focus. Drafts save as you work and editors review before anything goes live.</p>
-        </div>
-        <p className="text-sm text-white/50">Staff access only.</p>
+    <main className="flex min-h-screen flex-col items-center justify-center bg-mist px-4 py-12">
+      <Link href="/" aria-label="Report Focus News home" className="mb-1.5">
+        <Logo className="text-[32px] leading-[1.1] sm:text-[40px]" />
+      </Link>
+      <p className="mb-7 text-[13px] font-extrabold tracking-[0.12em] text-teal">NEWSROOM</p>
+      <div className="w-full max-w-[400px] rounded-[14px] border border-line bg-white p-6 sm:p-8">
+        <h1 className="text-[22px] font-extrabold">Sign in</h1>
+        <p className="mt-1.5 text-sm text-muted">For Report Focus News staff.</p>
+        <LoginForm next={next} />
       </div>
-      <div className="grid place-items-center px-6 py-12">
-        <div className="w-full max-w-sm">
-          <Link href="/" className="lg:hidden"><Logo /></Link>
-          <h1 className="headline mt-8 text-3xl lg:mt-0">Sign in</h1>
-          <p className="mt-2 text-muted">Use your newsroom account.</p>
-          <LoginForm next={next} />
-        </div>
-      </div>
-    </div>
+      <p className="mt-[22px] text-center text-sm text-muted">
+        Looking for the news?{" "}
+        <Link href="/" className="font-bold text-teal hover:underline">
+          Go to the homepage
+        </Link>
+      </p>
+    </main>
   );
 }
