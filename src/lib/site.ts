@@ -52,11 +52,6 @@ export const INFO_PAGES: Record<string, InfoPage> = {
     description: "How Report Focus News corrects its mistakes.",
     body: "When we make a mistake, we correct it promptly and add a note to the story explaining what changed.\n\nTo report an error, use the contact page and include a link to the story.\n\n_List recent corrections here before launch._",
   },
-  newsletters: {
-    title: "Newsletters",
-    description: "Sign up for The Morning Focus and other newsletters.",
-    body: "**The Morning Focus** brings you the five stories you need before 8 a.m., every weekday. Sign up with the form below.",
-  },
   podcasts: {
     title: "Podcasts",
     description: "Listen to Report Focus News.",

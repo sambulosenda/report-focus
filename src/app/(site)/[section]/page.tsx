@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
-import { NewsletterCard, NewsletterForm } from "@/components/NewsletterForm";
+import { NewsletterCard } from "@/components/NewsletterForm";
 import { Kicker, NumberedList, RiverStory, SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
 import { renderMarkdown } from "@/lib/markdown";
@@ -41,7 +41,7 @@ export default async function SectionPage({ params, searchParams }: Props) {
   if (!cat) {
     const info = INFO_PAGES[slug];
     if (!info) notFound();
-    return <InfoPage slug={slug} {...info} />;
+    return <InfoPage {...info} />;
   }
 
   const page = pageParam((await searchParams).page);
@@ -145,16 +145,11 @@ export default async function SectionPage({ params, searchParams }: Props) {
   );
 }
 
-function InfoPage({ slug, title, body }: { slug: string; title: string; body: string }) {
+function InfoPage({ title, body }: { title: string; body: string }) {
   return (
     <div className="mx-auto max-w-[780px] px-4 pb-16 pt-8 md:px-6 md:pt-12">
       <h1 className="headline border-b-[3px] border-ink pb-[18px] text-[32px] leading-[1.1] md:text-[44px]">{title}</h1>
       <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }} />
-      {slug === "newsletters" && (
-        <div className="mt-8 max-w-[520px]">
-          <NewsletterForm />
-        </div>
-      )}
     </div>
   );
 }
