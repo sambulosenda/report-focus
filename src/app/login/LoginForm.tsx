@@ -34,7 +34,7 @@ export function LoginForm({ next }: { next?: string }) {
             <span className="sr-only"> password</span>
           </button>
         </span>
-        {forgot && <p className="text-[13px] font-normal text-muted">Ask a newsroom admin to set a new password for you from the Staff page.</p>}
+        {forgot && <p className="text-[13px] font-normal text-muted">Ask a newsroom admin for a new sign-in link. They can make one from the Staff page.</p>}
       </div>
       <label className="flex min-h-11 items-center gap-2.5 text-sm">
         <input type="checkbox" name="remember" defaultChecked className="h-5 w-5 accent-teal" />

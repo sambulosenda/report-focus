@@ -3,6 +3,8 @@ import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqli
 
 export const ROLES = ["admin", "editor", "journalist"] as const;
 export type Role = (typeof ROLES)[number];
+/** "journalist" stays the stored value; the newsroom calls them writers. */
+export const ROLE_LABEL: Record<Role, string> = { admin: "Admin", editor: "Editor", journalist: "Writer" };
 
 export const STATUSES = ["draft", "review", "published", "archived"] as const;
 export type Status = (typeof STATUSES)[number];
