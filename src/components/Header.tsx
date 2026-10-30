@@ -27,7 +27,6 @@ export async function Header() {
           <MobileMenu sections={nav} live={live ? { title: live.title, href: storyHref(live) } : null} />
           <div className="hidden text-[13px] leading-snug text-muted md:block">
             <p className="font-bold text-ink">{formatLongDate(new Date())}</p>
-            <p>U.S. edition</p>
           </div>
         </div>
         <Link href="/" aria-label="Report Focus News home" className="hover:no-underline">
