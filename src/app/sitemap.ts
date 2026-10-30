@@ -3,7 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, categories, users } from "@/db/schema";
 import { allCategories, isLive } from "@/lib/queries";
-import { absoluteUrl, isDeskByline } from "@/lib/seo";
+import { absoluteUrl, isDeskByline, isWireByline } from "@/lib/seo";
 import { siteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +42,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const bySection = new Map<string, Date>();
   const byWriter = new Map<string, Date>();
   let latest: Date | undefined;
-  for (const s of stories) {
+  // Agency stories are noindex (see isWireByline), so they are left out.
+  const listed = stories.filter((s) => !isWireByline(s.author.name));
+  for (const s of listed) {
     if (!latest || s.updatedAt > latest) latest = s.updatedAt;
     if (s.section) newest(bySection, s.section, s.updatedAt);
     // Desk and wire bylines have no profile worth listing (their pages are noindex).
@@ -54,7 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: siteUrl(), lastModified: latest },
     { url: siteUrl("/latest"), lastModified: latest },
     ...cats.filter((c) => bySection.has(c.slug)).map((c) => ({ url: siteUrl(`/${c.slug}`), lastModified: bySection.get(c.slug) })),
-    ...stories.map((s) => ({
+    ...listed.map((s) => ({
       url: siteUrl(`/${s.section ?? "news"}/${s.slug}`),
       lastModified: s.updatedAt,
       images: s.heroImage ? [absoluteUrl(s.heroImage)] : undefined,

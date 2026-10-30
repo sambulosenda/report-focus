@@ -33,7 +33,7 @@ export const SOCIAL: { name: SocialName; url: string }[] = [
 export const CONTACT = {
   owner: "Sambulo Senda",
   editorInChief: "Brilliant Pongo",
-  founded: "2020",
+  founded: "2017",
   city: "Harare, Zimbabwe",
   editor: "editor@reportfocusnews.com",
   tips: "tips@reportfocusnews.com",
@@ -125,8 +125,70 @@ If you need to stay anonymous, say so and we will protect your identity. For ext
   },
   standards: {
     title: "Editorial standards",
-    description: "The principles that guide Report Focus News journalism.",
-    body: "## Accuracy\n\nWe verify what we publish. When we cannot confirm something, we say so.\n\n## Independence\n\nOur journalism is not influenced by advertisers, owners or political groups.\n\n## Corrections\n\nWhen we get something wrong, we fix it and say what changed.",
+    description: "The principles that guide Report Focus News journalism: accuracy, fairness, independence and how we use sources.",
+    body: `_Last updated: 30 October 2026_
+
+These are the rules our reporters and editors work to. If you think we have broken them, email ${mail(CONTACT.editor)}.
+
+## Accuracy
+
+We check what we publish before we publish it. Facts, names, numbers, dates and quotes are confirmed with the people involved, official records or more than one reliable source. When we cannot confirm something, we say so, or we wait.
+
+We say how we know what we report: who told us, which document it comes from, or what we saw ourselves.
+
+## Sources
+
+We name our sources whenever we can. We give a source anonymity only when they could lose their job, their safety or their freedom by being named, and only when the information matters to the public and cannot be had another way. An editor must know who an anonymous source is and agree to using them. We tell readers why the source was not named.
+
+We protect the identity of anyone we have promised anonymity to.
+
+We do not pay sources for information.
+
+## Fairness and the right to reply
+
+Before we publish a serious claim about a person or organisation, we contact them and give them a fair chance to respond. We include their response, or say that they did not reply.
+
+We report what people say accurately and in context. We do not change quotes, except to correct small slips of grammar that do not change the meaning.
+
+## Independence
+
+Our reporting is decided by our editors alone. No advertiser, donor, government, political party or owner has a say in what we cover or how.
+
+Reporters and editors do not cover people or organisations they have a personal, family or financial link to. They tell an editor about anything that could look like a conflict of interest.
+
+We do not accept gifts, payments or free travel in return for coverage.
+
+## News, analysis and opinion
+
+We label stories clearly. News stories report what happened. Analysis explains what it means and is based on evidence. Opinion pieces give the writer's own view and are marked as opinion. The views in opinion pieces are the writer's, not those of Report Focus News.
+
+## Bylines and news agencies
+
+Stories carry the name of the reporter who wrote them. "Staff Reporter" is used when several reporters worked on a story, or when naming the reporter would put them at risk.
+
+When we use reporting from news agencies or other outlets, we credit them in the story.
+
+## Pictures and video
+
+We do not alter news pictures or video in ways that mislead. Pictures used to illustrate a story, rather than show the event itself, are labelled as such. We credit the photographer or the source.
+
+## Artificial intelligence
+
+We do not publish stories, pictures or video made by artificial intelligence as if they were our own reporting. Any use of AI tools in a story, such as help translating a document, is checked by a journalist and an editor.
+
+## Privacy, harm and the vulnerable
+
+We respect people's privacy unless there is a clear public interest in reporting it. We take extra care with children, victims of crime, people who are grieving, and survivors of sexual violence, whom we do not name without their consent.
+
+We do not publish graphic images of death or injury unless they are needed to tell the story, and we warn readers when we do.
+
+## Advertising and sponsored content
+
+Advertising is kept apart from our journalism. Anything paid for by an advertiser is clearly labelled as sponsored or advertising.
+
+## Corrections
+
+When we get something wrong, we fix it and say what changed. Read our [corrections policy](/corrections).`,
   },
   corrections: {
     title: "Corrections",
@@ -224,9 +286,65 @@ If we change this policy, we will update the date at the top of this page.`,
   },
   terms: {
     title: "Terms of use",
-    description: "The terms that apply when you use Report Focus News.",
-    body: `Our terms of use are being prepared. For questions about using our reporting, email ${mail(CONTACT.editor)}.`,
-    noindex: true,
+    description: "The terms that apply when you read, share or use Report Focus News.",
+    body: `_Last updated: 30 October 2026_
+
+These terms apply when you use reportfocusnews.com. By using the site, you agree to them. If you do not agree, please do not use the site.
+
+Report Focus News is owned by ${CONTACT.owner}. In these terms, "we" and "us" mean Report Focus News.
+
+## Using the site
+
+You can read Report Focus News for free. You may use the site for your own personal, non-commercial use.
+
+You must not:
+
+- copy, republish, sell or distribute our stories, pictures or video without our written permission, except as allowed below
+- collect our content with automated tools, or use it to train artificial intelligence systems, without our written permission
+- try to break into, overload or interfere with the site or the systems behind it
+- use the site for anything unlawful
+
+## Sharing our stories
+
+You are welcome to share links to our stories, and to quote a short extract with a credit to Report Focus News and a link to the original story.
+
+To republish a whole story, picture or video, email ${mail(CONTACT.editor)} for permission.
+
+## Who owns the content
+
+The stories, pictures, video, design and logo on this site belong to Report Focus News or to the people and organisations who licensed them to us, such as news agencies and photographers. Using the site does not give you any rights to them.
+
+## Our reporting
+
+We work hard to make our reporting accurate, and we correct mistakes as set out in our [corrections policy](/corrections). But news changes quickly, and stories are written at a point in time. Nothing on the site is professional advice, such as legal, medical or financial advice. Do not rely on it as a substitute for that advice.
+
+## What you send us
+
+When you send us a tip, picture, video or other material, you confirm that you have the right to send it. You allow us to use it in our reporting, with a credit to you unless you ask to stay anonymous. You still own what you sent. Read how we handle your information in our [privacy policy](/privacy).
+
+## Newsletters and alerts
+
+If you sign up for a newsletter or alerts, you can unsubscribe at any time using the link in every email.
+
+## Advertising and other websites
+
+The site carries advertising, and some stories link to other websites. We are not responsible for advertisers' products or for the content of other websites. A link to another site does not mean we endorse it.
+
+## Availability
+
+We try to keep the site running at all times, but we cannot promise that it will always be available or free of errors. We may change or remove any part of the site.
+
+## Our responsibility to you
+
+We are not responsible for any loss that comes from using the site or relying on its content, as far as the law allows. Nothing in these terms limits any right you have that the law does not allow us to exclude.
+
+## Changes to these terms
+
+We may update these terms. The date at the top of this page shows when they last changed. If you keep using the site after a change, the new terms apply.
+
+## Contact
+
+For questions about these terms, email ${mail(CONTACT.editor)}.`,
   },
   cookies: {
     title: "Cookie settings",
@@ -271,6 +389,7 @@ export const FOOTER_LINKS = {
   ],
   legal: [
     { label: "Privacy policy", href: "/privacy" },
+    { label: "Terms of use", href: "/terms" },
     { label: "Cookie settings", href: "/cookies" },
     { label: "Accessibility", href: "/accessibility" },
   ],

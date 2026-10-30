@@ -61,12 +61,22 @@ const WIRES: Record<string, { name: string; url: string }> = {
   ap: { name: "The Associated Press", url: "https://apnews.com" },
   "associated press": { name: "The Associated Press", url: "https://apnews.com" },
   afp: { name: "AFP", url: "https://www.afp.com" },
+  // An old WordPress account spelled AFP this way.
+  apf: { name: "AFP", url: "https://www.afp.com" },
 };
 
 /** True when a byline is a desk or a news agency rather than a named person. */
 export function isDeskByline(name: string) {
   const key = name.trim().toLowerCase();
   return DESK_BYLINES.has(key) || key in WIRES;
+}
+
+/**
+ * True for a news agency byline. Agency stories run word for word without a syndication licence, so they are kept
+ * out of search results and sitemaps: the agency's own copy is the original, and ours would only compete with it.
+ */
+export function isWireByline(name: string) {
+  return name.trim().toLowerCase() in WIRES;
 }
 
 /**
