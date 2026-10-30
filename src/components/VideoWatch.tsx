@@ -36,7 +36,7 @@ export function VideoWatch({ video, upNext, more, moreTitle = "More videos", hea
               <span className="text-xs font-extrabold uppercase tracking-[0.06em] text-on-teal-pink">
                 {[video.categoryName, video.videoDuration].filter(Boolean).join(" · ")}
               </span>
-              <Heading className="font-serif text-2xl font-bold leading-[1.15] text-white md:text-[32px]">{video.title}</Heading>
+              <Heading className="font-headline text-2xl font-semibold leading-[1.15] text-white md:text-[32px]">{video.title}</Heading>
               {video.summary && <p className="max-w-[720px] text-base leading-[1.55] text-on-teal">{video.summary}</p>}
               <p className="text-[13px] text-on-teal-muted">
                 <time dateTime={video.publishedAt?.toISOString()}>{formatDate(video.publishedAt)}</time>
@@ -61,7 +61,7 @@ export function VideoWatch({ video, upNext, more, moreTitle = "More videos", hea
                       </span>
                       <span className="flex min-w-0 flex-col gap-1">
                         <span className="text-[11px] font-extrabold uppercase tracking-[0.05em] text-on-teal-pink">{v.category?.name ?? "Video"}</span>
-                        <span className="story-title font-serif text-base font-bold leading-[1.28]">{v.title}</span>
+                        <span className="story-title font-headline text-base font-semibold leading-[1.28]">{v.title}</span>
                       </span>
                     </Link>
                   </li>

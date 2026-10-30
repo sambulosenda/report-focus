@@ -50,7 +50,7 @@ export async function LiveUpdatesPanel({ articleId, publicUrl }: { articleId: nu
               </div>
               <div className="min-w-0 flex-1">
                 {u.isPinned && <p className="text-[11px] font-extrabold tracking-[0.08em] text-teal">PINNED</p>}
-                {u.title && <p className="font-serif text-lg font-bold">{u.title}</p>}
+                {u.title && <p className="font-headline text-lg font-semibold">{u.title}</p>}
                 <p className="whitespace-pre-line text-sm text-ink-2">{u.body}</p>
                 <p className="mt-1 text-xs text-muted">{u.author ?? "Former staff"}</p>
               </div>

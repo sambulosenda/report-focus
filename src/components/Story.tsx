@@ -137,7 +137,7 @@ export function VideoCard({ story, dark = true, className }: { story: StoryCard;
         <Duration story={story} />
       </span>
       <span className={cn("kicker block text-[11px] md:text-xs", dark && "text-on-teal-pink")}>{story.category?.name ?? "Video"}</span>
-      <span className={cn("story-title font-serif text-base font-bold leading-[1.28] md:text-lg", dark ? "text-white" : "text-ink")}>{story.title}</span>
+      <span className={cn("story-title font-headline text-base font-semibold leading-[1.28] md:text-lg", dark ? "text-white" : "text-ink")}>{story.title}</span>
     </Link>
   );
 }
