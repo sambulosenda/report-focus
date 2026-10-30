@@ -76,6 +76,8 @@ export default async function HomePage() {
 
   return (
     <>
+      <link rel="canonical" href={siteUrl("/")} />
+      <meta property="og:url" content={siteUrl("/")} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(siteLd) }} />
 
       {chips.length > 0 && (

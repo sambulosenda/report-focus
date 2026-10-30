@@ -7,19 +7,19 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import { CopyLinkButton } from "@/components/ShareButtons";
 import { Duration, SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { renderMarkdown } from "@/lib/markdown";
-import { metaDescription, pageMeta } from "@/lib/seo";
+import { NOT_FOUND_METADATA, pageMeta, storyDescription } from "@/lib/seo";
 import { liveUpdatesFor, liveUpdateStats, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
-import { excerpt, formatTime, siteUrl, timeAgo } from "@/lib/utils";
+import { formatTime, siteUrl, timeAgo } from "@/lib/utils";
 
 const FIRST_PAGE = 20;
 
 export async function liveMetadata(slug: string): Promise<Metadata> {
   const row = await publicArticle(slug);
-  if (!row || row.article.kind !== "live") return {};
+  if (!row || row.article.kind !== "live") return NOT_FOUND_METADATA;
   const { article } = row;
   return pageMeta({
     title: `Live updates: ${article.title}`,
-    description: metaDescription(article.summary || excerpt(article.body, 300)),
+    description: storyDescription(article.summary, article.body),
     path: `/live/${article.slug}`,
     image: article.heroImage ? { url: article.heroImage, alt: article.heroAlt } : null,
     openGraph: { type: "article", publishedTime: article.publishedAt?.toISOString(), modifiedTime: article.updatedAt.toISOString() },

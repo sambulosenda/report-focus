@@ -3,7 +3,7 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, categories, users } from "@/db/schema";
 import { allCategories, isLive } from "@/lib/queries";
-import { absoluteUrl, isDeskByline, isWireByline } from "@/lib/seo";
+import { absoluteUrl, isDeskByline, isUnconfirmedAuthor, isWireByline } from "@/lib/seo";
 import { INFO_PAGES } from "@/lib/site";
 import { TAG_INDEX_MIN, tagSlug } from "@/lib/tags";
 import { siteUrl } from "@/lib/utils";
@@ -60,14 +60,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const s of listed) {
     if (!latest || s.updatedAt > latest) latest = s.updatedAt;
     if (s.section) newest(bySection, s.section, s.updatedAt);
-    // Desk and wire bylines have no profile worth listing (their pages are noindex).
-    if (!isDeskByline(s.author.name)) newest(byWriter, s.author.slug, s.updatedAt);
+    // Desk bylines, wire copy and unconfirmed username accounts have no profile worth listing.
+    if (!isDeskByline(s.author.name) && !isUnconfirmedAuthor(s.author.slug)) newest(byWriter, s.author.slug, s.updatedAt);
   }
   const sectionSlugs = new Set(cats.map((c) => c.slug));
 
   return [
-    // The same address as the homepage's canonical link.
-    { url: siteUrl(), lastModified: latest },
+    // The same address as the homepage's canonical link, including the trailing slash.
+    { url: siteUrl("/"), lastModified: latest },
     { url: siteUrl("/latest"), lastModified: latest },
     ...cats.map((c) => ({ url: siteUrl(`/${c.slug}`), lastModified: bySection.get(c.slug) })),
     ...listed.map((s) => ({

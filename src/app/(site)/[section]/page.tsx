@@ -6,10 +6,10 @@ import { Kicker, NumberedList, RiverStory, SectionTitle, StoryImage, storyHref }
 import { LoadMore } from "@/components/StoryGrid";
 import { redirectLegacyOrNotFound } from "@/lib/legacy-redirect";
 import { renderMarkdown } from "@/lib/markdown";
-import { collectionLd, ldJson, pagedPath, pageMeta } from "@/lib/seo";
+import { collectionLd, ldJson, metaDescription, NOT_FOUND_METADATA, pagedPath, pageMeta, sectionMetaDescription } from "@/lib/seo";
 import { tagHref } from "@/lib/tags";
 import { categoryBySlug, mostRead, storiesInCategory, trendingTags } from "@/lib/queries";
-import { INFO_PAGES, SITE_NAME } from "@/lib/site";
+import { INFO_PAGES } from "@/lib/site";
 import { dayOffset, formatDate, formatTime, pageParam, siteUrl, timeAgo } from "@/lib/utils";
 
 const RIVER = 10;
@@ -21,10 +21,10 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const cat = await categoryBySlug(slug);
   if (cat) {
     const path = pagedPath(`/${cat.slug}`, pageParam((await searchParams).page));
-    return pageMeta({ title: `${cat.name} News`, description: cat.description ?? `The latest ${cat.name} news from ${SITE_NAME}.`, path });
+    return pageMeta({ title: `${cat.name} News`, description: sectionMetaDescription(cat), path });
   }
   const info = INFO_PAGES[slug];
-  return info ? pageMeta({ title: info.title, description: info.description, path: `/${slug}`, noindex: info.noindex }) : {};
+  return info ? pageMeta({ title: info.title, description: metaDescription(info.description), path: `/${slug}`, noindex: info.noindex }) : NOT_FOUND_METADATA;
 }
 
 /** River time column: clock time today, "Yesterday", then the date, by the site's calendar. */
@@ -59,10 +59,11 @@ export default async function SectionPage({ params, searchParams }: Props) {
   const [lead, ...second] = top;
   const river = stories.slice(topCount, topCount + RIVER);
   const hasNext = stories.length > topCount + RIVER;
+  const description = sectionMetaDescription(cat);
   const ld = collectionLd({
     name: `${cat.name} News`,
     url: siteUrl(pagedPath(`/${cat.slug}`, page)),
-    description: cat.description ?? `The latest ${cat.name} news from ${SITE_NAME}.`,
+    description,
     stories,
   });
 

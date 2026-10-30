@@ -9,8 +9,7 @@ import { MailIcon } from "@/components/icons";
 import { RiverStory, SectionTitle } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
 import { storiesByAuthor } from "@/lib/queries";
-import { absoluteUrl, authorLd, isDeskByline, ldJson, orgId, pagedPath, pageMeta } from "@/lib/seo";
-import { SITE_NAME } from "@/lib/site";
+import { absoluteUrl, authorLd, authorMetaDescription, isDeskByline, isUnconfirmedAuthor, ldJson, NOT_FOUND_METADATA, orgId, pagedPath, pageMeta } from "@/lib/seo";
 import { formatDate, pageParam, siteUrl } from "@/lib/utils";
 
 const PER_PAGE = 12;
@@ -22,13 +21,13 @@ const getAuthor = async (slug: string) =>
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const a = await getAuthor((await params).slug);
-  if (!a) return {};
+  if (!a) return NOT_FOUND_METADATA;
   return pageMeta({
     title: a.name,
-    description: a.bio ?? `Stories by ${a.name} for ${SITE_NAME}.`,
+    description: authorMetaDescription(a.name, a.bio),
     path: pagedPath(`/author/${a.slug}`, pageParam((await searchParams).page)),
-    // "Staff Reporter" or "Reuters" is not a person with a profile, so those pages stay out of search results.
-    noindex: isDeskByline(a.name),
+    // A desk byline is not a person. Username sign-ups stay out of search until the owner confirms them.
+    noindex: isDeskByline(a.name) || isUnconfirmedAuthor(a.slug),
     openGraph: { type: "profile" },
   });
 }
@@ -42,7 +41,7 @@ export default async function AuthorPage({ params, searchParams }: Props) {
   const person = authorLd(author);
   // A profile page for each named writer, so search engines can tie their stories to them.
   const ld =
-    person["@type"] === "Person"
+    person["@type"] === "Person" && !isUnconfirmedAuthor(author.slug)
       ? {
           "@context": "https://schema.org",
           "@type": "ProfilePage",
