@@ -38,7 +38,7 @@ const siteLd = [
 ];
 
 export default async function HomePage() {
-  const [{ lead, stack }, popular, cats, videos, opinion, live, chips] = await Promise.all([
+  const [front, popular, cats, videos, opinion, live, chips] = await Promise.all([
     homeTop(5),
     mostRead(8),
     navCategories(),
@@ -48,6 +48,8 @@ export default async function HomePage() {
     trendingTags(6),
   ]);
 
+  const { lead } = front;
+  const stack = front.stack.filter((s) => s !== undefined);
   if (!lead) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-24 text-center">

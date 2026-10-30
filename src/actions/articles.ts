@@ -161,7 +161,8 @@ export async function saveArticle(_prev: ArticleFormState, formData: FormData): 
   }
 
   // A story that leaves the site gives up its home page spot.
-  if (existing && status !== "published") await db.delete(homePins).where(eq(homePins.articleId, existing.id));
+  // Rescheduling a live story into the future takes it off the site too.
+  if (existing && (status !== "published" || (publishedAt && publishedAt > new Date()))) await db.delete(homePins).where(eq(homePins.articleId, existing.id));
 
   revalidatePath("/", "layout");
   if (!existing) redirect(`/newsroom/articles/${id}?created=1`);

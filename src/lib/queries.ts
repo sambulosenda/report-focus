@@ -169,15 +169,17 @@ export async function homePinned() {
  * newest top story (or the newest story), and the other slots fill with the newest stories that aren't already shown.
  */
 export async function homeTop(stackSize = 5) {
-  const [pinned, featured, latest] = await Promise.all([homePinned(), featuredStories(1), latestStories(30)]);
-  const lead = pinned.get(1)?.story ?? featured[0] ?? latest[0];
-  const used = new Set([...pinned.values()].map((p) => p.story.id));
-  if (lead) used.add(lead.id);
-  const auto = latest.filter((s) => s.kind !== "video" && !used.has(s.id));
-  const stack: StoryCard[] = [];
+  const [pinned, featured, latest] = await Promise.all([homePinned(), featuredStories(5), latestStories(30)]);
+  const pinnedIds = new Set([...pinned.values()].map((p) => p.story.id));
+  const unpinned = (s: StoryCard) => !pinnedIds.has(s.id);
+  // A story pinned lower down never also leads; only on a site with almost no stories does the lead fall back to one.
+  const lead = pinned.get(1)?.story ?? featured.find(unpinned) ?? latest.find(unpinned) ?? latest[0];
+  const auto = latest.filter((s) => s.kind !== "video" && unpinned(s) && s.id !== lead?.id);
+  // One entry per slot, so a pinned story keeps its place even when a slot above it is empty.
+  const stack: (StoryCard | undefined)[] = [];
   for (let slot = 2; slot < stackSize + 2; slot++) {
-    const next = pinned.get(slot)?.story ?? auto.shift();
-    if (next) stack.push(next);
+    const pin = pinned.get(slot)?.story;
+    stack.push(pin && pin.id !== lead?.id ? pin : auto.shift());
   }
   return { lead, stack, pinned };
 }
