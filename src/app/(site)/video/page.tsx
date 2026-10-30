@@ -6,7 +6,11 @@ import { db } from "@/db";
 import { articles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-export const metadata: Metadata = pageMeta({ title: "Video", description: "Watch the latest video from Report Focus News.", path: "/video" });
+export async function generateMetadata(): Promise<Metadata> {
+  // An empty video page is thin content, so it stays out of search results until there is a video.
+  const hasVideo = (await storiesOfKind(["video"], 1)).length > 0;
+  return pageMeta({ title: "Video", description: "Watch the latest video from Report Focus News.", path: "/video", noindex: !hasVideo });
+}
 
 /** Video hub: the newest video in the player, then the rest. */
 export default async function VideoHub() {

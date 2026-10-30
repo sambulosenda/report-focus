@@ -6,10 +6,11 @@ import { Kicker, NumberedList, RiverStory, SectionTitle, StoryImage, storyHref }
 import { LoadMore } from "@/components/StoryGrid";
 import { redirectLegacyOrNotFound } from "@/lib/legacy-redirect";
 import { renderMarkdown } from "@/lib/markdown";
-import { pagedPath, pageMeta } from "@/lib/seo";
+import { collectionLd, ldJson, pagedPath, pageMeta } from "@/lib/seo";
+import { tagHref } from "@/lib/tags";
 import { categoryBySlug, mostRead, storiesInCategory, trendingTags } from "@/lib/queries";
 import { INFO_PAGES, SITE_NAME } from "@/lib/site";
-import { dayOffset, formatDate, formatTime, pageParam, timeAgo } from "@/lib/utils";
+import { dayOffset, formatDate, formatTime, pageParam, siteUrl, timeAgo } from "@/lib/utils";
 
 const RIVER = 10;
 
@@ -23,7 +24,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     return pageMeta({ title: `${cat.name} News`, description: cat.description ?? `The latest ${cat.name} news from ${SITE_NAME}.`, path });
   }
   const info = INFO_PAGES[slug];
-  return info ? pageMeta({ title: info.title, description: info.description, path: `/${slug}` }) : {};
+  return info ? pageMeta({ title: info.title, description: info.description, path: `/${slug}`, noindex: info.noindex }) : {};
 }
 
 /** River time column: clock time today, "Yesterday", then the date, by the site's calendar. */
@@ -58,9 +59,16 @@ export default async function SectionPage({ params, searchParams }: Props) {
   const [lead, ...second] = top;
   const river = stories.slice(topCount, topCount + RIVER);
   const hasNext = stories.length > topCount + RIVER;
+  const ld = collectionLd({
+    name: `${cat.name} News`,
+    url: siteUrl(pagedPath(`/${cat.slug}`, page)),
+    description: cat.description ?? `The latest ${cat.name} news from ${SITE_NAME}.`,
+    stories,
+  });
 
   return (
     <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-6 md:px-6 md:pt-8">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(ld) }} />
       <header className="flex flex-wrap items-end justify-between gap-4 border-b-[3px] border-ink pb-[18px]">
         <div>
           <h1 className="text-[32px] font-extrabold leading-none tracking-[-0.02em] md:text-[44px]">{cat.name}</h1>
@@ -68,7 +76,7 @@ export default async function SectionPage({ params, searchParams }: Props) {
           {topics.length > 0 && (
             <nav aria-label={`${cat.name} topics`} className="mt-3 flex flex-wrap gap-x-5">
               {topics.map((t) => (
-                <Link key={t.slug} href={`/tag/${encodeURIComponent(t.slug)}`} className="inline-flex h-[34px] items-center text-[13px] font-bold capitalize hover:underline">
+                <Link key={t.slug} href={tagHref(t.slug)} className="inline-flex h-[34px] items-center text-[13px] font-bold capitalize hover:underline">
                   {t.label}
                 </Link>
               ))}

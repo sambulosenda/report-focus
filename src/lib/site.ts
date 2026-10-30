@@ -1,6 +1,13 @@
 /** Site-wide names, links and static pages. Edit this file to change the footer or the standing pages. */
 
 export const SITE_NAME = "Report Focus News";
+/** Homepage title and description, which also stand in for any page without its own. */
+export const HOME_TITLE = "Report Focus News | Zimbabwe, South Africa and Africa News";
+export const HOME_DESCRIPTION =
+  "Independent reporting and analysis on Zimbabwe, South Africa and the rest of Africa: politics, crime, business and more.";
+
+/** The X account, shown on share cards. */
+export const TWITTER_HANDLE = "@ReportFocus";
 export const TAGLINE = "Independent reporting. Fast when it breaks, thorough when it matters.";
 
 /**
@@ -14,7 +21,7 @@ export const SOCIAL: { name: SocialName; url: string }[] = [
   social("X", process.env.NEXT_PUBLIC_SOCIAL_X, "https://x.com/reportfocus"),
   social("Facebook", process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK, "https://www.facebook.com/reportfocusnews"),
   social("Instagram", process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM, "https://www.instagram.com/reportfocusnews"),
-  social("LinkedIn", process.env.NEXT_PUBLIC_SOCIAL_LINKEDIN, "https://www.linkedin.com/company/reportfocusnews"),
+  social("LinkedIn", process.env.NEXT_PUBLIC_SOCIAL_LINKEDIN, "https://www.linkedin.com/company/report-focus"),
   social("YouTube", process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE),
   social("TikTok", process.env.NEXT_PUBLIC_SOCIAL_TIKTOK),
 ].filter((s) => s.url);
@@ -25,6 +32,7 @@ export const SOCIAL: { name: SocialName; url: string }[] = [
  */
 export const CONTACT = {
   owner: "Sambulo Senda",
+  editorInChief: "Brilliant Pongo",
   founded: "2020",
   city: "Harare, Zimbabwe",
   editor: "editor@reportfocusnews.com",
@@ -35,7 +43,8 @@ export const CONTACT = {
 };
 const mail = (address: string) => `[${address}](mailto:${address})`;
 
-export type InfoPage = { title: string; description: string; body: string };
+/** A standing page. Unfinished ones are kept out of search results and the footer with noindex. */
+export type InfoPage = { title: string; description: string; body: string; noindex?: boolean };
 
 /**
  * Standing pages linked from the footer, served at /<slug>.
@@ -63,8 +72,8 @@ Report Focus News is owned by ${CONTACT.owner}. We are paid for by advertising a
 
 ## The team
 
-- Brilliant Pongo, Editor-in-Chief
-- Sambulo Senda, Managing Editor
+- ${CONTACT.editorInChief}, Editor-in-Chief
+- ${CONTACT.owner}, Managing Editor
 
 To reach the newsroom, see our [contact page](/contact).`,
   },
@@ -93,7 +102,7 @@ For questions about your information, email ${mail(CONTACT.privacy)}.
 
 ## Social media
 
-You can also find us on [X](https://x.com/reportfocus), [Facebook](https://www.facebook.com/reportfocusnews), [Instagram](https://www.instagram.com/reportfocusnews) and [LinkedIn](https://www.linkedin.com/company/reportfocusnews).
+You can also find us on [X](https://x.com/reportfocus), [Facebook](https://www.facebook.com/reportfocusnews), [Instagram](https://www.instagram.com/reportfocusnews) and [LinkedIn](https://www.linkedin.com/company/report-focus).
 
 ## Where we are
 
@@ -102,7 +111,8 @@ We are based in ${CONTACT.city}. We do not have a public office, so please get i
   careers: {
     title: "Careers",
     description: "Work at Report Focus News.",
-    body: "We hire reporters, editors, producers and engineers who care about getting the story right.\n\n_List open roles here, or link to the jobs board, before launch._",
+    body: `We have no open roles right now. If you would like to write for us, email ${mail(CONTACT.editor)} with a few links to your work.`,
+    noindex: true,
   },
   tips: {
     title: "Send a tip",
@@ -116,7 +126,7 @@ If you need to stay anonymous, say so and we will protect your identity. For ext
   standards: {
     title: "Editorial standards",
     description: "The principles that guide Report Focus News journalism.",
-    body: "## Accuracy\n\nWe verify what we publish. When we cannot confirm something, we say so.\n\n## Independence\n\nOur journalism is not influenced by advertisers, owners or political groups.\n\n## Corrections\n\nWhen we get something wrong, we fix it and say what changed.\n\n_Expand this page with the newsroom’s full standards before launch._",
+    body: "## Accuracy\n\nWe verify what we publish. When we cannot confirm something, we say so.\n\n## Independence\n\nOur journalism is not influenced by advertisers, owners or political groups.\n\n## Corrections\n\nWhen we get something wrong, we fix it and say what changed.",
   },
   corrections: {
     title: "Corrections",
@@ -144,7 +154,8 @@ If you are not happy with how we handled your correction, write to the Editor-in
   podcasts: {
     title: "Podcasts",
     description: "Listen to Report Focus News.",
-    body: "Our podcasts are on the way.\n\n_Add podcast links here before launch._",
+    body: "We do not have any podcasts yet.",
+    noindex: true,
   },
   privacy: {
     title: "Privacy policy",
@@ -214,7 +225,8 @@ If we change this policy, we will update the date at the top of this page.`,
   terms: {
     title: "Terms of use",
     description: "The terms that apply when you use Report Focus News.",
-    body: "_The terms of use have not been written yet. Publish the terms approved by your legal adviser here before launch._",
+    body: `Our terms of use are being prepared. For questions about using our reporting, email ${mail(CONTACT.editor)}.`,
+    noindex: true,
   },
   cookies: {
     title: "Cookie settings",
@@ -241,16 +253,14 @@ Read our [privacy policy](/privacy) for more.`,
 };
 
 export const FOOTER_LINKS = {
+  // Video and Podcasts come back here once there is something to watch or hear.
   watch: [
     { label: "Report Focus Live", href: "/live" },
-    { label: "Video", href: "/video" },
-    { label: "The Evening Focus", href: "/video" },
-    { label: "Podcasts", href: "/podcasts" },
+    { label: "Latest news", href: "/latest" },
   ],
   company: [
     { label: "About us", href: "/about" },
     { label: "Contact", href: "/contact" },
-    { label: "Careers", href: "/careers" },
     { label: "Send a tip", href: "/tips" },
   ],
   help: [
@@ -261,7 +271,6 @@ export const FOOTER_LINKS = {
   ],
   legal: [
     { label: "Privacy policy", href: "/privacy" },
-    { label: "Terms of use", href: "/terms" },
     { label: "Cookie settings", href: "/cookies" },
     { label: "Accessibility", href: "/accessibility" },
   ],
@@ -271,7 +280,7 @@ export const FOOTER_LINKS = {
 export const RESERVED_SLUGS = new Set([
   "newsroom", "login", "search", "latest", "author", "tag", "media", "live", "video", "demo", "feed.xml", "sitemap.xml", "robots.txt", "api", "newsletters", "support", "ads.txt", "news-sitemap.xml",
   // Old WordPress addresses are looked up here.
-  "wp-redirect",
+  "wp-redirect", "wp-gone", "llms.txt", "llms-full.txt",
   // Standing pages share the top-level URL space with sections.
   ...Object.keys(INFO_PAGES),
 ]);

@@ -18,8 +18,9 @@ import { canOptimize } from "@/lib/images";
 import { redirectLegacyOrNotFound } from "@/lib/legacy-redirect";
 import { renderMarkdownWithBreaks } from "@/lib/markdown";
 import { liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
-import { absoluteUrl, ldJson, pageMeta, publisherLd, SHARE_IMAGE } from "@/lib/seo";
+import { absoluteUrl, authorLd, ldJson, metaDescription, pageMeta, publisherLd, SHARE_IMAGE } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
+import { tagHref } from "@/lib/tags";
 import { excerpt, formatDateTime, formatTime, readingTime, siteUrl, timeAgo } from "@/lib/utils";
 import { videoEmbedUrl } from "@/lib/video";
 
@@ -39,7 +40,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { article, category, author } = row;
   return pageMeta({
     title: article.title,
-    description: article.summary || excerpt(article.body, 160),
+    // Google cuts titles at about 65 characters, so a long headline goes without the site name after it.
+    absoluteTitle: article.title.length + ` | ${SITE_NAME}`.length > 65,
+    description: metaDescription(article.summary || excerpt(article.body, 300)),
     path: `/${category?.slug ?? "news"}/${article.slug}`,
     image: article.heroImage ? { url: article.heroImage, alt: article.heroAlt } : null,
     openGraph:
@@ -111,11 +114,11 @@ export default async function ArticlePage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": article.kind === "live" ? "LiveBlogPosting" : article.kind === "opinion" ? "OpinionNewsArticle" : article.kind === "analysis" ? "AnalysisNewsArticle" : "NewsArticle",
     headline: article.title,
-    description: article.summary || excerpt(article.body, 160),
+    description: metaDescription(article.summary || excerpt(article.body, 300)),
     image: [absoluteUrl(article.heroImage ?? SHARE_IMAGE.url)],
     datePublished: article.publishedAt?.toISOString(),
     dateModified: updatedAt.toISOString(),
-    author: [{ "@type": "Person", name: author.name, url: siteUrl(`/author/${author.slug}`) }],
+    author: [authorLd(author)],
     publisher: publisherLd(),
     mainEntityOfPage: { "@type": "WebPage", "@id": url },
     url,
@@ -258,7 +261,7 @@ export default async function ArticlePage({ params }: Props) {
               <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-1" aria-label="Topics">
                 {tags.map((t) => (
                   <li key={t}>
-                    <Link href={`/tag/${encodeURIComponent(t.toLowerCase())}`} className="inline-flex py-1 text-[13px] font-bold capitalize text-ink underline decoration-line-2 underline-offset-4 hover:decoration-ink">
+                    <Link href={tagHref(t)} className="inline-flex py-1 text-[13px] font-bold capitalize text-ink underline decoration-line-2 underline-offset-4 hover:decoration-ink">
                       {t}
                     </Link>
                   </li>

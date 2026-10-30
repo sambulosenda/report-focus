@@ -65,7 +65,7 @@ export async function Footer() {
               ))}
             </ul>
           </div>
-          <LinkColumn title="Watch & listen" links={FOOTER_LINKS.watch} />
+          <LinkColumn title="Latest" links={FOOTER_LINKS.watch} />
           <LinkColumn title="Company" links={donateUrl() ? [...FOOTER_LINKS.company, { label: "Support us", href: "/support" }] : FOOTER_LINKS.company} />
           <LinkColumn title="Standards & help" links={FOOTER_LINKS.help} />
         </nav>
