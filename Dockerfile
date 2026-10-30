@@ -22,6 +22,7 @@ ARG NEXT_PUBLIC_SOCIAL_INSTAGRAM
 ARG NEXT_PUBLIC_SOCIAL_LINKEDIN
 ARG NEXT_PUBLIC_SOCIAL_YOUTUBE
 ARG NEXT_PUBLIC_SOCIAL_TIKTOK
+ARG UMAMI_WEBSITE_ID
 
 # The build reads the database to prepare the homepage, so migrations run first (the README's order).
 # The Turso token arrives as a build secret: `fly deploy --build-secret DATABASE_AUTH_TOKEN=...`. It never lands in the image.
