@@ -19,19 +19,35 @@ export const SOCIAL: { name: SocialName; url: string }[] = [
   social("TikTok", process.env.NEXT_PUBLIC_SOCIAL_TIKTOK),
 ].filter((s) => s.url);
 
+/**
+ * Newsroom contact details used on the standing pages. Change an address here and every page that
+ * shows it follows.
+ */
+export const CONTACT = {
+  owner: "Report Focus News",
+  founded: "2020",
+  city: "Harare, Zimbabwe",
+  editor: "editor@reportfocusnews.com",
+  tips: "tips@reportfocusnews.com",
+  corrections: "corrections@reportfocusnews.com",
+  advertising: "advertising@reportfocusnews.com",
+  privacy: "privacy@reportfocusnews.com",
+};
+const mail = (address: string) => `[${address}](mailto:${address})`;
+
 export type InfoPage = { title: string; description: string; body: string };
 
 /**
  * Standing pages linked from the footer, served at /<slug>.
- * The copy is a starting point written for launch prep; replace it with the newsroom's own wording.
+ * Contact details come from CONTACT above.
  */
 export const INFO_PAGES: Record<string, InfoPage> = {
   about: {
     title: "About us",
     description: "Who we are and how Report Focus News works.",
-    body: `Report Focus News is an independent news site covering South Africa, Zimbabwe and the rest of Africa, along with the biggest stories from around the world.
+    body: `Report Focus News is an independent news site covering Zimbabwe, South Africa and the rest of Africa, along with the biggest stories from around the world.
 
-We were founded in [year] by [founder names]. Our newsroom is based in [city] and works with reporters and contributors across [countries or regions].
+We started in ${CONTACT.founded}. Our newsroom is based in ${CONTACT.city}, and we work with reporters and contributors across Zimbabwe and South Africa.
 
 ## What we cover
 
@@ -43,45 +59,44 @@ Every story is read by an editor before it is published. We say where our inform
 
 ## Who owns us
 
-Report Focus News is owned by [company or owner name]. [Say how the newsroom is funded, for example advertising and reader support.] No advertiser or funder has a say in what we report.
+Report Focus News is owned by ${CONTACT.owner}. We are paid for by advertising and by readers who [support our work](/support). No advertiser, donor or political group has a say in what we report.
 
 ## The team
 
-- [Name], Editor
-- [Name], News editor
-- [Name], Reporter
+- Brilliant Pongo, Editor-in-Chief
+- Sambulo Senda, Managing Editor
 
-_Replace the text in square brackets before launch. This page is edited in src/lib/site.ts._`,
+To reach the newsroom, see our [contact page](/contact).`,
   },
   contact: {
     title: "Contact",
     description: "How to reach the Report Focus News newsroom.",
     body: `## Newsroom
 
-For news and story ideas, email [editor@reportfocusnews.com]. Send press releases to [press@reportfocusnews.com], and anything else to [info@reportfocusnews.com].
+For news, story ideas and press releases, email ${mail(CONTACT.editor)}. We read every message, but we cannot reply to them all or promise to publish a press release.
 
 ## Tips
 
-If you have information you think we should look into, see [Send a tip](/tips), or email [tips@reportfocusnews.com]. Tell us if you need to stay anonymous.
+If you have information you think we should look into, email ${mail(CONTACT.tips)} or read how to [send a tip](/tips). Tell us if you need to stay anonymous and we will protect your identity.
 
 ## Corrections
 
-If you think we got something wrong, email [corrections@reportfocusnews.com] with a link to the story and what needs fixing. Read how we handle it on our [corrections page](/corrections).
+If you think we got something wrong, email ${mail(CONTACT.corrections)} with a link to the story and what needs fixing. Read how we handle it on our [corrections page](/corrections).
 
 ## Advertising
 
-For advertising and partnerships, email [advertising@reportfocusnews.com].
+For advertising and partnerships, email ${mail(CONTACT.advertising)}.
 
-## Post and phone
+## Privacy
 
-[Company name]  
-[Street address]  
-[City, postal code]  
-[Country]
+For questions about your information, email ${mail(CONTACT.privacy)}.
 
-Phone: [+00 00 000 0000]
+## Social media
 
-_Replace the text in square brackets before launch. This page is edited in src/lib/site.ts._`,
+You can also find us on [X](https://x.com/reportfocus), [Facebook](https://www.facebook.com/reportfocusnews), [Instagram](https://www.instagram.com/reportfocusnews) and [LinkedIn](https://www.linkedin.com/company/reportfocusnews).
+
+${CONTACT.owner}  
+${CONTACT.city}`,
   },
   careers: {
     title: "Careers",
@@ -91,7 +106,11 @@ _Replace the text in square brackets before launch. This page is edited in src/l
   tips: {
     title: "Send a tip",
     description: "Share a story idea or information with our reporters.",
-    body: "Know something we should look into? Our reporters read every tip.\n\nTell us what happened, when and where, and how we can reach you. If you need to stay anonymous, say so and we will protect your identity.\n\n_Add the secure tip line and email address here before launch._",
+    body: `Know something we should look into? Our reporters read every tip.
+
+Email ${mail(CONTACT.tips)}. Tell us what happened, when and where, and how we can reach you. Send documents or photos if you have them.
+
+If you need to stay anonymous, say so and we will protect your identity. For extra safety, write from an email address that is not linked to your name or your work.`,
   },
   standards: {
     title: "Editorial standards",
@@ -108,17 +127,18 @@ _Replace the text in square brackets before launch. This page is edited in src/l
 - **Errors of fact**, such as a wrong name, number, date or quote, are fixed in the story. We add a note at the bottom saying what was wrong and when it was corrected.
 - **Serious errors**, where the mistake changed the meaning of the story, get a note at the top of the story as well.
 - **Small fixes**, such as spelling or grammar, are made without a note.
+- **Updates**, when a story changes because there is new information rather than a mistake, are marked as updates with the time.
 - We do not quietly delete stories. If a story cannot stand, we say why.
 
 ## Report an error
 
-Email [corrections@reportfocusnews.com] with a link to the story and what you think is wrong. An editor reads every message and we aim to reply within [two working days].
+Email ${mail(CONTACT.corrections)} with a link to the story and what you think is wrong. An editor reads every message and we aim to reply within two working days.
 
-## Recent corrections
+If you are named in a story and want to respond, email the same address. We will consider adding your response to the story.
 
-- [Date]: [Story headline, linked]. [What was wrong and what we changed.]
+## Complaints
 
-_Replace the text in square brackets before launch. This page is edited in src/lib/site.ts._`,
+If you are not happy with how we handled your correction, write to the Editor-in-Chief at ${mail(CONTACT.editor)}.`,
   },
   podcasts: {
     title: "Podcasts",
@@ -128,29 +148,35 @@ _Replace the text in square brackets before launch. This page is edited in src/l
   privacy: {
     title: "Privacy policy",
     description: "How Report Focus News collects and uses information.",
-    body: `_Last updated: [date]_
+    body: `_Last updated: 30 October 2026_
 
-This policy explains what information Report Focus News collects when you use this website, why we collect it and what we do with it. Report Focus News is run by [company name], [address], which is responsible for your information.
+This policy explains what information Report Focus News collects when you use this website, why we collect it and what we do with it. The site is run by ${CONTACT.owner}, ${CONTACT.city}, which is responsible for your information.
 
 ## Reading the site
 
 You can read Report Focus News without an account. Our own pages do not set tracking cookies. Our advertising partner does, as explained under Advertising below.
 
-We count visits with [Plausible / Umami], a privacy-friendly stats service. It records which pages are read, which site sent you here, and your browser, device type and country. It does not use cookies, does not store your IP address and cannot identify you. We use these numbers only to understand what readers find useful.
+We may count visits with a privacy-friendly stats service such as Plausible or Umami. It records which pages are read, which site sent you here, and your browser, device type and country. It does not use cookies, does not store your IP address and cannot identify you. We use these numbers only to understand what readers find useful.
+
+Our servers keep short-lived technical logs, including IP addresses, to keep the site secure and fix problems. We also use an error-reporting service, Sentry, which receives technical details when a page breaks.
 
 ## Newsletters and alerts
 
-If you sign up for a newsletter or breaking-news alerts, we keep your email address and what you chose. We use it only to send those emails. Every email has a link to unsubscribe, and you can ask us to delete your address at any time.
+If you sign up for a newsletter or breaking-news alerts, we keep your email address and what you chose, and we send you an email to confirm. We use your address only to send what you asked for. Our emails are sent through Resend. Every email has a link to unsubscribe, and you can ask us to delete your address at any time.
 
 ## Contacting us
 
-If you email us, send a tip or report an error, we keep your message and contact details so we can reply and follow up. We will not publish your name or details without your permission.
+If you email us, send a tip or report an error, we keep your message and contact details so we can reply and follow up. We will not publish your name or details without your permission, and we protect the identity of anyone who asks to stay anonymous.
+
+## Supporting us
+
+If you give money to Report Focus News, the payment is handled on our payment provider's own page, and that provider's privacy policy applies. We do not see or store your card details.
 
 ## Advertising
 
 Report Focus News is paid for partly by advertising. Ads on this site are served by Google AdSense. Google and its partners may use cookies and similar technology to show ads, to limit how often you see the same ad, to measure how ads perform and, if you agree, to show ads based on your interests and the sites you have visited.
 
-You can turn off personalised ads at [Google's ad settings](https://adssettings.google.com), and read how Google uses information from sites that use its services at [policies.google.com/technologies/partner-sites](https://policies.google.com/technologies/partner-sites). [If you show a cookie consent banner, say here how readers can change their choice.]
+You can turn off personalised ads at [Google's ad settings](https://adssettings.google.com), and read how Google uses information from sites that use its services at [policies.google.com/technologies/partner-sites](https://policies.google.com/technologies/partner-sites). You can also block or delete cookies in your browser settings.
 
 ## Newsroom staff
 
@@ -158,17 +184,30 @@ Staff who sign in to the newsroom get one cookie that keeps them signed in. It i
 
 ## Sharing your information
 
-We do not sell your information. We share it only with services that help us run the site, such as our hosting provider, our email provider, our visitor stats service and Google for advertising, and only as far as they need it. [List them here.]
+We do not sell your information. We share it only with services that help us run the site, and only as far as they need it:
+
+- Fly.io, which hosts the site
+- Turso, which stores our database
+- Cloudflare, which delivers pages and photos
+- Resend, which sends our emails
+- Sentry, which reports errors
+- Google, for advertising
+
+Some of these services store data outside Zimbabwe and South Africa, including in the European Union and the United States. We may also share information when the law requires it.
+
+## How long we keep it
+
+We keep newsletter addresses until you unsubscribe, messages to the newsroom for as long as we need them to follow up a story, and server logs for no more than 30 days.
 
 ## Your rights
 
-You can ask to see, correct or delete the information we hold about you. Email [info@reportfocusnews.com]. [Add the rights that apply under your local law, for example POPIA in South Africa or GDPR in Europe, and how to complain to the regulator.]
+You can ask to see, correct or delete the information we hold about you, or object to how we use it. Email ${mail(CONTACT.privacy)} and we will reply within 30 days.
+
+If you are in Zimbabwe, you can complain to the Postal and Telecommunications Regulatory Authority of Zimbabwe (POTRAZ), the data protection authority under the Cyber and Data Protection Act. If you are in South Africa, you can complain to the [Information Regulator](https://inforegulator.org.za) under the Protection of Personal Information Act (POPIA). If you are in the UK or Europe, you have rights under the GDPR and can complain to your local data protection authority.
 
 ## Changes to this policy
 
-If we change this policy, we will update the date at the top of this page.
-
-_This is a starting draft, not legal advice. Have it checked by a legal adviser and replace the text in square brackets before launch. This page is edited in src/lib/site.ts._`,
+If we change this policy, we will update the date at the top of this page.`,
   },
   terms: {
     title: "Terms of use",
@@ -184,17 +223,13 @@ One cookie keeps newsroom staff signed in. Readers get no cookies from Report Fo
 
 ## Visitor stats
 
-We count visits with [Plausible / Umami], which works without cookies and cannot identify you.
+We may count visits with a privacy-friendly stats service such as Plausible or Umami. It works without cookies and cannot identify you.
 
 ## Advertising cookies
 
 Ads on this site come from Google AdSense. Google and its partners use cookies to show and measure ads, and, if you agree, to choose ads based on your interests. You can turn off personalised ads at [Google's ad settings](https://adssettings.google.com), or block or delete cookies in your browser settings.
 
-[If you show a cookie consent banner, add a link here for readers to change their choice.]
-
-Read our [privacy policy](/privacy) for more.
-
-_Replace the text in square brackets before launch. This page is edited in src/lib/site.ts._`,
+Read our [privacy policy](/privacy) for more.`,
   },
   accessibility: {
     title: "Accessibility",
