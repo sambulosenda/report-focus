@@ -22,11 +22,12 @@
  */
 import { createHash, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
+import { unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import bcrypt from "bcryptjs";
 import { eq, inArray, like, max } from "drizzle-orm";
 import { legacyPathKey } from "../src/lib/legacy";
+import { RESERVED_SLUGS } from "../src/lib/site";
 import { slugify } from "../src/lib/utils";
 import { clip, htmlToMarkdown, htmlToText, leadText, markdownImages, withoutImage } from "./wordpress/convert";
 import { readExportFile, readFromSite, type WpPost, type WpSite } from "./wordpress/source";
@@ -143,7 +144,9 @@ async function main() {
     const cats = post.categories.filter((c) => !NOT_SECTIONS.has(c.slug));
     const first = cats[0];
     if (!first && !opts.defaultSection) return null;
-    const slug = first ? (opts.sectionMap.get(first.slug.toLowerCase()) ?? slugify(first.slug || first.name)) : opts.defaultSection!;
+    const wanted = first ? (opts.sectionMap.get(first.slug.toLowerCase()) ?? slugify(first.slug || first.name)) : opts.defaultSection!;
+    // A section can't take over a URL that belongs to another page, such as /video or /about.
+    const slug = RESERVED_SLUGS.has(wanted) ? `${wanted}-news` : wanted;
     const found = catBySlug.get(slug);
     if (found) return found;
     // A section that doesn't exist yet is named after the WordPress category with that slug, if there is one.
@@ -237,7 +240,13 @@ async function main() {
       mkdirSync(path.join(uploadDir, dir), { recursive: true });
       await writeFile(path.join(uploadDir, rel), data);
       const local = `/media/${rel}`;
-      await db.insert(media).values({ url: local, alt: clip(alt, 300) });
+      try {
+        await db.insert(media).values({ url: local, alt: clip(alt, 300) });
+      } catch (err) {
+        // Otherwise the next run would find the file, skip the library entry and never list it.
+        await unlink(path.join(uploadDir, rel)).catch(() => {});
+        throw err;
+      }
       imageCache.set(abs, local);
       report.images++;
       return local;
@@ -369,8 +378,8 @@ async function main() {
       for (const c of post.categories) {
         if (!c.slug || seen.has(c.slug)) continue;
         seen.add(c.slug);
-        const slug = opts.sectionMap.get(c.slug.toLowerCase()) ?? slugify(c.slug);
-        const cat = catBySlug.get(slug);
+        const wanted = opts.sectionMap.get(c.slug.toLowerCase()) ?? slugify(c.slug);
+        const cat = catBySlug.get(RESERVED_SLUGS.has(wanted) ? `${wanted}-news` : wanted);
         if (!cat) continue;
         const res = await db.insert(legacyRedirects).values({ path: legacyPathKey(`/category/${c.slug}`), categoryId: cat.id }).onConflictDoNothing().run();
         report.redirects += res.rowsAffected;

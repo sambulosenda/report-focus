@@ -133,6 +133,12 @@ export async function readExportFile(file: string, { includePages = false } = {}
       count(skipped, `${status || "unknown"} posts`);
       continue;
     }
+    // The WordPress ID is how a rerun recognises a post, so one without a usable ID can't be imported safely.
+    const id = Number(text(item["wp:post_id"]).trim());
+    if (!Number.isInteger(id) || id <= 0) {
+      count(skipped, "posts with no WordPress ID");
+      continue;
+    }
     if (text(item["wp:post_password"]).trim()) {
       count(skipped, "password-protected posts");
       continue;
@@ -146,7 +152,7 @@ export async function readExportFile(file: string, { includePages = false } = {}
     const m = meta(item);
     const login = text(item["dc:creator"]).trim();
     posts.push({
-      id: Number(text(item["wp:post_id"])),
+      id,
       type: type as "post" | "page",
       title: decodeEntities(text(item.title)).trim(),
       slug: decodeSlug(text(item["wp:post_name"]).trim()),
@@ -222,9 +228,12 @@ export async function readFromSite(siteUrl: string, { includePages = false, log 
       const url = base.includes("?") ? `${base}/${kind}&${q}` : `${base}/${kind}?${q}`;
       const res = await getJson(url);
       if (!res.ok) throw new Error(`The old site answered ${res.status} for ${url}`);
-      pages = Number(res.headers.get("x-wp-totalpages") ?? 1);
-      log(`  fetched ${kind} page ${page} of ${pages}`);
-      for (const p of (await res.json()) as RestPost[]) {
+      const items = (await res.json()) as RestPost[];
+      // Some hosts strip the page-count header; then keep going while pages come back full.
+      const total = res.headers.get("x-wp-totalpages");
+      pages = total !== null ? Number(total) : items.length === 100 ? page + 1 : page;
+      log(`  fetched ${kind} page ${page}${total !== null ? ` of ${pages}` : ""}`);
+      for (const p of items) {
         if (p.content?.protected) {
           count(skipped, "password-protected posts");
           continue;
