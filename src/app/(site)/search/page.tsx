@@ -25,7 +25,7 @@ function highlight(text: string, q: string) {
   const words = q.split(/\s+/).filter((w) => w.length > 1).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
   if (!words.length) return text;
   const parts = text.split(new RegExp(`(${words.join("|")})`, "gi"));
-  return parts.map((p, i) => (i % 2 ? <mark key={i} className="rounded-sm bg-highlight px-0.5 text-ink">{p}</mark> : p));
+  return parts.map((p, i) => (i % 2 ? <mark key={i} className="bg-highlight text-ink">{p}</mark> : p));
 }
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<Search> }) {
@@ -54,11 +54,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         {type !== "all" && <input type="hidden" name="type" value={type} />}
         {sort !== "relevance" && <input type="hidden" name="sort" value={sort} />}
         <label htmlFor="q" className="sr-only">Search Report Focus News</label>
-        <div className="flex h-12 min-w-0 flex-1 items-center gap-2.5 rounded-full border-2 border-ink px-4 md:h-14 md:px-[18px]">
+        <div className="flex h-12 min-w-0 flex-1 items-center gap-2.5 border-2 border-ink px-4 md:h-14 md:px-[18px]">
           <SearchIcon size={20} />
           <input id="q" name="q" type="search" defaultValue={q} autoFocus={!q} placeholder="Search for a story, topic or place" className="min-w-0 flex-1 bg-transparent text-base outline-none md:text-lg" />
         </div>
-        <button className="h-12 rounded-full bg-teal px-5 text-base font-bold text-white hover:bg-teal-hover md:h-14 md:px-[26px]">Search</button>
+        <button className="h-12 bg-teal px-5 text-base font-bold text-white hover:bg-teal-hover md:h-14 md:px-[26px]">Search</button>
       </form>
 
       {q && total > 0 && (
@@ -77,7 +77,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                     key={t.value}
                     href={qs({ type: t.value === "all" ? undefined : t.value, page: undefined })}
                     aria-current={t.value === type ? "page" : undefined}
-                    className={cn("inline-flex h-9 items-center rounded-full border px-3.5 text-[13px] font-bold", t.value === type ? "border-ink bg-ink text-white" : "border-line-2 bg-white text-ink hover:border-ink")}
+                    className={cn("inline-flex h-9 items-center border px-3.5 text-[13px] font-bold", t.value === type ? "border-ink bg-ink text-white" : "border-line-2 bg-white text-ink hover:border-ink")}
                   >
                     {t.label}
                   </Link>
@@ -87,12 +87,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
                 <input type="hidden" name="q" value={q} />
                 {type !== "all" && <input type="hidden" name="type" value={type} />}
                 <label htmlFor="sort">Sort</label>
-                <AutoSubmitSelect id="sort" name="sort" defaultValue={sort} className="h-9 rounded-lg border border-line-2 bg-white px-2 text-[13px]">
+                <AutoSubmitSelect id="sort" name="sort" defaultValue={sort} className="h-9 border border-line-2 bg-white px-2 text-[13px]">
                   <option value="relevance">Most relevant</option>
                   <option value="newest">Newest</option>
                 </AutoSubmitSelect>
                 <noscript>
-                  <button className="h-9 rounded-lg border border-line-2 px-2">Apply</button>
+                  <button className="h-9 border border-line-2 px-2">Apply</button>
                 </noscript>
               </form>
             </div>
@@ -121,7 +121,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           )}
           <div className="mt-1 flex flex-wrap justify-center gap-2">
             {[{ name: "Video", slug: "video" }, ...cats].map((c) => (
-              <Link key={c.slug} href={`/${c.slug}`} className="inline-flex h-9 items-center rounded-full border border-line-2 px-3.5 text-[13px] font-bold hover:border-ink">
+              <Link key={c.slug} href={`/${c.slug}`} className="inline-flex h-9 items-center border border-line-2 px-3.5 text-[13px] font-bold hover:border-ink">
                 {c.name}
               </Link>
             ))}

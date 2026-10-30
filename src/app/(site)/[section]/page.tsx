@@ -47,7 +47,11 @@ export default async function SectionPage({ params, searchParams }: Props) {
     trendingTags(5, cat.id),
     mostRead(5, cat.id),
   ]);
-  const [lead, ...second] = stories.slice(0, topCount);
+  const top = stories.slice(0, topCount);
+  // Lead with the newest story that has a picture, so a text-only story doesn't leave a hole beside the stack.
+  const withArt = top.findIndex((s) => s.heroImage);
+  if (withArt > 0) top.unshift(...top.splice(withArt, 1));
+  const [lead, ...second] = top;
   const river = stories.slice(topCount, topCount + RIVER);
   const hasNext = stories.length > topCount + RIVER;
 
@@ -58,17 +62,17 @@ export default async function SectionPage({ params, searchParams }: Props) {
           <h1 className="text-[32px] font-extrabold leading-none tracking-[-0.02em] md:text-[44px]">{cat.name}</h1>
           {cat.description && <p className="mt-2.5 max-w-2xl text-base text-ink-2">{cat.description}</p>}
           {topics.length > 0 && (
-            <nav aria-label={`${cat.name} topics`} className="mt-4 flex flex-wrap gap-2">
+            <nav aria-label={`${cat.name} topics`} className="mt-3 flex flex-wrap gap-x-5">
               {topics.map((t) => (
-                <Link key={t.slug} href={`/tag/${encodeURIComponent(t.slug)}`} className="inline-flex h-[34px] items-center rounded-full border border-line-2 px-3.5 text-[13px] font-bold capitalize hover:border-ink">
+                <Link key={t.slug} href={`/tag/${encodeURIComponent(t.slug)}`} className="inline-flex h-[34px] items-center text-[13px] font-bold capitalize hover:underline">
                   {t.label}
                 </Link>
               ))}
             </nav>
           )}
         </div>
-        <a href="#section-newsletter" className="inline-flex h-10 items-center rounded-full border border-teal px-4 text-sm font-bold text-teal hover:bg-teal hover:text-white">
-          + Follow {cat.name}
+        <a href="#section-newsletter" className="inline-flex h-10 items-center border border-teal px-4 text-sm font-bold text-teal hover:bg-teal hover:text-white">
+          Follow {cat.name}
         </a>
       </header>
 

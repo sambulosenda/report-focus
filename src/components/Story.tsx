@@ -26,24 +26,18 @@ export function StoryImage({
   ratio = "16/9",
   className,
   priority,
-  rounded = true,
 }: {
   story: StoryCard;
   ratio?: keyof typeof RATIO;
   className?: string;
   priority?: boolean;
-  rounded?: boolean;
 }) {
+  // No picture means no picture: a story without art runs as text rather than behind a placeholder.
+  if (!story.heroImage) return null;
   return (
-    <span className={cn("relative block overflow-hidden bg-mist", RATIO[ratio], rounded && "rounded", className)}>
-      {story.heroImage ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={story.heroImage} alt={story.heroAlt ?? ""} loading={priority ? "eager" : "lazy"} className="h-full w-full object-cover" />
-      ) : (
-        <span aria-hidden className="flex h-full w-full items-end bg-gradient-to-br from-teal to-teal-deep p-3 text-xs font-extrabold uppercase tracking-[0.08em] text-on-teal">
-          {story.category?.name}
-        </span>
-      )}
+    <span className={cn("relative block overflow-hidden bg-mist", RATIO[ratio], className)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={story.heroImage} alt={story.heroAlt ?? ""} loading={priority ? "eager" : "lazy"} className="h-full w-full object-cover" />
     </span>
   );
 }
@@ -52,7 +46,7 @@ export function StoryImage({
 export function Duration({ story, className }: { story: StoryCard; className?: string }) {
   if (story.kind !== "video") return null;
   return (
-    <span className={cn("absolute bottom-2 left-2 inline-flex items-center gap-1.5 rounded bg-black/80 px-2 py-1 text-xs font-bold text-white md:bottom-2.5 md:left-2.5", className)}>
+    <span className={cn("absolute bottom-2 left-2 inline-flex items-center gap-1.5 bg-black/80 px-2 py-1 text-xs font-bold text-white md:bottom-2.5 md:left-2.5", className)}>
       <PlayIcon />
       {story.videoDuration ?? "Video"}
       <span className="sr-only"> video</span>
@@ -60,10 +54,10 @@ export function Duration({ story, className }: { story: StoryCard; className?: s
   );
 }
 
-/** A section heading with the red rule under it. */
-export function SectionTitle({ children, className, as: Tag = "h2", id }: { children: React.ReactNode; className?: string; as?: "h1" | "h2"; id?: string }) {
+/** A section heading set under a thin ink rule, newspaper style. */
+export function SectionTitle({ children, className, as: Tag = "h2", id, ruled = true }: { children: React.ReactNode; className?: string; as?: "h1" | "h2"; id?: string; ruled?: boolean }) {
   return (
-    <Tag id={id} className={cn("inline-block border-b-[3px] border-brand pb-2 text-xl font-extrabold tracking-[-0.01em] text-ink", className)}>
+    <Tag id={id} className={cn("block text-lg font-extrabold tracking-[-0.01em] text-ink", ruled && "border-t-2 border-ink pt-2", className)}>
       {children}
     </Tag>
   );
@@ -71,11 +65,11 @@ export function SectionTitle({ children, className, as: Tag = "h2", id }: { chil
 
 export function SectionHeader({ title, href, more = "More", className }: { title: string; href?: string; more?: string; className?: string }) {
   return (
-    <div className={cn("mb-3 flex items-baseline justify-between md:mb-3.5", className)}>
-      <SectionTitle>{title}</SectionTitle>
+    <div className={cn("mb-3 flex items-baseline justify-between border-t-2 border-ink pt-2 md:mb-3.5", className)}>
+      <SectionTitle ruled={false}>{title}</SectionTitle>
       {href && (
         <Link href={href} className="inline-flex min-h-11 items-center text-[13px] font-bold text-ink hover:underline md:min-h-0">
-          {more} <span aria-hidden className="ml-1">→</span>
+          {more}
         </Link>
       )}
     </div>
@@ -103,9 +97,11 @@ export function ThumbStory({ story }: { story: StoryCard }) {
         <span className="story-title headline text-lg leading-[1.28]">{story.title}</span>
         <time dateTime={story.publishedAt?.toISOString()} className="text-xs text-muted">{timeAgo(story.publishedAt)}</time>
       </span>
-      <span className="relative flex-none">
-        <StoryImage story={story} ratio="4/3" className="w-[104px]" />
-      </span>
+      {story.heroImage && (
+        <span className="relative flex-none">
+          <StoryImage story={story} ratio="4/3" className="w-[104px]" />
+        </span>
+      )}
     </Link>
   );
 }
@@ -185,26 +181,23 @@ export function RiverStory({
         {story.summary && <span className="hidden text-[15px] leading-normal text-ink-2 sm:block">{story.summary}</span>}
         {(meta || time) && <span className="text-[13px] text-muted">{meta ?? <span className="md:hidden">{time}</span>}</span>}
       </span>
-      <span className={cn("relative w-[104px] flex-none sm:w-[140px]", imageWidth, imageFirst && "sm:order-first")}>
-        <StoryImage story={story} ratio="3/2" />
-        <span className="hidden sm:block">
-          <Duration story={story} />
+      {story.heroImage && (
+        <span className={cn("relative w-[104px] flex-none sm:w-[140px]", imageWidth, imageFirst && "sm:order-first")}>
+          <StoryImage story={story} ratio="3/2" />
+          <span className="hidden sm:block">
+            <Duration story={story} />
+          </span>
         </span>
-      </span>
+      )}
     </Link>
   );
 }
 
-const OPINION_COLORS: Record<string, string> = { analysis: "bg-teal", opinion: "bg-rust", explainer: "bg-moss" };
-
-export function OpinionStory({ story, initials }: { story: StoryCard; initials: string }) {
+export function OpinionStory({ story }: { story: StoryCard }) {
   return (
-    <Link href={storyHref(story)} className="story-link group flex items-start gap-3 border-t border-[#e6dcca] py-3 first:border-t-0 md:gap-3.5 md:border-0 md:py-0">
-      <span aria-hidden className={cn("inline-flex h-10 w-10 flex-none items-center justify-center rounded-full text-[13px] font-extrabold text-white md:h-[52px] md:w-[52px] md:text-base", OPINION_COLORS[story.kind] ?? "bg-teal")}>
-        {initials}
-      </span>
+    <Link href={storyHref(story)} className="story-link group flex items-start border-t border-line py-3 first:border-t-0 md:border-0 md:py-0">
       <span className="flex flex-col gap-1 md:gap-1.5">
-        <span className="kicker block text-[11px] text-rust md:text-xs">{KIND_LABEL[story.kind]}</span>
+        <span className="kicker block text-[11px] md:text-xs">{KIND_LABEL[story.kind]}</span>
         <span className="story-title headline text-lg leading-[1.25] md:text-xl">{story.title}</span>
         <span className="text-xs text-muted md:text-[13px]">
           {story.author.name}

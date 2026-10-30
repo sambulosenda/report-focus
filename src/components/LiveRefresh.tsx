@@ -32,7 +32,7 @@ export function LiveRefresh({ articleId, latestId }: { articleId: number; latest
             router.refresh();
             document.getElementById("updates")?.scrollIntoView({ behavior: "smooth" });
           }}
-          className="h-10 rounded-full bg-teal px-[18px] text-sm font-bold text-white hover:bg-teal-hover"
+          className="h-10 bg-teal px-[18px] text-sm font-bold text-white hover:bg-teal-hover"
         >
           ↑ {count} new update{count === 1 ? "" : "s"}
         </button>

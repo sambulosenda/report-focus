@@ -56,7 +56,7 @@ export function VideoWatch({ video, upNext, more, moreTitle = "More videos", hea
                       <span className="relative block w-32 flex-none">
                         <StoryImage story={v} />
                         {v.videoDuration && (
-                          <span className="absolute bottom-1 right-1 rounded-[3px] bg-black/80 px-[5px] py-0.5 text-[11px] font-bold">{v.videoDuration}</span>
+                          <span className="absolute bottom-1 right-1 bg-black/80 px-[5px] py-0.5 text-[11px] font-bold">{v.videoDuration}</span>
                         )}
                       </span>
                       <span className="flex min-w-0 flex-col gap-1">

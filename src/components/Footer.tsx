@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { navCategories } from "@/lib/queries";
-import { FOOTER_LINKS, SOCIAL, TAGLINE } from "@/lib/site";
+import { FOOTER_LINKS, SOCIAL } from "@/lib/site";
 import { Logo } from "./Logo";
 import { SOCIAL_ICONS } from "./icons";
 
@@ -38,12 +38,11 @@ export async function Footer() {
             <Link href="/" aria-label="Report Focus News home" className="hover:no-underline">
               <Logo dark className="text-[28px] leading-[1.1]" />
             </Link>
-            <p className="mt-2 text-sm leading-normal text-on-teal-muted">{TAGLINE}</p>
           </div>
-          <ul aria-label="Follow Report Focus News" className="flex gap-2.5">
+          <ul aria-label="Follow Report Focus News" className="-mx-2.5 flex">
             {SOCIAL.map(({ name, url }) => {
               const Icon = SOCIAL_ICONS[name];
-              const circle = "inline-flex h-10 w-10 items-center justify-center rounded-full border border-teal-line text-white";
+              const circle = "inline-flex h-10 w-10 items-center justify-center text-white";
               return (
                 <li key={name}>
                   {url ? (

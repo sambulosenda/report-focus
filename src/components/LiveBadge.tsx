@@ -4,7 +4,7 @@ export function LiveBadge({ size = "sm", className }: { size?: "sm" | "md"; clas
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded bg-brand font-extrabold tracking-[0.08em] text-white",
+        "inline-flex items-center gap-1.5 bg-brand font-extrabold tracking-[0.08em] text-white",
         size === "md" ? "px-2.5 py-[5px] text-xs" : "px-[7px] py-[3px] text-[11px] md:px-[9px] md:py-1",
         className,
       )}

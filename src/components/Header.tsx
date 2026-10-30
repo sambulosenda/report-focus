@@ -32,12 +32,12 @@ export async function Header() {
           <Logo className="text-2xl md:text-[clamp(34px,5vw,58px)]" />
         </Link>
         <div className="flex items-center justify-end gap-2.5 md:flex-[1_1_180px]">
-          <Link href="/search" aria-label="Search" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-ink hover:bg-mist md:bg-mist md:hover:bg-line">
+          <Link href="/search" aria-label="Search" className="inline-flex h-11 w-11 items-center justify-center text-ink hover:text-teal">
             <SearchIcon />
           </Link>
           <Link
             href={user ? "/newsroom" : "/login"}
-            className="hidden h-11 items-center rounded-full bg-teal px-[18px] text-sm font-bold text-white hover:bg-teal-hover md:inline-flex"
+            className="hidden h-11 items-center bg-teal px-[18px] text-sm font-bold text-white hover:bg-teal-hover md:inline-flex"
           >
             {user ? "Newsroom" : "Sign in"}
           </Link>

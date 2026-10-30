@@ -67,14 +67,14 @@ export function MobileMenu({ sections, live, signedIn }: Props) {
         aria-label="Open menu"
         aria-expanded={open}
         onClick={() => setOpen(true)}
-        className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-mist md:hidden"
+        className="inline-flex h-11 w-11 items-center justify-center hover:bg-mist md:hidden"
       >
         <MenuIcon />
       </button>
       {open && (
         <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Menu" className="fixed inset-0 z-50 flex flex-col bg-white md:hidden">
           <div className="flex h-14 flex-none items-center justify-between border-b border-line px-1.5">
-            <button ref={closeRef} type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-mist">
+            <button ref={closeRef} type="button" aria-label="Close menu" onClick={() => setOpen(false)} className="inline-flex h-11 w-11 items-center justify-center hover:bg-mist">
               <CloseIcon />
             </button>
             <Link href="/" aria-label="Report Focus News home" onClick={() => setOpen(false)}>
@@ -84,7 +84,7 @@ export function MobileMenu({ sections, live, signedIn }: Props) {
           </div>
           <form action="/search" role="search" className="flex-none p-4">
             <label htmlFor="menu-search" className="sr-only">Search news</label>
-            <div className="flex h-[46px] items-center gap-2 rounded-full bg-mist px-3.5">
+            <div className="flex h-[46px] items-center gap-2 bg-mist px-3.5">
               <SearchIcon size={18} className="text-muted" />
               <input id="menu-search" name="q" type="search" placeholder="Search news" className="flex-1 bg-transparent text-base text-ink outline-none" />
             </div>
@@ -103,10 +103,10 @@ export function MobileMenu({ sections, live, signedIn }: Props) {
             ))}
           </nav>
           <div className="flex flex-none flex-col gap-2.5 border-t border-line bg-white p-4">
-            <Link href={signedIn ? "/newsroom" : "/login"} className="flex h-[46px] items-center justify-center rounded-full bg-teal text-[15px] font-bold text-white hover:bg-teal-hover">
+            <Link href={signedIn ? "/newsroom" : "/login"} className="flex h-[46px] items-center justify-center bg-teal text-[15px] font-bold text-white hover:bg-teal-hover">
               {signedIn ? "Go to the newsroom" : "Sign in"}
             </Link>
-            <Link href="/newsletters" className="flex h-[46px] items-center justify-center rounded-full border border-[#9ca3af] text-[15px] font-bold text-ink">
+            <Link href="/newsletters" className="flex h-[46px] items-center justify-center border border-[#9ca3af] text-[15px] font-bold text-ink">
               Get The Morning Focus newsletter
             </Link>
           </div>
