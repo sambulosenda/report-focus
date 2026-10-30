@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from "next";
-import { Bodoni_Moda, Libre_Franklin, Playfair_Display, Source_Serif_4 } from "next/font/google";
+import { Libre_Bodoni, Libre_Franklin, Playfair_Display, Source_Serif_4 } from "next/font/google";
 import { siteUrl } from "@/lib/utils";
 import "./globals.css";
 
-// Playfair for the masthead, Bodoni Moda for headlines, Source Serif 4 for body text, Libre Franklin for UI.
+// Playfair for the masthead, Libre Bodoni for headlines, Source Serif 4 for body text, Libre Franklin for UI.
 const playfair = Playfair_Display({ subsets: ["latin"], weight: "600", variable: "--font-playfair", display: "swap" });
-const headline = Bodoni_Moda({
+const headline = Libre_Bodoni({
   subsets: ["latin"],
-  axes: ["opsz"],
+  weight: ["600", "700"],
   style: ["normal", "italic"],
   variable: "--font-bodoni",
   display: "swap",

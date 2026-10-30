@@ -75,7 +75,7 @@ ol,
   white-space: nowrap;
 }
 
-/* Every story headline uses Bodoni Moda SemiBold in ink. */
+/* Every story headline uses Libre Bodoni SemiBold in ink. */
 .headline {
   font-family: var(--font-headline);
   font-weight: 600;
