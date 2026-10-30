@@ -47,7 +47,7 @@ export const INFO_PAGES: Record<string, InfoPage> = {
     description: "Who we are and how Report Focus News works.",
     body: `Report Focus News is an independent news site covering Zimbabwe, South Africa and the rest of Africa, along with the biggest stories from around the world.
 
-We started in ${CONTACT.founded}. Our newsroom is based in ${CONTACT.city}, and we work with reporters and contributors across Zimbabwe and South Africa.
+We started in ${CONTACT.founded}. We are based in ${CONTACT.city} and work with reporters and contributors across Zimbabwe and South Africa.
 
 ## What we cover
 
@@ -95,8 +95,9 @@ For questions about your information, email ${mail(CONTACT.privacy)}.
 
 You can also find us on [X](https://x.com/reportfocus), [Facebook](https://www.facebook.com/reportfocusnews), [Instagram](https://www.instagram.com/reportfocusnews) and [LinkedIn](https://www.linkedin.com/company/reportfocusnews).
 
-${CONTACT.owner}  
-${CONTACT.city}`,
+## Where we are
+
+We are based in ${CONTACT.city}. We do not have a public office, so please get in touch by email.`,
   },
   careers: {
     title: "Careers",
