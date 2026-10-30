@@ -278,9 +278,27 @@ export async function searchStories(q: string, { type = "all", sort = "relevance
   return { rows, total: Number(n) };
 }
 
+/** Every tag on a live story, most used first, so writers reuse a topic instead of starting a new one. */
+export async function knownTags(limit = 500) {
+  const rows = await db.select({ tags: articles.tags }).from(articles).where(isLive());
+  const counts = new Map<string, { label: string; n: number }>();
+  for (const r of rows) {
+    for (const raw of r.tags.split(",")) {
+      const label = raw.trim();
+      const key = label.toLowerCase();
+      if (!label || key === "sample") continue;
+      const hit = counts.get(key);
+      counts.set(key, { label: hit?.label ?? label, n: (hit?.n ?? 0) + 1 });
+    }
+  }
+  return [...counts.values()].sort((a, b) => b.n - a.n).slice(0, limit).map((t) => t.label);
+}
+
+/** Stories carrying this exact tag (any case), so "ai" doesn't also match "Ukraine". */
 export async function storiesByTag(tag: string, limit = 30) {
+  const needle = `%,${tag.trim().toLowerCase().replace(/[%_]/g, "")},%`;
   return storyQuery()
-    .where(and(isLive(), like(articles.tags, `%${tag.replace(/[%_]/g, "")}%`)))
+    .where(and(isLive(), like(sql`',' || replace(lower(${articles.tags}), ', ', ',') || ','`, needle)))
     .orderBy(desc(articles.publishedAt))
     .limit(limit);
 }

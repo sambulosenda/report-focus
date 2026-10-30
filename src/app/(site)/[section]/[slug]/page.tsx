@@ -125,6 +125,16 @@ export default async function ArticlePage({ params }: Props) {
     isAccessibleForFree: true,
     ...(article.kind === "live" && { coverageStartTime: article.publishedAt?.toISOString() }),
   };
+  // Lets Google show "Report Focus News › Zimbabwe" above the story in results.
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: SITE_NAME, item: siteUrl("/") },
+      ...(category ? [{ "@type": "ListItem", position: 2, name: category.name, item: siteUrl(`/${category.slug}`) }] : []),
+      { "@type": "ListItem", position: category ? 3 : 2, name: article.title },
+    ],
+  };
 
   return (
     <>
@@ -132,6 +142,7 @@ export default async function ArticlePage({ params }: Props) {
       <ViewBeacon articleId={article.id} />
       <article id="story" className="mx-auto max-w-[1280px] px-4 pb-16 pt-[18px] md:px-6 md:pb-[72px] md:pt-9">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(jsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(breadcrumbLd) }} />
         <header className="mx-auto max-w-[780px]">
           <nav aria-label="Breadcrumb" className="mb-2.5 flex flex-wrap items-center gap-2 text-xs font-bold md:mb-3.5 md:gap-2.5 md:text-[13px]">
             {article.kind === "live" && <LiveBadge />}

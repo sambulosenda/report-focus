@@ -9,6 +9,7 @@ import { LiveUpdatesPanel } from "@/components/newsroom/LiveUpdatesPanel";
 import { PageHeader, btnGhost } from "@/components/newsroom/ui";
 import { hasRole, requireUser } from "@/lib/auth";
 import { canEditArticle } from "@/lib/permissions";
+import { knownTags } from "@/lib/queries";
 
 export const metadata: Metadata = { title: "Edit story" };
 
@@ -46,7 +47,7 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
     );
   }
 
-  const [cats, library, homePin] = await Promise.all([
+  const [cats, library, homePin, tags] = await Promise.all([
     db.select().from(categories).orderBy(categories.sortOrder),
     db.select({ id: media.id, url: media.url, alt: media.alt }).from(media).orderBy(desc(media.createdAt)).limit(60),
     db
@@ -54,11 +55,12 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
       .from(homePins)
       .where(and(eq(homePins.articleId, article.id), or(isNull(homePins.expiresAt), gt(homePins.expiresAt, new Date()))))
       .get(),
+    knownTags(),
   ]);
 
   return (
     <>
-      <ArticleEditor article={article} categories={cats} library={library} role={user.role} authorName={row.author} publicUrl={publicUrl} homePin={homePin} />
+      <ArticleEditor article={article} categories={cats} library={library} knownTags={tags} role={user.role} authorName={row.author} publicUrl={publicUrl} homePin={homePin} />
       {canPostUpdates && <LiveUpdatesPanel articleId={article.id} publicUrl={live ? `/live/${article.slug}` : undefined} />}
     </>
   );
