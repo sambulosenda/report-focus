@@ -2,7 +2,7 @@ import "server-only";
 import { and, desc, eq, inArray, like, lte, ne, notInArray, or, sql, type Column } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "@/db";
-import { articles, categories, liveUpdates, users, type Kind } from "@/db/schema";
+import { articles, categories, legacyRedirects, liveUpdates, users, type Kind } from "@/db/schema";
 
 /** A story is public once it is published and its publish time has arrived (future times act as a schedule). */
 export const isLive = () => and(eq(articles.status, "published"), lte(articles.publishedAt, new Date()));
@@ -286,4 +286,26 @@ export async function sectionRails(cats: { id: number }[], perSection = 4) {
     map.set(r.categoryId!, list);
   }
   return map;
+}
+
+/** Where an old WordPress address should go now, or null if it isn't one we know. */
+export async function legacyTarget(key: string) {
+  const row = await db
+    .select({
+      articleSlug: articles.slug,
+      status: articles.status,
+      publishedAt: articles.publishedAt,
+      section: categories.slug,
+      categoryId: legacyRedirects.categoryId,
+    })
+    .from(legacyRedirects)
+    .leftJoin(articles, eq(articles.id, legacyRedirects.articleId))
+    .leftJoin(categories, eq(categories.id, sql`coalesce(${legacyRedirects.categoryId}, ${articles.categoryId})`))
+    .where(eq(legacyRedirects.path, key))
+    .get();
+  if (!row) return null;
+  if (row.categoryId) return row.section ? `/${row.section}` : null;
+  const live = row.status === "published" && row.publishedAt && row.publishedAt <= new Date();
+  if (!row.articleSlug || !live) return null;
+  return `/${row.section ?? "news"}/${row.articleSlug}`;
 }

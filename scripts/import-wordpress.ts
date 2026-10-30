@@ -1,0 +1,472 @@
+/**
+ * Brings posts over from a WordPress site: stories, sections (from categories), authors, tags,
+ * featured and inline images, dates and slugs. Old WordPress addresses keep working by redirecting
+ * to the new story pages.
+ *
+ *   npm run import:wordpress -- export.xml              # a file from WordPress → Tools → Export
+ *   npm run import:wordpress -- https://old-site.com    # a live site, through its public REST API
+ *
+ * Options:
+ *   --dry-run                 Show what would be imported without changing anything
+ *   --update                  Refresh stories already imported (otherwise they are skipped)
+ *   --no-images               Leave images on the old site instead of copying them here
+ *   --image-delay=1000        Milliseconds between image downloads (the old host may block a fast burst)
+ *   --author=<email>          Credit every story to this existing staff account
+ *   --section-map=a:b,c:d     Put WordPress category "a" into section "b" (by slug; "b" is created if needed).
+ *                             Unmapped categories become new sections of their own
+ *   --default-section=<slug>  Section for posts with no other category, such as only "Uncategorized" (created if needed)
+ *   --include-pages           Also import WordPress pages (About, Contact…) as stories
+ *   --since=<YYYY-MM-DD>      Only import posts published on or after this date (older ones are left out)
+ *   --limit=<n>               Only import the first n posts (handy for a trial run)
+ *
+ * Running it again is safe: posts are matched by their WordPress ID and never imported twice.
+ */
+import { createHash, randomBytes } from "node:crypto";
+import { existsSync, mkdirSync } from "node:fs";
+import { unlink, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import bcrypt from "bcryptjs";
+import { eq, inArray, like, max } from "drizzle-orm";
+import { legacyPathKey } from "../src/lib/legacy";
+import { RESERVED_SLUGS } from "../src/lib/site";
+import { slugify } from "../src/lib/utils";
+import { clip, htmlToMarkdown, htmlToText, leadText, markdownImages, withoutImage } from "./wordpress/convert";
+import { readExportFile, readFromSite, type WpPost, type WpSite } from "./wordpress/source";
+
+const PALETTE = ["#1d4ed8", "#0f766e", "#b91c1c", "#a16207", "#7c3aed", "#059669", "#15803d", "#c2410c", "#db2777"];
+const IMAGE_EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/avif": "avif" };
+/** Categories WordPress sites use as flags (or, for Opinion, a story type) rather than places in the site. They become tags, never sections. */
+const NOT_SECTIONS = new Set(["uncategorized", "featured", "breaking-news", "breaking", "top-stories", "trending", "opinion"]);
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+function parseArgs(argv: string[]) {
+  const flags: Record<string, string | true> = {};
+  const rest: string[] = [];
+  for (const a of argv) {
+    const m = a.match(/^--([a-z-]+)(?:=(.*))?$/);
+    if (m) flags[m[1]] = m[2] ?? true;
+    else rest.push(a);
+  }
+  const str = (k: string) => (typeof flags[k] === "string" ? (flags[k] as string) : undefined);
+  const known = ["dry-run", "update", "no-images", "author", "section-map", "default-section", "include-pages", "since", "limit", "image-delay"];
+  const unknown = Object.keys(flags).filter((k) => !known.includes(k));
+  if (unknown.length) throw new Error(`Unknown option --${unknown[0]}. See the top of scripts/import-wordpress.ts for the options.`);
+  const sectionMap = new Map(
+    (str("section-map") ?? "")
+      .split(",")
+      .map((pair) => pair.split(":").map((s) => s.trim().toLowerCase()))
+      .filter((p): p is [string, string] => p.length === 2 && !!p[0] && !!p[1]),
+  );
+  return {
+    source: rest[0],
+    dryRun: flags["dry-run"] === true,
+    update: flags.update === true,
+    images: flags["no-images"] !== true,
+    author: str("author")?.toLowerCase(),
+    sectionMap,
+    defaultSection: str("default-section")?.toLowerCase(),
+    includePages: flags["include-pages"] === true,
+    since: parseSince(str("since")),
+    limit: str("limit") ? Number(str("limit")) : undefined,
+    imageDelay: str("image-delay") ? Math.max(0, Number(str("image-delay")) || 0) : 1000,
+  };
+}
+
+function parseSince(value?: string) {
+  if (!value) return undefined;
+  const d = new Date(/^\d{4}$/.test(value) ? `${value}-01-01T00:00:00Z` : /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00Z` : "invalid");
+  if (Number.isNaN(d.getTime())) throw new Error(`--since needs a date like 2025-01-01 (got "${value}").`);
+  return d;
+}
+
+/**
+ * Fetches an image politely. Shared hosts start answering 429 after a burst of downloads,
+ * so requests are spaced out and a 429 or 503 waits (as long as Retry-After asks, or longer each time) and tries again.
+ */
+function politeFetcher(gapMs: number, log = console.log) {
+  let last = 0;
+  return async function get(url: string) {
+    for (let attempt = 0; ; attempt++) {
+      const wait = last + gapMs - Date.now();
+      if (wait > 0) await sleep(wait);
+      last = Date.now();
+      const res = await fetch(url, { headers: { "User-Agent": "ReportFocusImporter/1.0" } });
+      if ((res.status !== 429 && res.status !== 503) || attempt >= 5) return res;
+      await res.body?.cancel().catch(() => {});
+      const retryAfter = Number(res.headers.get("retry-after"));
+      const pause = Math.min(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 15_000 * 2 ** attempt, 5 * 60_000);
+      log(`  the old site asked us to slow down (HTTP ${res.status}); waiting ${Math.round(pause / 1000)}s…`);
+      await sleep(pause);
+    }
+  };
+}
+
+/** Reads a response body, giving up as soon as it passes `limit` bytes. */
+async function readCapped(res: Response, limit: number) {
+  const declared = Number(res.headers.get("content-length"));
+  if (declared > limit) throw new Error("larger than 20 MB");
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for await (const chunk of res.body as unknown as AsyncIterable<Uint8Array>) {
+    size += chunk.length;
+    if (size > limit) throw new Error("larger than 20 MB");
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
+}
+
+async function main() {
+  const opts = parseArgs(process.argv.slice(2));
+  if (!opts.source) {
+    console.log("Usage: npm run import:wordpress -- <export.xml | https://old-site.com> [--dry-run]");
+    process.exit(1);
+  }
+
+  const fromSite = /^https?:\/\//i.test(opts.source);
+  console.log(fromSite ? `Reading posts from ${opts.source}…` : `Reading ${opts.source}…`);
+  const site: WpSite = fromSite
+    ? await readFromSite(opts.source, { includePages: opts.includePages })
+    : await readExportFile(opts.source, { includePages: opts.includePages });
+
+  const since = opts.since;
+  const tooOld = since ? site.posts.filter((p) => p.status !== "private" && !(p.date && p.date >= since)).length : 0;
+  if (tooOld) site.skipped[`posts from before ${since!.toISOString().slice(0, 10)}`] = tooOld;
+  const posts = site.posts.filter((p) => p.status !== "private" && (!since || (p.date && p.date >= since))).slice(0, opts.limit);
+  const privateCount = site.posts.filter((p) => p.status === "private").length;
+  if (privateCount) site.skipped["private posts"] = privateCount;
+  console.log(`Found ${site.posts.length} ${site.posts.length === 1 ? "post" : "posts"}${site.url ? ` from ${site.url}` : ""}.`);
+
+  const oldHosts = new Set<string>();
+  if (site.url) oldHosts.add(new URL(site.url).hostname.replace(/^www\./, ""));
+  for (const p of site.posts) if (p.link) try { oldHosts.add(new URL(p.link).hostname.replace(/^www\./, "")); } catch {}
+
+  mkdirSync("data", { recursive: true });
+  const { db, schema } = await import("../src/db");
+  const { articles, categories, legacyRedirects, media, users } = schema;
+
+  // --- What's already here -------------------------------------------------
+  const existingCats = await db.select().from(categories);
+  const catBySlug = new Map(existingCats.map((c) => [c.slug, c]));
+  const allUsers = await db.select().from(users);
+  const usedSlugs = new Set((await db.select({ slug: articles.slug }).from(articles)).map((r) => r.slug));
+  const imported = new Map(
+    (await db.select({ path: legacyRedirects.path, articleId: legacyRedirects.articleId }).from(legacyRedirects).where(like(legacyRedirects.path, "/?p=%"))).map(
+      (r) => [r.path, r.articleId],
+    ),
+  );
+
+  const fixedAuthor = opts.author ? allUsers.find((u) => u.email.toLowerCase() === opts.author) : undefined;
+  if (opts.author && !fixedAuthor) throw new Error(`No staff account has the email ${opts.author}.`);
+
+  const report = { created: 0, updated: 0, skipped: 0, sections: [] as string[], authors: [] as string[], images: 0, imageFailures: [] as string[], redirects: 0, conflicts: [] as string[] };
+
+  // --- Sections ----------------------------------------------------------
+  const categoryNames = new Map<string, string>();
+  for (const p of site.posts) for (const c of p.categories) if (!categoryNames.has(c.slug)) categoryNames.set(c.slug, c.name);
+  let nextSort = ((await db.select({ m: max(categories.sortOrder) }).from(categories).get())?.m ?? 0) + 1;
+  async function sectionFor(post: WpPost) {
+    const cats = post.categories.filter((c) => !NOT_SECTIONS.has(c.slug));
+    const first = cats[0];
+    if (!first && !opts.defaultSection) return null;
+    const wanted = first ? (opts.sectionMap.get(first.slug.toLowerCase()) ?? slugify(first.slug || first.name)) : opts.defaultSection!;
+    // A section can't take over a URL that belongs to another page, such as /video or /about.
+    const slug = RESERVED_SLUGS.has(wanted) ? `${wanted}-news` : wanted;
+    const found = catBySlug.get(slug);
+    if (found) return found;
+    // A section that doesn't exist yet is named after the WordPress category with that slug, if there is one.
+    const name = categoryNames.get(slug) ?? first?.name ?? slug.replace(/-/g, " ").replace(/\b\w/g, (ch) => ch.toUpperCase());
+    const row = { name, slug, color: PALETTE[nextSort % PALETTE.length], sortOrder: nextSort++, inNav: false, description: null };
+    report.sections.push(`${name} (/${slug})`);
+    if (opts.dryRun) {
+      const fake = { ...row, id: -nextSort };
+      catBySlug.set(slug, fake);
+      return fake;
+    }
+    const created = await db.insert(categories).values(row).returning().get();
+    catBySlug.set(slug, created);
+    return created;
+  }
+
+  // --- Authors -----------------------------------------------------------
+  const authorCache = new Map<string, number>();
+  let placeholderHash: string | undefined;
+  async function authorFor(post: WpPost) {
+    if (fixedAuthor) return fixedAuthor.id;
+    const a = post.author ?? { login: "wordpress", name: "Staff", email: null, slug: "staff" };
+    const cached = authorCache.get(a.login);
+    if (cached) return cached;
+    const slug = slugify(a.slug || a.name);
+    const match =
+      (a.email && allUsers.find((u) => u.email.toLowerCase() === a.email!.toLowerCase())) ||
+      allUsers.find((u) => u.slug === slug) ||
+      allUsers.find((u) => u.name.toLowerCase() === a.name.toLowerCase());
+    if (match) {
+      authorCache.set(a.login, match.id);
+      return match.id;
+    }
+    report.authors.push(a.name);
+    if (opts.dryRun) {
+      authorCache.set(a.login, -1);
+      return -1;
+    }
+    // Imported writers can't sign in until an admin turns their account on and sets a password.
+    placeholderHash ??= await bcrypt.hash(randomBytes(24).toString("hex"), 10);
+    const email = a.email?.toLowerCase() || `${slug}@wordpress-import.invalid`;
+    const created = await db
+      .insert(users)
+      .values({ name: a.name, slug: uniqueUserSlug(slug), email, passwordHash: placeholderHash, role: "journalist", active: false })
+      .returning()
+      .get();
+    allUsers.push(created);
+    authorCache.set(a.login, created.id);
+    return created.id;
+  }
+  function uniqueUserSlug(slug: string) {
+    let s = slug;
+    for (let i = 2; allUsers.some((u) => u.slug === s); i++) s = `${slug}-${i}`;
+    return s;
+  }
+
+  // --- Images ------------------------------------------------------------
+  const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
+  // Like the site's own uploads, images go to the S3/R2 bucket when S3_BUCKET is set, otherwise to UPLOAD_DIR.
+  const bucket = process.env.S3_BUCKET;
+  const bucketUrl = process.env.S3_PUBLIC_URL?.replace(/\/+$/, "");
+  if (bucket && !bucketUrl && opts.images && !opts.dryRun) throw new Error("S3_PUBLIC_URL must be set with S3_BUCKET: it is the address readers load images from.");
+  const s3 = bucket
+    ? new S3Client({
+        region: process.env.S3_REGION || "auto",
+        endpoint: process.env.S3_ENDPOINT || undefined,
+        credentials:
+          process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY
+            ? { accessKeyId: process.env.S3_ACCESS_KEY_ID, secretAccessKey: process.env.S3_SECRET_ACCESS_KEY }
+            : undefined,
+      })
+    : null;
+  const publicUrl = (key: string) => (s3 ? `${bucketUrl}/${key}` : `/media/${key}`);
+  // Images already in the library, so a rerun doesn't fetch them again (the bucket can't be listed cheaply).
+  const libraryUrls = new Set((await db.select({ url: media.url }).from(media)).map((r) => r.url));
+  const imageCache = new Map<string, string>();
+  const fetchImage = politeFetcher(opts.imageDelay);
+  async function copyImage(url: string, alt: string, when: Date | null) {
+    // Root-relative and protocol-relative addresses only make sense on the old site.
+    let abs = url;
+    try {
+      abs = url.startsWith("//") ? `https:${url}` : url.startsWith("/") && site.url ? new URL(url, site.url).href : url;
+    } catch {}
+    if (!opts.images || opts.dryRun || !/^https?:/i.test(abs)) return abs;
+    const cached = imageCache.get(abs);
+    if (cached) return cached;
+    try {
+      const pathname = new URL(abs).pathname;
+      const d = when ?? new Date();
+      const dir = path.posix.join("wordpress", String(d.getUTCFullYear()), String(d.getUTCMonth() + 1).padStart(2, "0"));
+      const base = path.posix.basename(pathname).replace(/\.[a-z0-9]+$/i, "").replace(/[^a-z0-9_-]+/gi, "-").slice(0, 60) || "image";
+      const hash = createHash("sha1").update(abs).digest("hex").slice(0, 8);
+      // Same address, same file name: a second run finds the file and doesn't fetch it again.
+      for (const ext of Object.values(IMAGE_EXT)) {
+        const rel = path.posix.join(dir, `${base}-${hash}.${ext}`);
+        if (libraryUrls.has(publicUrl(rel)) || (!s3 && existsSync(path.join(uploadDir, rel)))) {
+          imageCache.set(abs, publicUrl(rel));
+          return publicUrl(rel);
+        }
+      }
+      const res = await fetchImage(abs);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const type = (res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+      const fileExt = path.extname(pathname).slice(1).toLowerCase().replace(/^jpg$/, "jpeg");
+      const ext = IMAGE_EXT[type] ?? (type.startsWith("image/") ? undefined : IMAGE_EXT[`image/${fileExt}`]);
+      if (!ext) throw new Error(`not a supported image (${type || "unknown type"})`);
+      const data = await readCapped(res, MAX_IMAGE_BYTES);
+      const rel = path.posix.join(dir, `${base}-${hash}.${ext}`);
+      const contentType = Object.keys(IMAGE_EXT).find((t) => IMAGE_EXT[t] === ext)!;
+      if (s3) {
+        await s3.send(
+          new PutObjectCommand({ Bucket: bucket, Key: rel, Body: data, ContentType: contentType, CacheControl: "public, max-age=31536000, immutable" }),
+        );
+      } else {
+        mkdirSync(path.join(uploadDir, dir), { recursive: true });
+        await writeFile(path.join(uploadDir, rel), data);
+      }
+      const local = publicUrl(rel);
+      try {
+        await db.insert(media).values({ url: local, alt: clip(alt, 300) });
+        libraryUrls.add(local);
+      } catch (err) {
+        // Otherwise the next run would find the file, skip the library entry and never list it.
+        if (s3) await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: rel })).catch(() => {});
+        else await unlink(path.join(uploadDir, rel)).catch(() => {});
+        throw err;
+      }
+      imageCache.set(abs, local);
+      report.images++;
+      return local;
+    } catch (err) {
+      report.imageFailures.push(`${abs} (${(err as Error).message})`);
+      imageCache.set(abs, abs);
+      return abs;
+    }
+  }
+
+  function uniqueSlug(wanted: string) {
+    const base = slugify(wanted);
+    let s = base;
+    for (let i = 2; usedSlugs.has(s); i++) s = `${base.slice(0, 85)}-${i}`;
+    usedSlugs.add(s);
+    return s;
+  }
+
+  // --- Old addresses -----------------------------------------------------
+  type Tx = Pick<typeof db, "insert" | "select">;
+  async function saveRedirects(tx: Tx, keys: Set<string>, articleId: number) {
+    for (const key of keys) {
+      const res = await tx.insert(legacyRedirects).values({ path: key, articleId }).onConflictDoNothing().run();
+      report.redirects += res.rowsAffected;
+      if (res.rowsAffected) continue;
+      // Two WordPress posts used the same address. The first one imported keeps it.
+      const owner = await tx.select({ articleId: legacyRedirects.articleId }).from(legacyRedirects).where(eq(legacyRedirects.path, key)).get();
+      if (owner && owner.articleId !== articleId) report.conflicts.push(`${key} already goes to story #${owner.articleId ?? "?"}, not #${articleId}`);
+    }
+  }
+
+  // --- Posts -------------------------------------------------------------
+  let preview: string | undefined;
+  for (const [i, post] of posts.entries()) {
+    const idKey = legacyPathKey("/", String(post.id));
+    const keys = new Set([idKey]);
+    if (post.link) {
+      try {
+        const u = new URL(post.link);
+        keys.add(legacyPathKey(u.pathname, u.searchParams.get("p")));
+      } catch {}
+    }
+    const existingId = imported.get(idKey);
+    if (existingId && !opts.update) {
+      // An earlier run that stopped part-way may have missed some of this post's old addresses.
+      if (!opts.dryRun) await saveRedirects(db, keys, existingId);
+      report.skipped++;
+      continue;
+    }
+    const label = `[${i + 1}/${posts.length}] ${post.title || "(no title)"}`;
+    console.log(label);
+
+    let body = htmlToMarkdown(post.html, { oldHosts: [...oldHosts] });
+    const copied = new Set<string>();
+    for (const { src, alt } of markdownImages(body)) {
+      if (copied.has(src)) continue;
+      copied.add(src);
+      const local = await copyImage(src, alt, post.date);
+      if (local !== src) body = body.split(`](${src}`).join(`](${local}`);
+    }
+
+    const summary = clip(htmlToText(post.excerpt) || leadText(post.html), 300);
+    const section = await sectionFor(post);
+    const authorId = await authorFor(post);
+    const hero = post.featured;
+    const heroImage = hero ? await copyImage(hero.url, hero.alt, post.date) : null;
+    if (heroImage) body = withoutImage(body, heroImage);
+    preview ??= body;
+    const extraSections = post.categories.filter((c) => c.slug !== "uncategorized" && c.slug !== section?.slug).map((c) => c.name);
+    // One of each tag, ignoring case, and not the story's own section.
+    const tagSeen = new Set([section?.name.toLowerCase()]);
+    const tagList = [...post.tags, ...extraSections].filter((t) => !tagSeen.has(t.toLowerCase()) && tagSeen.add(t.toLowerCase()));
+    const tags = clip(tagList.join(", "), 300).replace(/,[^,]*…$/, "");
+    const published = post.status === "publish" || post.status === "future";
+    const values = {
+      title: clip(post.title || "Untitled story", 200),
+      summary,
+      body,
+      heroImage,
+      heroCaption: hero?.caption ? clip(hero.caption, 300) : null,
+      heroAlt: hero?.alt ? clip(hero.alt, 300) : null,
+      tags,
+      // WordPress sites often file columns under an "Opinion" category; here that's a story type.
+      kind: post.categories.some((c) => c.slug === "opinion") ? ("opinion" as const) : ("news" as const),
+      categoryId: section?.id ?? null,
+      authorId,
+      status: published ? ("published" as const) : post.status === "pending" ? ("review" as const) : ("draft" as const),
+      publishedAt: published ? (post.date ?? new Date()) : null,
+      updatedAt: post.modified ?? post.date ?? new Date(),
+    };
+
+    if (opts.dryRun) {
+      if (existingId) report.updated++;
+      else report.created++;
+      continue;
+    }
+
+    let articleId: number;
+    if (existingId) {
+      // Keep the slug and status the newsroom may have changed since the first import.
+      const content: Partial<typeof values> = { ...values };
+      delete content.status;
+      delete content.publishedAt;
+      await db.update(articles).set(content).where(eq(articles.id, existingId));
+      articleId = existingId;
+      report.updated++;
+    } else {
+      // The story and its "/?p=ID" record are saved together, so a stopped run never leaves a story
+      // that the next run can't recognise and imports a second time.
+      articleId = await db.transaction(async (tx) => {
+        const row = await tx
+          .insert(articles)
+          .values({ ...values, slug: uniqueSlug(post.slug || post.title), createdAt: post.date ?? new Date() })
+          .returning({ id: articles.id })
+          .get();
+        await saveRedirects(tx, keys, row.id);
+        return row.id;
+      });
+      report.created++;
+      continue;
+    }
+    await saveRedirects(db, keys, articleId);
+  }
+
+  // Old category pages (/category/politics/) go to their section.
+  if (!opts.dryRun) {
+    const seen = new Set<string>();
+    for (const post of posts)
+      for (const c of post.categories) {
+        if (!c.slug || seen.has(c.slug)) continue;
+        seen.add(c.slug);
+        const wanted = opts.sectionMap.get(c.slug.toLowerCase()) ?? slugify(c.slug);
+        const cat = catBySlug.get(RESERVED_SLUGS.has(wanted) ? `${wanted}-news` : wanted);
+        if (!cat) continue;
+        const res = await db.insert(legacyRedirects).values({ path: legacyPathKey(`/category/${c.slug}`), categoryId: cat.id }).onConflictDoNothing().run();
+        report.redirects += res.rowsAffected;
+      }
+  }
+
+  // --- Report ------------------------------------------------------------
+  const verb = opts.dryRun ? "Would import" : "Imported";
+  console.log(`\n${verb} ${report.created} new ${report.created === 1 ? "story" : "stories"}${report.updated ? `, ${opts.dryRun ? "would update" : "updated"} ${report.updated}` : ""}.`);
+  if (report.skipped) console.log(`Skipped ${report.skipped} already imported (run with --update to refresh them).`);
+  for (const [why, n] of Object.entries(site.skipped)) console.log(`Left out ${why}: ${n}`);
+  if (report.sections.length) console.log(`New sections (hidden from the menu until you turn them on in Newsroom → Sections): ${report.sections.join(", ")}`);
+  if (report.authors.length)
+    console.log(`New writer accounts (switched off, so turn them on and set a password in Newsroom → Staff before they sign in): ${report.authors.join(", ")}`);
+  if (!opts.dryRun) console.log(`Copied ${report.images} images. Added ${report.redirects} redirects from old WordPress addresses.`);
+  if (report.conflicts.length) {
+    console.log(`\n${report.conflicts.length} old addresses were used by more than one post. The first story keeps them:`);
+    for (const c of report.conflicts.slice(0, 20)) console.log(`  ${c}`);
+  }
+  if (report.imageFailures.length) {
+    console.log(`\n${report.imageFailures.length} images couldn't be copied and still point at the old site:`);
+    for (const f of report.imageFailures.slice(0, 20)) console.log(`  ${f}`);
+  }
+  if (opts.dryRun && preview) console.log(`\nFirst story body as it will appear in the editor:\n\n${clip(preview, 1500)}\n`);
+  if (opts.dryRun && !fixedAuthor && authorCache.size) {
+    const ids = [...authorCache.values()].filter((id) => id > 0);
+    if (ids.length) {
+      const names = await db.select({ name: users.name }).from(users).where(inArray(users.id, ids));
+      console.log(`Existing staff who will get bylines: ${names.map((n) => n.name).join(", ")}`);
+    }
+  }
+}
+
+main().catch((err) => {
+  console.error(err instanceof Error ? err.message : err);
+  process.exit(1);
+});

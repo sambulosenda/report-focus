@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound, permanentRedirect } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
 import { Avatar } from "@/components/Avatar";
 import { LiveBadge } from "@/components/LiveBadge";
@@ -15,6 +15,7 @@ import { ViewBeacon } from "@/components/ViewBeacon";
 import { KIND_LABEL } from "@/db/schema";
 import { inlineAdHtml } from "@/lib/ads";
 import { canOptimize } from "@/lib/images";
+import { redirectLegacyOrNotFound } from "@/lib/legacy-redirect";
 import { renderMarkdownWithBreaks } from "@/lib/markdown";
 import { liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
 import { absoluteUrl, ldJson, pageMeta, publisherLd, SHARE_IMAGE } from "@/lib/seo";
@@ -58,7 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ArticlePage({ params }: Props) {
   const { section, slug } = await params;
   const row = await publicArticle(slug);
-  if (!row) notFound();
+  if (!row) return redirectLegacyOrNotFound(`/${section}/${slug}`);
   const { article, category, author } = row;
   const canonicalSection = category?.slug ?? "news";
   if (section !== canonicalSection) permanentRedirect(`/${canonicalSection}/${article.slug}`);

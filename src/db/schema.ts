@@ -165,6 +165,16 @@ export const loginAttempts = sqliteTable("login_attempts", {
   resetAt: integer("reset_at", { mode: "timestamp" }).notNull(),
 });
 
+/** Old addresses (from the WordPress site) that should send readers to a story or section here. */
+export const legacyRedirects = sqliteTable("legacy_redirects", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  /** Lowercase path with no trailing slash, such as "/2021/04/my-story" or "/?p=123". */
+  path: text("path").notNull().unique(),
+  articleId: integer("article_id").references(() => articles.id, { onDelete: "cascade" }),
+  categoryId: integer("category_id").references(() => categories.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at"),
+});
+
 export type User = typeof users.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Article = typeof articles.$inferSelect;
