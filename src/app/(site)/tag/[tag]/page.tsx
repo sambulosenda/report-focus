@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import { CardStory, RiverStory } from "@/components/Story";
 import { storiesByTag } from "@/lib/queries";
+import { pageMeta } from "@/lib/seo";
+import { SITE_NAME } from "@/lib/site";
 import { timeAgo } from "@/lib/utils";
 
 type Props = { params: Promise<{ tag: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const tag = decodeURIComponent((await params).tag);
-  return { title: tag.charAt(0).toUpperCase() + tag.slice(1) };
+  const title = tag.charAt(0).toUpperCase() + tag.slice(1);
+  return pageMeta({ title, description: `Full coverage of ${tag} from ${SITE_NAME}.`, path: `/tag/${encodeURIComponent(tag)}` });
 }
 
 export default async function TagPage({ params }: Props) {

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Libre_Franklin, Newsreader, Playfair_Display, Source_Serif_4 } from "next/font/google";
+import { SHARE_IMAGE } from "@/lib/seo";
 import { siteUrl } from "@/lib/utils";
 import "./globals.css";
 
@@ -29,7 +30,8 @@ export const metadata: Metadata = {
   },
   description:
     "Report Focus News brings you breaking news, in-depth reporting and analysis on politics, the economy, the world, health, technology and sport.",
-  openGraph: { siteName: "Report Focus News", type: "website" },
+  openGraph: { siteName: "Report Focus News", locale: "en_ZA", type: "website", images: [SHARE_IMAGE] },
+  twitter: { card: "summary_large_image", images: [SHARE_IMAGE] },
   alternates: { types: { "application/rss+xml": "/feed.xml" } },
 };
 

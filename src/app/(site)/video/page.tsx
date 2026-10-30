@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { VideoWatch } from "@/components/VideoWatch";
 import { storiesOfKind } from "@/lib/queries";
+import { pageMeta } from "@/lib/seo";
 import { db } from "@/db";
 import { articles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
-export const metadata: Metadata = { title: "Video", description: "Watch the latest video from Report Focus News." };
+export const metadata: Metadata = pageMeta({ title: "Video", description: "Watch the latest video from Report Focus News.", path: "/video" });
 
 /** Video hub: the newest video in the player, then the rest. */
 export default async function VideoHub() {
