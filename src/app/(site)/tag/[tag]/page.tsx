@@ -5,14 +5,11 @@ import { CardStory, RiverStory } from "@/components/Story";
 import { storiesByTag } from "@/lib/queries";
 import { collectionLd, ldJson, pageMeta } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
-import { tagName, tagSlug } from "@/lib/tags";
+import { TAG_INDEX_MIN, tagName, tagSlug } from "@/lib/tags";
 import { siteUrl, timeAgo } from "@/lib/utils";
 
 type Props = { params: Promise<{ tag: string }> };
 export const generateStaticParams = () => [];
-
-// A topic with fewer stories than this is too thin a page for Google; readers can still open it.
-const MIN_INDEXED = 3;
 
 /**
  * The stories for a tag address. A tag's address joins its words with hyphens (/tag/cyril-ramaphosa), as the old
@@ -39,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${name} News`,
     description: `The latest news and analysis on ${name} from ${SITE_NAME}.`,
     path: `/tag/${encodeURIComponent(slug)}`,
-    noindex: stories.length < MIN_INDEXED,
+    noindex: stories.length < TAG_INDEX_MIN,
   });
 }
 

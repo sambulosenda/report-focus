@@ -4,6 +4,8 @@ import { db } from "@/db";
 import { articles, categories, users } from "@/db/schema";
 import { allCategories, isLive } from "@/lib/queries";
 import { absoluteUrl, isDeskByline, isWireByline } from "@/lib/seo";
+import { INFO_PAGES } from "@/lib/site";
+import { TAG_INDEX_MIN, tagSlug } from "@/lib/tags";
 import { siteUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +14,7 @@ export const dynamic = "force-dynamic";
 const MAX_STORIES = 45_000;
 
 /**
- * Every public story, section and writer, so search engines can find the whole archive.
+ * Every public story, section, writer, topic hub and standing page search engines should index.
  * Each list page is dated by its newest story. Google ignores change frequency and priority, so they are left out.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -23,6 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         slug: articles.slug,
         section: categories.slug,
         heroImage: articles.heroImage,
+        tags: articles.tags,
         updatedAt: articles.updatedAt,
         author: { slug: users.slug, name: users.name },
       })
@@ -41,15 +44,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   };
   const bySection = new Map<string, Date>();
   const byWriter = new Map<string, Date>();
+  const byTag = new Map<string, { at: Date; n: number }>();
   let latest: Date | undefined;
-  // Agency stories are noindex (see isWireByline), so they are left out.
+  // Agency stories are noindex (see isWireByline), so they are left out of the story list.
+  // Their tags still count: a topic page indexes every live story that carries the tag.
   const listed = stories.filter((s) => !isWireByline(s.author.name));
+  for (const s of stories) {
+    for (const raw of s.tags.split(",")) {
+      const slug = tagSlug(raw);
+      if (!slug || slug === "sample") continue;
+      const prev = byTag.get(slug);
+      byTag.set(slug, { n: (prev?.n ?? 0) + 1, at: !prev || s.updatedAt > prev.at ? s.updatedAt : prev.at });
+    }
+  }
   for (const s of listed) {
     if (!latest || s.updatedAt > latest) latest = s.updatedAt;
     if (s.section) newest(bySection, s.section, s.updatedAt);
     // Desk and wire bylines have no profile worth listing (their pages are noindex).
     if (!isDeskByline(s.author.name)) newest(byWriter, s.author.slug, s.updatedAt);
   }
+  const sectionSlugs = new Set(cats.map((c) => c.slug));
 
   return [
     // The same address as the homepage's canonical link.
@@ -62,5 +76,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       images: s.heroImage ? [absoluteUrl(s.heroImage)] : undefined,
     })),
     ...[...byWriter].map(([slug, d]) => ({ url: siteUrl(`/author/${slug}`), lastModified: d })),
+    ...[...byTag]
+      .filter(([, t]) => t.n >= TAG_INDEX_MIN)
+      .map(([slug, t]) => ({ url: siteUrl(`/tag/${encodeURIComponent(slug)}`), lastModified: t.at })),
+    ...Object.entries(INFO_PAGES)
+      .filter(([slug, page]) => !page.noindex && !sectionSlugs.has(slug))
+      .map(([slug]) => ({ url: siteUrl(`/${slug}`) })),
+    { url: siteUrl("/newsletters") },
   ];
 }

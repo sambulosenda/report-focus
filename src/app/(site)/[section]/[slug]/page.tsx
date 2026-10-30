@@ -116,7 +116,9 @@ export default async function ArticlePage({ params }: Props) {
     "@type": article.kind === "live" ? "LiveBlogPosting" : article.kind === "opinion" ? "OpinionNewsArticle" : article.kind === "analysis" ? "AnalysisNewsArticle" : "NewsArticle",
     headline: article.title,
     description: metaDescription(article.summary || excerpt(article.body, 300)),
-    image: [absoluteUrl(article.heroImage ?? SHARE_IMAGE.url)],
+    image: article.heroImage
+      ? [{ "@type": "ImageObject", url: absoluteUrl(article.heroImage), caption: article.heroCaption || undefined, creditText: article.heroCredit || undefined }]
+      : [absoluteUrl(SHARE_IMAGE.url)],
     datePublished: article.publishedAt?.toISOString(),
     dateModified: updatedAt.toISOString(),
     author: [authorLd(author)],
@@ -127,7 +129,17 @@ export default async function ArticlePage({ params }: Props) {
     keywords: tags.length ? tags.join(", ") : undefined,
     inLanguage: "en",
     isAccessibleForFree: true,
-    ...(article.kind === "live" && { coverageStartTime: article.publishedAt?.toISOString() }),
+    ...(article.kind === "live" && {
+      coverageStartTime: article.publishedAt?.toISOString(),
+      // Only the updates printed on this page. The rest live on the timeline.
+      ...(latestUpdates.length > 0 && {
+        liveBlogUpdate: latestUpdates.flatMap((u) =>
+          u.createdAt
+            ? [{ "@type": "BlogPosting", headline: u.title || excerpt(u.body, 110), datePublished: u.createdAt.toISOString(), url: siteUrl(`/live/${article.slug}#update-${u.id}`) }]
+            : [],
+        ),
+      }),
+    }),
   };
   // Lets Google show "Report Focus News › Zimbabwe" above the story in results.
   const breadcrumbLd = {

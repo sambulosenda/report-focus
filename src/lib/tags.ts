@@ -1,5 +1,8 @@
 /** Topic tags are stored as typed by the newsroom ("cyril ramaphosa", "SAPS"); these turn them into addresses and names. */
 
+/** A topic with fewer stories than this stays out of the sitemap and out of search results. */
+export const TAG_INDEX_MIN = 3;
+
 /** Short names that are always written in capitals. */
 const ACRONYMS = new Set([
   "anc", "au", "ccc", "da", "dirco", "drc", "eff", "ecowas", "fifa", "idac", "iec", "imf", "mdc", "mk", "nato", "npa", "saps", "sadc",
