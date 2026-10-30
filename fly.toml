@@ -3,14 +3,14 @@ app = "report-focus"
 primary_region = "lhr"
 
 [build.args]
-  DATABASE_URL = "libsql://report-focus-CHANGE-ME.turso.io"
+  DATABASE_URL = "libsql://report-focus-sambulosenda.aws-eu-west-1.turso.io"
   SITE_URL = "https://reportfocusnews.com"
   S3_PUBLIC_URL = "https://media.reportfocusnews.com"
   SITE_TIMEZONE = "America/New_York"
   NEXT_PUBLIC_SITE_TIMEZONE = "America/New_York"
 
 [env]
-  DATABASE_URL = "libsql://report-focus-CHANGE-ME.turso.io"
+  DATABASE_URL = "libsql://report-focus-sambulosenda.aws-eu-west-1.turso.io"
   SITE_URL = "https://reportfocusnews.com"
   S3_PUBLIC_URL = "https://media.reportfocusnews.com"
   S3_REGION = "auto"
