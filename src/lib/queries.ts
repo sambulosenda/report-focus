@@ -2,7 +2,7 @@ import "server-only";
 import { and, desc, eq, inArray, like, lte, ne, notInArray, or, sql, type Column } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "@/db";
-import { articles, categories, legacyRedirects, liveUpdates, users, type Kind } from "@/db/schema";
+import { articles, categories, homePins, legacyRedirects, liveUpdates, users, type Kind } from "@/db/schema";
 
 /** A story is public once it is published and its publish time has arrived (future times act as a schedule). */
 export const isLive = () => and(eq(articles.status, "published"), lte(articles.publishedAt, new Date()));
@@ -144,6 +144,42 @@ export async function featuredStories(limit = 5) {
     .where(and(isLive(), eq(articles.isFeatured, true)))
     .orderBy(desc(articles.publishedAt))
     .limit(limit);
+}
+
+/** Home page slots an editor has pinned, keyed by slot. Pins that have run out, or whose story is no longer public, are left out. */
+export async function homePinned() {
+  const now = new Date();
+  const pins = await db
+    .select()
+    .from(homePins)
+    .where(or(sql`${homePins.expiresAt} is null`, sql`${homePins.expiresAt} > ${Math.floor(now.getTime() / 1000)}`));
+  if (pins.length === 0) return new Map<number, { story: StoryCard; expiresAt: Date | null }>();
+  const stories = await storyQuery().where(and(isLive(), inArray(articles.id, pins.map((p) => p.articleId))));
+  const byId = new Map(stories.map((s) => [s.id, s]));
+  const out = new Map<number, { story: StoryCard; expiresAt: Date | null }>();
+  for (const p of pins) {
+    const story = byId.get(p.articleId);
+    if (story) out.set(p.slot, { story, expiresAt: p.expiresAt });
+  }
+  return out;
+}
+
+/**
+ * The lead and the headline list beside it on the home page. Pinned slots come first; an empty lead slot goes to the
+ * newest top story (or the newest story), and the other slots fill with the newest stories that aren't already shown.
+ */
+export async function homeTop(stackSize = 5) {
+  const [pinned, featured, latest] = await Promise.all([homePinned(), featuredStories(1), latestStories(30)]);
+  const lead = pinned.get(1)?.story ?? featured[0] ?? latest[0];
+  const used = new Set([...pinned.values()].map((p) => p.story.id));
+  if (lead) used.add(lead.id);
+  const auto = latest.filter((s) => s.kind !== "video" && !used.has(s.id));
+  const stack: StoryCard[] = [];
+  for (let slot = 2; slot < stackSize + 2; slot++) {
+    const next = pinned.get(slot)?.story ?? auto.shift();
+    if (next) stack.push(next);
+  }
+  return { lead, stack, pinned };
 }
 
 export async function breakingStory() {

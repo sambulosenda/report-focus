@@ -1,15 +1,16 @@
 "use server";
 
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, lte, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
-import { KINDS, articles, liveUpdates, media } from "@/db/schema";
+import { HOME_PIN_HOURS, HOME_SLOTS, HOME_SLOT_LABEL, KINDS, articles, homePins, liveUpdates, media } from "@/db/schema";
+import type { FormState } from "@/actions/auth";
 import { requireUser } from "@/lib/auth";
 import { canDeleteArticle, canEditArticle, canPublish } from "@/lib/permissions";
 import { saveImage } from "@/lib/storage";
-import { slugify } from "@/lib/utils";
+import { formatDateTime, slugify } from "@/lib/utils";
 
 export type ArticleFormState = { error?: string; ok?: string; savedAt?: number } | undefined;
 
@@ -159,6 +160,9 @@ export async function saveArticle(_prev: ArticleFormState, formData: FormData): 
     id = row.id;
   }
 
+  // A story that leaves the site gives up its home page spot.
+  if (existing && status !== "published") await db.delete(homePins).where(eq(homePins.articleId, existing.id));
+
   revalidatePath("/", "layout");
   if (!existing) redirect(`/newsroom/articles/${id}?created=1`);
 
@@ -179,7 +183,11 @@ export async function deleteArticle(formData: FormData) {
   const existing = await db.select().from(articles).where(eq(articles.id, id)).get();
   if (!existing || !canDeleteArticle(user, existing)) redirect("/newsroom/articles?error=delete");
   // Remove the timeline explicitly: SQLite only cascades when foreign keys are switched on.
-  await db.batch([db.delete(liveUpdates).where(eq(liveUpdates.articleId, id)), db.delete(articles).where(eq(articles.id, id))]);
+  await db.batch([
+    db.delete(liveUpdates).where(eq(liveUpdates.articleId, id)),
+    db.delete(homePins).where(eq(homePins.articleId, id)),
+    db.delete(articles).where(eq(articles.id, id)),
+  ]);
   revalidatePath("/", "layout");
   redirect("/newsroom/articles?deleted=1");
 }
@@ -216,5 +224,47 @@ export async function clearBreakingBanner() {
   const user = await requireUser();
   if (!canPublish(user)) return;
   await db.update(articles).set({ isBreaking: false }).where(eq(articles.isBreaking, true));
+  revalidatePath("/", "layout");
+}
+
+const PinInput = z.object({
+  id: z.coerce.number().int().positive("Choose a story to pin."),
+  slot: z.coerce.number().refine((n) => (HOME_SLOTS as readonly number[]).includes(n), "Choose a spot on the home page."),
+  hours: z.enum(HOME_PIN_HOURS),
+});
+
+/** Editors fix a published story to a home page slot. It replaces whatever was pinned there, and leaves any other slot it held. */
+export async function pinStory(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await requireUser();
+  if (!canPublish(user)) return { error: "Only editors can arrange the home page." };
+  const parsed = PinInput.safeParse({ id: formData.get("id"), slot: formData.get("slot"), hours: formData.get("hours") ?? "24" });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form and try again." };
+  const { id, slot, hours } = parsed.data;
+  const story = await db
+    .select({ title: articles.title })
+    .from(articles)
+    .where(and(eq(articles.id, id), eq(articles.status, "published"), lte(articles.publishedAt, new Date())))
+    .get();
+  if (!story) return { error: "Only stories that are live on the site can be pinned." };
+  const expiresAt = hours === "0" ? null : new Date(Date.now() + Number(hours) * 3600e3);
+  await db.batch([
+    db.delete(homePins).where(eq(homePins.articleId, id)),
+    db
+      .insert(homePins)
+      .values({ slot, articleId: id, expiresAt, pinnedBy: user.id })
+      .onConflictDoUpdate({ target: homePins.slot, set: { articleId: id, expiresAt, pinnedBy: user.id, createdAt: new Date() } }),
+  ]);
+  revalidatePath("/", "layout");
+  const place = slot === 1 ? "the lead story" : `${HOME_SLOT_LABEL[slot].toLowerCase()} on the home page`;
+  return { ok: `“${story.title}” is now ${place}${expiresAt ? ` until ${formatDateTime(expiresAt)}` : ""}.` };
+}
+
+/** Lets a slot go back to filling itself. */
+export async function unpinSlot(formData: FormData) {
+  const user = await requireUser();
+  if (!canPublish(user)) return;
+  const slot = Number(formData.get("slot"));
+  if (!Number.isInteger(slot)) return;
+  await db.delete(homePins).where(eq(homePins.slot, slot));
   revalidatePath("/", "layout");
 }

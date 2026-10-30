@@ -19,8 +19,7 @@ import {
 } from "@/components/Story";
 import {
   currentLiveStory,
-  featuredStories,
-  latestStories,
+  homeTop,
   newestLiveUpdate,
   mostRead,
   navCategories,
@@ -39,9 +38,8 @@ const siteLd = [
 ];
 
 export default async function HomePage() {
-  const [featured, latest, popular, cats, videos, opinion, live, chips] = await Promise.all([
-    featuredStories(5),
-    latestStories(30),
+  const [{ lead, stack }, popular, cats, videos, opinion, live, chips] = await Promise.all([
+    homeTop(5),
     mostRead(8),
     navCategories(),
     storiesOfKind(["video"], 5),
@@ -50,7 +48,6 @@ export default async function HomePage() {
     trendingTags(6),
   ]);
 
-  const lead = featured[0] ?? latest[0];
   if (!lead) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-24 text-center">
@@ -60,16 +57,8 @@ export default async function HomePage() {
     );
   }
 
-  const used = new Set([lead.id]);
-  const take = <T extends { id: number }>(list: T[], n: number) => {
-    const out = list.filter((s) => !used.has(s.id)).slice(0, n);
-    out.forEach((s) => used.add(s.id));
-    return out;
-  };
-  const textStories = latest.filter((s) => s.kind !== "video");
-  const bullets = await relatedStories(lead.id, lead.categoryId, 2, "video");
-  bullets.forEach((s) => used.add(s.id));
-  const stack = take(textStories, 5);
+  const shown = new Set(stack.map((s) => s.id));
+  const bullets = (await relatedStories(lead.id, lead.categoryId, 2 + stack.length, "video")).filter((s) => !shown.has(s.id)).slice(0, 2);
   const top = popular.slice(0, 8);
   // When the live story is already the lead, point to its newest post instead of repeating the headline.
   const liveLatest = live && live.id === lead.id ? await newestLiveUpdate(live.id) : undefined;

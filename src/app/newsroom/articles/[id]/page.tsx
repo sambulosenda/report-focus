@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { db } from "@/db";
-import { articles, categories, media, users } from "@/db/schema";
+import { articles, categories, homePins, media, users } from "@/db/schema";
 import { ArticleEditor } from "@/components/newsroom/ArticleEditor";
 import { LiveUpdatesPanel } from "@/components/newsroom/LiveUpdatesPanel";
 import { PageHeader, btnGhost } from "@/components/newsroom/ui";
@@ -46,14 +46,19 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
     );
   }
 
-  const [cats, library] = await Promise.all([
+  const [cats, library, homePin] = await Promise.all([
     db.select().from(categories).orderBy(categories.sortOrder),
     db.select({ id: media.id, url: media.url, alt: media.alt }).from(media).orderBy(desc(media.createdAt)).limit(60),
+    db
+      .select({ slot: homePins.slot, expiresAt: homePins.expiresAt })
+      .from(homePins)
+      .where(and(eq(homePins.articleId, article.id), or(isNull(homePins.expiresAt), gt(homePins.expiresAt, new Date()))))
+      .get(),
   ]);
 
   return (
     <>
-      <ArticleEditor article={article} categories={cats} library={library} role={user.role} authorName={row.author} publicUrl={publicUrl} />
+      <ArticleEditor article={article} categories={cats} library={library} role={user.role} authorName={row.author} publicUrl={publicUrl} homePin={homePin} />
       {canPostUpdates && <LiveUpdatesPanel articleId={article.id} publicUrl={live ? `/live/${article.slug}` : undefined} />}
     </>
   );

@@ -4,9 +4,9 @@ import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { deleteArticle, saveArticle, uploadImage } from "@/actions/articles";
 import { CheckIcon, ChevronLeftIcon, EyeIcon } from "@/components/icons";
-import { KIND_LABEL, KINDS, type Article, type Category, type Kind, type Media, type Role } from "@/db/schema";
+import { HOME_SLOT_LABEL, KIND_LABEL, KINDS, type Article, type Category, type Kind, type Media, type Role } from "@/db/schema";
 import { renderMarkdown } from "@/lib/markdown";
-import { cn, readingTime } from "@/lib/utils";
+import { cn, formatDateTime, readingTime } from "@/lib/utils";
 import { StatusBadge, SwitchButton, btnGhost, inputClass, labelClass } from "./ui";
 
 type Props = {
@@ -16,6 +16,8 @@ type Props = {
   role: Role;
   authorName: string;
   publicUrl?: string;
+  /** The home page spot this story is pinned to, if any. */
+  homePin?: { slot: number; expiresAt: Date | null };
 };
 
 const HEADLINE_MAX = 110;
@@ -29,7 +31,7 @@ function toLocalInput(d: Date | null | undefined) {
 
 const clock = (d: Date) => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TZ });
 
-export function ArticleEditor({ article, categories, library, role, authorName, publicUrl }: Props) {
+export function ArticleEditor({ article, categories, library, role, authorName, publicUrl, homePin }: Props) {
   const [state, action, pending] = useActionState(saveArticle, undefined);
   const editor = role !== "journalist";
   const [title, setTitle] = useState(article?.title ?? "");
@@ -582,6 +584,25 @@ export function ArticleEditor({ article, categories, library, role, authorName, 
                     <option value="section">Section only</option>
                   </select>
                 </label>
+                {publicUrl && article && (
+                  <p className="text-xs text-muted">
+                    {homePin ? (
+                      <>
+                        <span className="font-bold text-teal">
+                          Pinned: {HOME_SLOT_LABEL[homePin.slot].toLowerCase()}
+                          {homePin.expiresAt ? ` until ${formatDateTime(homePin.expiresAt)}` : ""}.
+                        </span>{" "}
+                        <Link href="/newsroom#home-page" className="font-bold text-ink underline">
+                          Change on the dashboard
+                        </Link>
+                      </>
+                    ) : (
+                      <Link href={`/newsroom?pin=${article.id}#home-page`} className="font-bold text-ink underline">
+                        Pin to the top of the home page
+                      </Link>
+                    )}
+                  </p>
+                )}
                 <label className="flex flex-col gap-1.5 text-[13px] font-bold">
                   Publish at (optional)
                   <input type="datetime-local" value={scheduleLocal} onChange={(e) => setScheduleLocal(e.target.value)} className={cn(field, "font-normal tabular")} />
