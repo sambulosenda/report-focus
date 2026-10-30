@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { donateUrl } from "@/lib/ads";
 import { navCategories } from "@/lib/queries";
-import { FOOTER_LINKS, SOCIAL, TAGLINE } from "@/lib/site";
+import { FOOTER_LINKS, SOCIAL } from "@/lib/site";
 import { Logo } from "./Logo";
 import { SOCIAL_ICONS } from "./icons";
 
@@ -38,23 +39,16 @@ export async function Footer() {
             <Link href="/" aria-label="Report Focus News home" className="hover:no-underline">
               <Logo dark className="text-[28px] leading-[1.1]" />
             </Link>
-            <p className="mt-2 text-sm leading-normal text-on-teal-muted">{TAGLINE}</p>
           </div>
-          <ul aria-label="Follow Report Focus News" className="flex gap-2.5">
+          <ul aria-label="Follow Report Focus News" className="-mx-2.5 flex">
             {SOCIAL.map(({ name, url }) => {
               const Icon = SOCIAL_ICONS[name];
-              const circle = "inline-flex h-10 w-10 items-center justify-center rounded-full border border-teal-line text-white";
+              const circle = "inline-flex h-10 w-10 items-center justify-center text-white";
               return (
                 <li key={name}>
-                  {url ? (
-                    <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`Report Focus News on ${name}`} className={`${circle} hover:bg-teal-line`}>
-                      <Icon size={name === "YouTube" ? 17 : 15} />
-                    </a>
-                  ) : (
-                    <span role="img" aria-label={name} className={circle}>
-                      <Icon size={name === "YouTube" ? 17 : 15} />
-                    </span>
-                  )}
+                  <a href={url} target="_blank" rel="noopener noreferrer" aria-label={`Report Focus News on ${name}`} className={`${circle} hover:bg-teal-line`}>
+                    <Icon size={name === "YouTube" ? 17 : 15} />
+                  </a>
                 </li>
               );
             })}
@@ -72,7 +66,7 @@ export async function Footer() {
             </ul>
           </div>
           <LinkColumn title="Watch & listen" links={FOOTER_LINKS.watch} />
-          <LinkColumn title="Company" links={FOOTER_LINKS.company} />
+          <LinkColumn title="Company" links={donateUrl() ? [...FOOTER_LINKS.company, { label: "Support us", href: "/support" }] : FOOTER_LINKS.company} />
           <LinkColumn title="Standards & help" links={FOOTER_LINKS.help} />
         </nav>
       </div>

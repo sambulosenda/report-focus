@@ -4,16 +4,20 @@ export const SITE_NAME = "Report Focus News";
 export const TAGLINE = "Independent reporting. Fast when it breaks, thorough when it matters.";
 
 /**
- * Social accounts shown in the footer. Add each profile URL when the account exists;
- * icons without a URL are shown but not linked.
+ * Social accounts shown in the footer and listed for Google. The defaults are the accounts the old
+ * WordPress site linked on its About and Contact pages; a non-empty env variable overrides each one.
+ * An account with no URL is left out.
  */
-export const SOCIAL: { name: "X" | "Facebook" | "Instagram" | "YouTube" | "TikTok"; url: string }[] = [
-  { name: "X", url: process.env.NEXT_PUBLIC_SOCIAL_X ?? "" },
-  { name: "Facebook", url: process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK ?? "" },
-  { name: "Instagram", url: process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM ?? "" },
-  { name: "YouTube", url: process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE ?? "" },
-  { name: "TikTok", url: process.env.NEXT_PUBLIC_SOCIAL_TIKTOK ?? "" },
-];
+const social = (name: SocialName, env: string | undefined, fallback = "") => ({ name, url: env || fallback });
+export type SocialName = "X" | "Facebook" | "Instagram" | "LinkedIn" | "YouTube" | "TikTok";
+export const SOCIAL: { name: SocialName; url: string }[] = [
+  social("X", process.env.NEXT_PUBLIC_SOCIAL_X, "https://x.com/reportfocus"),
+  social("Facebook", process.env.NEXT_PUBLIC_SOCIAL_FACEBOOK, "https://www.facebook.com/reportfocusnews"),
+  social("Instagram", process.env.NEXT_PUBLIC_SOCIAL_INSTAGRAM, "https://www.instagram.com/reportfocusnews"),
+  social("LinkedIn", process.env.NEXT_PUBLIC_SOCIAL_LINKEDIN, "https://www.linkedin.com/company/reportfocusnews"),
+  social("YouTube", process.env.NEXT_PUBLIC_SOCIAL_YOUTUBE),
+  social("TikTok", process.env.NEXT_PUBLIC_SOCIAL_TIKTOK),
+].filter((s) => s.url);
 
 export type InfoPage = { title: string; description: string; body: string };
 
@@ -51,11 +55,6 @@ export const INFO_PAGES: Record<string, InfoPage> = {
     title: "Corrections",
     description: "How Report Focus News corrects its mistakes.",
     body: "When we make a mistake, we correct it promptly and add a note to the story explaining what changed.\n\nTo report an error, use the contact page and include a link to the story.\n\n_List recent corrections here before launch._",
-  },
-  newsletters: {
-    title: "Newsletters",
-    description: "Sign up for The Morning Focus and other newsletters.",
-    body: "**The Morning Focus** brings you the five stories you need before 8 a.m., every weekday. Sign up with the form below.",
   },
   podcasts: {
     title: "Podcasts",
@@ -113,7 +112,7 @@ export const FOOTER_LINKS = {
 
 /** Top-level URLs that belong to pages, so no section may use them as its slug. */
 export const RESERVED_SLUGS = new Set([
-  "newsroom", "login", "search", "latest", "author", "tag", "media", "live", "video", "demo", "feed.xml", "sitemap.xml", "robots.txt", "api",
+  "newsroom", "login", "search", "latest", "author", "tag", "media", "live", "video", "demo", "feed.xml", "sitemap.xml", "robots.txt", "api", "newsletters", "support", "ads.txt", "news-sitemap.xml",
   // Old WordPress addresses are looked up here.
   "wp-redirect",
   // Standing pages share the top-level URL space with sections.

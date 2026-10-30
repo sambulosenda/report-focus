@@ -16,7 +16,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <Logo className="text-[32px] leading-[1.1] sm:text-[40px]" />
       </Link>
       <p className="mb-7 text-[13px] font-extrabold tracking-[0.12em] text-teal">NEWSROOM</p>
-      <div className="w-full max-w-[400px] rounded-[14px] border border-line bg-white p-6 sm:p-8">
+      <div className="w-full max-w-[400px] border border-line bg-white p-6 sm:p-8">
         <h1 className="text-[22px] font-extrabold">Sign in</h1>
         <p className="mt-1.5 text-sm text-muted">For Report Focus News staff.</p>
         <LoginForm next={next} />

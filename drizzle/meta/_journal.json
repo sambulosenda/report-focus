@@ -19,8 +19,22 @@
     {
       "idx": 2,
       "version": "6",
-      "when": 1793352355371,
-      "tag": "0002_wordpress_redirects",
+      "when": 1793369668837,
+      "tag": "0002_newsletter_alerts",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793372263062,
+      "tag": "0003_login_attempts",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1793373029250,
+      "tag": "0004_wordpress_redirects",
       "breakpoints": true
     }
   ]

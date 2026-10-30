@@ -25,6 +25,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { existsSync, mkdirSync } from "node:fs";
 import { unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { DeleteObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import bcrypt from "bcryptjs";
 import { eq, inArray, like, max } from "drizzle-orm";
 import { legacyPathKey } from "../src/lib/legacy";
@@ -230,6 +231,23 @@ async function main() {
 
   // --- Images ------------------------------------------------------------
   const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
+  // Like the site's own uploads, images go to the S3/R2 bucket when S3_BUCKET is set, otherwise to UPLOAD_DIR.
+  const bucket = process.env.S3_BUCKET;
+  const bucketUrl = process.env.S3_PUBLIC_URL?.replace(/\/+$/, "");
+  if (bucket && !bucketUrl && opts.images && !opts.dryRun) throw new Error("S3_PUBLIC_URL must be set with S3_BUCKET: it is the address readers load images from.");
+  const s3 = bucket
+    ? new S3Client({
+        region: process.env.S3_REGION || "auto",
+        endpoint: process.env.S3_ENDPOINT || undefined,
+        credentials:
+          process.env.S3_ACCESS_KEY_ID && process.env.S3_SECRET_ACCESS_KEY
+            ? { accessKeyId: process.env.S3_ACCESS_KEY_ID, secretAccessKey: process.env.S3_SECRET_ACCESS_KEY }
+            : undefined,
+      })
+    : null;
+  const publicUrl = (key: string) => (s3 ? `${bucketUrl}/${key}` : `/media/${key}`);
+  // Images already in the library, so a rerun doesn't fetch them again (the bucket can't be listed cheaply).
+  const libraryUrls = new Set((await db.select({ url: media.url }).from(media)).map((r) => r.url));
   const imageCache = new Map<string, string>();
   const fetchImage = politeFetcher(opts.imageDelay);
   async function copyImage(url: string, alt: string, when: Date | null) {
@@ -250,9 +268,9 @@ async function main() {
       // Same address, same file name: a second run finds the file and doesn't fetch it again.
       for (const ext of Object.values(IMAGE_EXT)) {
         const rel = path.posix.join(dir, `${base}-${hash}.${ext}`);
-        if (existsSync(path.join(uploadDir, rel))) {
-          imageCache.set(abs, `/media/${rel}`);
-          return `/media/${rel}`;
+        if (libraryUrls.has(publicUrl(rel)) || (!s3 && existsSync(path.join(uploadDir, rel)))) {
+          imageCache.set(abs, publicUrl(rel));
+          return publicUrl(rel);
         }
       }
       const res = await fetchImage(abs);
@@ -263,14 +281,23 @@ async function main() {
       if (!ext) throw new Error(`not a supported image (${type || "unknown type"})`);
       const data = await readCapped(res, MAX_IMAGE_BYTES);
       const rel = path.posix.join(dir, `${base}-${hash}.${ext}`);
-      mkdirSync(path.join(uploadDir, dir), { recursive: true });
-      await writeFile(path.join(uploadDir, rel), data);
-      const local = `/media/${rel}`;
+      const contentType = Object.keys(IMAGE_EXT).find((t) => IMAGE_EXT[t] === ext)!;
+      if (s3) {
+        await s3.send(
+          new PutObjectCommand({ Bucket: bucket, Key: rel, Body: data, ContentType: contentType, CacheControl: "public, max-age=31536000, immutable" }),
+        );
+      } else {
+        mkdirSync(path.join(uploadDir, dir), { recursive: true });
+        await writeFile(path.join(uploadDir, rel), data);
+      }
+      const local = publicUrl(rel);
       try {
         await db.insert(media).values({ url: local, alt: clip(alt, 300) });
+        libraryUrls.add(local);
       } catch (err) {
         // Otherwise the next run would find the file, skip the library entry and never list it.
-        await unlink(path.join(uploadDir, rel)).catch(() => {});
+        if (s3) await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: rel })).catch(() => {});
+        else await unlink(path.join(uploadDir, rel)).catch(() => {});
         throw err;
       }
       imageCache.set(abs, local);

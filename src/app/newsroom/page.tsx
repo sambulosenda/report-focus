@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { and, desc, eq, gt, gte, lte, sql, type SQL } from "drizzle-orm";
 import { clearBreakingBanner, setBreaking } from "@/actions/articles";
+import { emailBreakingAlert } from "@/actions/newsletter";
 import { db } from "@/db";
-import { articles, categories, users } from "@/db/schema";
-import { Card, StatusBadge, SwitchButton, displayStatus } from "@/components/newsroom/ui";
+import { articles, categories, emailSends, users } from "@/db/schema";
+import { ActionForm } from "@/components/newsroom/ActionForm";
+import { ConfirmButton } from "@/components/newsroom/ConfirmButton";
+import { Card, StatusBadge, SwitchButton, btnBrand, displayStatus } from "@/components/newsroom/ui";
 import { hasRole, requireUser } from "@/lib/auth";
+import { BREAKING, subscriberCount } from "@/lib/newsletters";
 import { breakingStory } from "@/lib/queries";
 import { cn, dayOffset, formatDate, formatTime, timeAgo } from "@/lib/utils";
 
@@ -108,6 +112,13 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     editor ? breakingStory() : Promise.resolve(null),
   ]);
 
+  const [alertSent, alertReaders] = breaking
+    ? await Promise.all([
+        db.select().from(emailSends).where(and(eq(emailSends.list, BREAKING), eq(emailSends.articleId, breaking.id))).get(),
+        subscriberCount(BREAKING),
+      ])
+    : [undefined, 0];
+
   const n = (v: number | null | undefined) => Number(v ?? 0);
   const reviewCount = n(counts.review);
   const tabCount: Record<Tab, number> = { "": n(counts.all), review: reviewCount, draft: n(counts.draft), scheduled: n(counts.scheduled), published: n(counts.published) };
@@ -168,6 +179,24 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
               {breaking ? breaking.title : "Switch on Breaking for a published story below to show the red banner across the site."}
             </span>
           </div>
+          {breaking &&
+            (alertSent ? (
+              <p className="text-sm font-semibold text-ink-2">
+                Alert emailed at {formatTime(alertSent.createdAt)} to {alertSent.recipients.toLocaleString()} reader{alertSent.recipients === 1 ? "" : "s"}
+              </p>
+            ) : alertReaders > 0 ? (
+              <ActionForm action={emailBreakingAlert} className="flex flex-col items-start">
+                <input type="hidden" name="id" value={breaking.id} />
+                <ConfirmButton
+                  className={btnBrand}
+                  message={`Email “${breaking.title}” to ${alertReaders.toLocaleString()} breaking-news subscriber${alertReaders === 1 ? "" : "s"}? This can't be undone.`}
+                >
+                  Email alert to {alertReaders.toLocaleString()} reader{alertReaders === 1 ? "" : "s"}
+                </ConfirmButton>
+              </ActionForm>
+            ) : (
+              <p className="text-sm text-muted">No one has signed up for breaking-news emails yet.</p>
+            ))}
           {breaking && (
             <form action={clearBreakingBanner}>
               <SwitchButton on label="Show breaking banner on the site" />

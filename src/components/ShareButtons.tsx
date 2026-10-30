@@ -24,9 +24,9 @@ export function ShareButtons({ url, title, className }: { url: string; title: st
     }
   }
 
-  const btn = "inline-flex h-11 w-11 items-center justify-center rounded-full border border-line-2 bg-white text-teal hover:border-teal hover:bg-teal hover:text-white";
+  const btn = "inline-flex h-11 w-11 items-center justify-center text-ink hover:text-teal";
   return (
-    <div className={cn("flex gap-2", className)}>
+    <div className={cn("-mx-3 flex", className)}>
       {links.map(({ label, Icon, href }) => (
         <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label} title={label} className={btn}>
           <Icon size={16} />

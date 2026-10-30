@@ -8,6 +8,7 @@ import { cache } from "react";
 import { db } from "@/db";
 import { sessions, users, type Role, type User } from "@/db/schema";
 import { hasRole } from "./auth-shared";
+import { isPendingHash } from "./invites";
 
 export const SESSION_COOKIE = "rf_session";
 const SESSION_DAYS = 14;
@@ -19,6 +20,8 @@ export async function hashPassword(password: string) {
 }
 
 export async function verifyPassword(password: string, hash: string) {
+  // Invited staff have a placeholder instead of a hash until they choose a password.
+  if (isPendingHash(hash)) return false;
   return bcrypt.compare(password, hash);
 }
 

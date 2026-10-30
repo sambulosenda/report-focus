@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "298a3c07-89ca-4b1f-9883-a628a7daaa99",
+  "id": "9bb5f71e-ed16-46b6-9a4d-e8f1e3c4c2ca",
   "prevId": "496e05b9-9d2c-4a46-b2e4-1c9c3a590f7c",
   "tables": {
     "articles": {
@@ -312,8 +312,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "legacy_redirects": {
-      "name": "legacy_redirects",
+    "email_sends": {
+      "name": "email_sends",
       "columns": {
         "id": {
           "name": "id",
@@ -322,8 +322,8 @@
           "notNull": true,
           "autoincrement": true
         },
-        "path": {
-          "name": "path",
+        "list": {
+          "name": "list",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -336,8 +336,30 @@
           "notNull": false,
           "autoincrement": false
         },
-        "category_id": {
-          "name": "category_id",
+        "edition": {
+          "name": "edition",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "subject": {
+          "name": "subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "recipients": {
+          "name": "recipients",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": 0
+        },
+        "sent_by": {
+          "name": "sent_by",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
@@ -353,18 +375,35 @@
         }
       },
       "indexes": {
-        "legacy_redirects_path_unique": {
-          "name": "legacy_redirects_path_unique",
+        "email_sends_list_idx": {
+          "name": "email_sends_list_idx",
           "columns": [
-            "path"
+            "list",
+            "created_at"
+          ],
+          "isUnique": false
+        },
+        "email_sends_alert_idx": {
+          "name": "email_sends_alert_idx",
+          "columns": [
+            "list",
+            "article_id"
+          ],
+          "isUnique": true
+        },
+        "email_sends_edition_idx": {
+          "name": "email_sends_edition_idx",
+          "columns": [
+            "list",
+            "edition"
           ],
           "isUnique": true
         }
       },
       "foreignKeys": {
-        "legacy_redirects_article_id_articles_id_fk": {
-          "name": "legacy_redirects_article_id_articles_id_fk",
-          "tableFrom": "legacy_redirects",
+        "email_sends_article_id_articles_id_fk": {
+          "name": "email_sends_article_id_articles_id_fk",
+          "tableFrom": "email_sends",
           "tableTo": "articles",
           "columnsFrom": [
             "article_id"
@@ -372,20 +411,20 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "legacy_redirects_category_id_categories_id_fk": {
-          "name": "legacy_redirects_category_id_categories_id_fk",
-          "tableFrom": "legacy_redirects",
-          "tableTo": "categories",
+        "email_sends_sent_by_users_id_fk": {
+          "name": "email_sends_sent_by_users_id_fk",
+          "tableFrom": "email_sends",
+          "tableTo": "users",
           "columnsFrom": [
-            "category_id"
+            "sent_by"
           ],
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },
@@ -577,6 +616,35 @@
           "autoincrement": false,
           "default": "'morning-focus'"
         },
+        "token": {
+          "name": "token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(lower(hex(randomblob(16))))"
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "unsubscribed_at": {
+          "name": "unsubscribed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "confirm_sent_at": {
+          "name": "confirm_sent_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "created_at": {
           "name": "created_at",
           "type": "integer",
@@ -592,6 +660,13 @@
           "columns": [
             "email",
             "list"
+          ],
+          "isUnique": true
+        },
+        "newsletter_signups_token_idx": {
+          "name": "newsletter_signups_token_idx",
+          "columns": [
+            "token"
           ],
           "isUnique": true
         }

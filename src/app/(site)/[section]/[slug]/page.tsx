@@ -1,46 +1,57 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { after } from "next/server";
 import { permanentRedirect } from "next/navigation";
+import { AdSlot } from "@/components/AdSlot";
 import { Avatar } from "@/components/Avatar";
 import { LiveBadge } from "@/components/LiveBadge";
 import { NewsletterCard } from "@/components/NewsletterForm";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { ShareButtons } from "@/components/ShareButtons";
+import { SupportCard } from "@/components/SupportCard";
 import { CardStory, NumberedList, SectionTitle } from "@/components/Story";
 import { VideoWatch } from "@/components/VideoWatch";
+import { ViewBeacon } from "@/components/ViewBeacon";
 import { KIND_LABEL } from "@/db/schema";
+import { inlineAdHtml } from "@/lib/ads";
 import { redirectLegacyOrNotFound } from "@/lib/legacy-redirect";
-import { renderMarkdown } from "@/lib/markdown";
-import { incrementViews, liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
+import { renderMarkdownWithBreaks } from "@/lib/markdown";
+import { liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
+import { absoluteUrl, ldJson, pageMeta, publisherLd, SHARE_IMAGE } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
-import { formatDateTime, formatTime, readingTime, siteUrl, timeAgo } from "@/lib/utils";
+import { excerpt, formatDateTime, formatTime, readingTime, siteUrl, timeAgo } from "@/lib/utils";
 import { videoEmbedUrl } from "@/lib/video";
 
 type Props = { params: Promise<{ section: string; slug: string }> };
+
+// No stories are built ahead of time: each is built on its first visit, then cached like every reader page.
+export const generateStaticParams = () => [];
+
+/** A story's tags as a list, without the placeholder "sample" tag. */
+function storyTags(tags: string) {
+  return tags.split(",").map((t) => t.trim()).filter((t) => t && t.toLowerCase() !== "sample");
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const row = await publicArticle((await params).slug);
   if (!row) return {};
   const { article, category, author } = row;
-  const url = `/${category?.slug ?? "news"}/${article.slug}`;
-  return {
+  return pageMeta({
     title: article.title,
-    description: article.summary,
-    alternates: { canonical: url },
-    openGraph: {
-      type: article.kind === "video" ? "video.other" : "article",
-      title: article.title,
-      description: article.summary,
-      url,
-      images: article.heroImage ? [{ url: article.heroImage, alt: article.heroAlt ?? undefined }] : undefined,
-      publishedTime: article.publishedAt?.toISOString(),
-      modifiedTime: article.updatedAt.toISOString(),
-      authors: [author.name],
-      section: category?.name,
-    },
-    twitter: { card: "summary_large_image", title: article.title, description: article.summary },
-  };
+    description: article.summary || excerpt(article.body, 160),
+    path: `/${category?.slug ?? "news"}/${article.slug}`,
+    image: article.heroImage ? { url: article.heroImage, alt: article.heroAlt } : null,
+    openGraph:
+      article.kind === "video"
+        ? { type: "video.other" }
+        : {
+            type: "article",
+            publishedTime: article.publishedAt?.toISOString(),
+            modifiedTime: article.updatedAt.toISOString(),
+            authors: [siteUrl(`/author/${author.slug}`)],
+            section: category?.name,
+            tags: storyTags(article.tags),
+          },
+  });
 }
 
 export default async function ArticlePage({ params }: Props) {
@@ -51,30 +62,28 @@ export default async function ArticlePage({ params }: Props) {
   const canonicalSection = category?.slug ?? "news";
   if (section !== canonicalSection) permanentRedirect(`/${canonicalSection}/${article.slug}`);
 
-  after(() => incrementViews(article.id));
-
   const url = siteUrl(`/${canonicalSection}/${article.slug}`);
 
   if (article.kind === "video") {
     const videos = (await storiesOfKind(["video"], 10)).filter((v) => v.id !== article.id);
     const moreVideos = videos.slice(5, 9);
-    const abs = (u: string) => (u.startsWith("/") ? siteUrl(u) : u);
     const embed = article.videoUrl ? videoEmbedUrl(article.videoUrl) : null;
     const videoLd = {
       "@context": "https://schema.org",
       "@type": "VideoObject",
       name: article.title,
       description: article.summary || article.title,
-      thumbnailUrl: article.heroImage ? [abs(article.heroImage)] : undefined,
+      thumbnailUrl: [absoluteUrl(article.heroImage ?? SHARE_IMAGE.url)],
       uploadDate: article.publishedAt?.toISOString(),
       duration: isoDuration(article.videoDuration),
       embedUrl: embed ?? undefined,
-      contentUrl: article.videoUrl && !embed ? abs(article.videoUrl) : undefined,
-      publisher: { "@type": "NewsMediaOrganization", name: SITE_NAME, url: siteUrl() },
+      contentUrl: article.videoUrl && !embed ? absoluteUrl(article.videoUrl) : undefined,
+      publisher: publisherLd(),
     };
     return (
       <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(videoLd).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(videoLd) }} />
+      <ViewBeacon articleId={article.id} />
       <VideoWatch
         video={{ ...article, categoryName: category?.name }}
         upNext={videos.slice(0, 5)}
@@ -93,33 +102,39 @@ export default async function ArticlePage({ params }: Props) {
   const lastUpdate = updates.reduce<Date | null>((d, u) => (!d || u.createdAt > d ? u.createdAt : d), null);
   const updatedAt = lastUpdate && lastUpdate > article.updatedAt ? lastUpdate : article.updatedAt;
   const updated = article.publishedAt && updatedAt.getTime() - article.publishedAt.getTime() > 10 * 60e3;
-  const tags = article.tags.split(",").map((t) => t.trim()).filter((t) => t && t.toLowerCase() !== "sample");
+  const tags = storyTags(article.tags);
   const latestUpdates = [...updates].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 3);
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": article.kind === "live" ? "LiveBlogPosting" : article.kind === "opinion" ? "OpinionNewsArticle" : article.kind === "analysis" ? "AnalysisNewsArticle" : "NewsArticle",
     headline: article.title,
-    description: article.summary,
-    image: article.heroImage ? [article.heroImage.startsWith("/") ? siteUrl(article.heroImage) : article.heroImage] : undefined,
+    description: article.summary || excerpt(article.body, 160),
+    image: [absoluteUrl(article.heroImage ?? SHARE_IMAGE.url)],
     datePublished: article.publishedAt?.toISOString(),
     dateModified: updatedAt.toISOString(),
     author: [{ "@type": "Person", name: author.name, url: siteUrl(`/author/${author.slug}`) }],
-    publisher: { "@type": "NewsMediaOrganization", name: SITE_NAME, url: siteUrl() },
-    mainEntityOfPage: url,
+    publisher: publisherLd(),
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
     articleSection: category?.name,
+    keywords: tags.length ? tags.join(", ") : undefined,
+    inLanguage: "en",
+    isAccessibleForFree: true,
+    ...(article.kind === "live" && { coverageStartTime: article.publishedAt?.toISOString() }),
   };
 
   return (
     <>
       <ReadingProgress targetId="story" />
+      <ViewBeacon articleId={article.id} />
       <article id="story" className="mx-auto max-w-[1280px] px-4 pb-16 pt-[18px] md:px-6 md:pb-[72px] md:pt-9">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(jsonLd) }} />
         <header className="mx-auto max-w-[780px]">
           <nav aria-label="Breadcrumb" className="mb-2.5 flex flex-wrap items-center gap-2 text-xs font-bold md:mb-3.5 md:gap-2.5 md:text-[13px]">
             {article.kind === "live" && <LiveBadge />}
             {article.isBreaking && article.kind !== "live" && (
-              <span className="rounded bg-brand px-[9px] py-1 text-[11px] font-extrabold tracking-[0.08em] text-white">BREAKING</span>
+              <span className="bg-brand px-[9px] py-1 text-[11px] font-extrabold tracking-[0.08em] text-white">BREAKING</span>
             )}
             {category && (
               <Link href={`/${category.slug}`} className="text-ink hover:underline">
@@ -138,12 +153,16 @@ export default async function ArticlePage({ params }: Props) {
 
           <div className="mt-4 md:mt-6 md:flex md:flex-wrap md:items-center md:gap-x-5 md:gap-y-3.5 md:border-y md:border-line md:py-4">
             <div className="flex items-center gap-2.5 md:flex-[1_1_260px] md:gap-3">
-              <span className="hidden md:block">
-                <Avatar name={author.name} url={author.avatarUrl} size={44} />
-              </span>
-              <span className="md:hidden">
-                <Avatar name={author.name} url={author.avatarUrl} size={40} />
-              </span>
+              {author.avatarUrl && (
+                <>
+                  <span className="hidden md:block">
+                    <Avatar name={author.name} url={author.avatarUrl} size={44} />
+                  </span>
+                  <span className="md:hidden">
+                    <Avatar name={author.name} url={author.avatarUrl} size={40} />
+                  </span>
+                </>
+              )}
               <div className="text-[13px] leading-[1.4] md:text-sm md:leading-[1.45]">
                 <p>
                   By{" "}
@@ -170,7 +189,7 @@ export default async function ArticlePage({ params }: Props) {
         {article.heroImage && (
           <figure className="-mx-4 mt-4 md:mx-auto md:mt-[30px] md:max-w-[1080px]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={article.heroImage} alt={article.heroAlt ?? ""} className="block aspect-video w-full object-cover md:rounded" />
+            <img src={article.heroImage} alt={article.heroAlt ?? ""} className="block aspect-video w-full object-cover " />
             {(article.heroCaption || article.heroCredit) && (
               <figcaption className="px-4 pt-2 text-xs leading-[1.45] text-muted md:mt-2.5 md:px-0 md:pt-0 md:text-[13px]">
                 {article.heroCaption}
@@ -183,14 +202,14 @@ export default async function ArticlePage({ params }: Props) {
         <div className="mt-5 flex flex-col gap-14 md:mt-10 lg:flex-row lg:justify-center">
           <div className="min-w-0 lg:max-w-[680px] lg:flex-[999_1_560px]">
             {latestUpdates.length > 0 && (
-              <section aria-labelledby="latest-updates" className="mb-5 rounded-lg border border-line p-3.5 md:mb-8 md:px-5 md:py-[18px]">
+              <section aria-labelledby="latest-updates" className="mb-5 border border-line p-3.5 md:mb-8 md:px-5 md:py-[18px]">
                 <div className="mb-1.5 flex items-center justify-between md:mb-3">
                   <h2 id="latest-updates" className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.08em] text-brand md:text-xs">
                     <span aria-hidden className="live-dot h-[7px] w-[7px] rounded-full bg-brand" />
                     Latest updates
                   </h2>
                   <Link href={`/live/${article.slug}`} className="hidden text-[13px] font-bold text-ink hover:underline md:inline">
-                    All updates →
+                    All updates
                   </Link>
                 </div>
                 <ol>
@@ -206,18 +225,18 @@ export default async function ArticlePage({ params }: Props) {
                   ))}
                 </ol>
                 <Link href={`/live/${article.slug}`} className="flex min-h-11 items-center border-t border-[#f0f1f3] text-sm font-bold md:hidden">
-                  See all updates →
+                  See all updates
                 </Link>
               </section>
             )}
 
-            <div className="article-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(article.body) }} />
+            <div className="article-body" dangerouslySetInnerHTML={{ __html: renderMarkdownWithBreaks(article.body, inlineAdHtml()) }} />
 
             {tags.length > 0 && (
-              <ul className="mt-6 flex flex-wrap gap-2" aria-label="Topics">
+              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-1" aria-label="Topics">
                 {tags.map((t) => (
                   <li key={t}>
-                    <Link href={`/tag/${encodeURIComponent(t.toLowerCase())}`} className="inline-flex rounded-full border border-line-2 px-3.5 py-2 text-[13px] font-bold capitalize text-ink hover:border-ink">
+                    <Link href={`/tag/${encodeURIComponent(t.toLowerCase())}`} className="inline-flex py-1 text-[13px] font-bold capitalize text-ink underline decoration-line-2 underline-offset-4 hover:decoration-ink">
                       {t}
                     </Link>
                   </li>
@@ -225,16 +244,18 @@ export default async function ArticlePage({ params }: Props) {
               </ul>
             )}
 
-            <div className="mt-8 flex items-start gap-4 rounded-lg border border-line p-5">
-              <Avatar name={author.name} url={author.avatarUrl} size={52} />
+            <div className="mt-8 flex items-start gap-4 border-t border-line pt-5">
+              {author.avatarUrl && <Avatar name={author.name} url={author.avatarUrl} size={52} />}
               <div className="text-[15px] leading-normal">
                 <p className="font-extrabold text-ink">{author.name}</p>
                 <p className="text-muted">{author.bio ?? `${author.name} reports for ${SITE_NAME}.`}</p>
-                <Link href={`/author/${author.slug}`} className="mt-1.5 inline-block text-sm font-bold text-brand hover:underline">
-                  More from {author.name.split(" ")[0]} →
+                <Link href={`/author/${author.slug}`} className="mt-1.5 inline-block text-sm font-bold text-ink underline underline-offset-4 hover:text-teal">
+                  More from {author.name.split(" ")[0]}
                 </Link>
               </div>
             </div>
+
+            <SupportCard className="mt-8" />
           </div>
 
           <aside className="min-w-0 lg:max-w-[320px] lg:flex-[1_1_280px]">
@@ -243,6 +264,7 @@ export default async function ArticlePage({ params }: Props) {
                 <SectionTitle>Most Read</SectionTitle>
                 <NumberedList stories={popular} numberSize="lg" />
               </div>
+              <AdSlot placement="sidebar" />
               <NewsletterCard text="Five stories before 8 a.m., every weekday." />
             </div>
           </aside>

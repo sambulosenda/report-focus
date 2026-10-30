@@ -53,12 +53,14 @@ export function VideoWatch({ video, upNext, more, moreTitle = "More videos", hea
                 {upNext.map((v) => (
                   <li key={v.id} className="border-t border-teal-line">
                     <Link href={storyHref(v)} className="story-link group flex gap-3 py-3 text-white">
-                      <span className="relative block w-32 flex-none">
-                        <StoryImage story={v} />
-                        {v.videoDuration && (
-                          <span className="absolute bottom-1 right-1 rounded-[3px] bg-black/80 px-[5px] py-0.5 text-[11px] font-bold">{v.videoDuration}</span>
-                        )}
-                      </span>
+                      {v.heroImage && (
+                        <span className="relative block w-32 flex-none">
+                          <StoryImage story={v} />
+                          {v.videoDuration && (
+                            <span className="absolute bottom-1 right-1 bg-black/80 px-[5px] py-0.5 text-[11px] font-bold">{v.videoDuration}</span>
+                          )}
+                        </span>
+                      )}
                       <span className="flex min-w-0 flex-col gap-1">
                         <span className="text-[11px] font-extrabold uppercase tracking-[0.05em] text-on-teal-pink">{v.category?.name ?? "Video"}</span>
                         <span className="story-title font-headline text-base font-semibold leading-[1.28]">{v.title}</span>

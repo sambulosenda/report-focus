@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { db } from "@/db";
 import { categories, media, ROLES, sessions, users } from "@/db/schema";
-import { hashPassword, requireUser } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
+import { isPendingHash, pendingHash, signInLink } from "@/lib/invites";
 import { RESERVED_SLUGS } from "@/lib/site";
 import { slugify } from "@/lib/utils";
 import type { FormState } from "./auth";
@@ -58,9 +59,9 @@ const UserInput = z.object({
   email: z.email("Enter a valid email.").transform((e) => e.toLowerCase()),
   role: z.enum(ROLES),
   title: z.string().trim().max(80).optional(),
-  password: z.string().min(10, "Temporary password must be at least 10 characters."),
 });
 
+/** Adds a staff account with no password yet. The admin sends them the link so they choose their own. */
 export async function createUser(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireUser("admin");
   const parsed = UserInput.safeParse({
@@ -68,19 +69,26 @@ export async function createUser(_prev: FormState, formData: FormData): Promise<
     email: String(formData.get("email") ?? "").trim(),
     role: formData.get("role"),
     title: formData.get("title") || undefined,
-    password: formData.get("password"),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
-  const { password, ...data } = parsed.data;
+  const data = parsed.data;
   let slug = slugify(data.name);
   for (let i = 2; await db.select({ id: users.id }).from(users).where(eq(users.slug, slug)).get(); i++) slug = `${slugify(data.name)}-${i}`;
+  let row;
   try {
-    await db.insert(users).values({ ...data, slug, title: data.title ?? null, passwordHash: await hashPassword(password) });
+    row = await db
+      .insert(users)
+      .values({ ...data, slug, title: data.title ?? null, passwordHash: pendingHash() })
+      .returning({ id: users.id, passwordHash: users.passwordHash })
+      .get();
   } catch {
     return { error: "Someone already has that email address." };
   }
   revalidatePath("/newsroom/users");
-  return { ok: `${data.name} can now sign in with ${data.email}.` };
+  return {
+    ok: `${data.name} is added. Send them this link to choose a password and sign in. It works once and lasts 7 days.`,
+    link: await signInLink(row),
+  };
 }
 
 export async function updateUser(formData: FormData) {
@@ -95,14 +103,23 @@ export async function updateUser(formData: FormData) {
   revalidatePath("/newsroom/users");
 }
 
-export async function resetPassword(_prev: FormState, formData: FormData): Promise<FormState> {
+/**
+ * A fresh link for someone who lost their invite or forgot their password.
+ * Their current password keeps working until they use the link.
+ */
+export async function makeSignInLink(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireUser("admin");
   const id = Number(formData.get("id"));
-  const password = String(formData.get("password") ?? "");
-  if (password.length < 10) return { error: "At least 10 characters." };
-  await db.update(users).set({ passwordHash: await hashPassword(password) }).where(eq(users.id, id));
-  await db.delete(sessions).where(eq(sessions.userId, id));
-  return { ok: "Password reset. They’ve been signed out everywhere." };
+  let user = await db.select().from(users).where(eq(users.id, id)).get();
+  if (!user) return { error: "That account no longer exists." };
+  if (!user.active) return { error: "Switch this account back on first." };
+  if (isPendingHash(user.passwordHash)) {
+    // Cancel any invite link sent earlier, so only the newest one works.
+    user = { ...user, passwordHash: pendingHash() };
+    await db.update(users).set({ passwordHash: user.passwordHash }).where(eq(users.id, id));
+    revalidatePath("/newsroom/users");
+  }
+  return { ok: `Send this to ${user.name}. It works once and lasts 7 days.`, link: await signInLink(user) };
 }
 
 export async function updateProfile(_prev: FormState, formData: FormData): Promise<FormState> {
