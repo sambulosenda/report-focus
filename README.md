@@ -113,7 +113,7 @@ Set `SITE_URL` to your public address so RSS, sitemap and share links are correc
 Optional settings:
 
 - `SITE_TIMEZONE` and `NEXT_PUBLIC_SITE_TIMEZONE`: the newsroom's time zone for dates and times on the site (default `America/New_York`)
-- `NEXT_PUBLIC_SOCIAL_X`, `_FACEBOOK`, `_INSTAGRAM`, `_YOUTUBE`, `_TIKTOK`: profile links for the footer icons (icons show unlinked until set)
+- `NEXT_PUBLIC_SOCIAL_X`, `_FACEBOOK`, `_INSTAGRAM`, `_LINKEDIN`, `_YOUTUBE`, `_TIKTOK`: profile links for the footer icons. X (@reportfocus), Facebook, Instagram and LinkedIn (/reportfocusnews) are set by default in `src/lib/site.ts`; YouTube and TikTok only show once set
 - `NEXT_PUBLIC_AD_SLOTS=on`: shows the 300 × 250 ad spaces on section and live pages
 
 ## Project layout
