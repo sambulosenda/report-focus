@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, inArray, like, lte, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, like, lte, ne, notInArray, or, sql } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "@/db";
 import { articles, categories, liveUpdates, users, type Kind } from "@/db/schema";
@@ -155,12 +155,20 @@ export async function breakingStory() {
   return rows[0] ?? null;
 }
 
+/** Most-viewed stories of the past week. When a quiet week (or an archive import) leaves too few, the list is topped up with the newest stories. */
 export async function mostRead(limit = 6, categoryId?: number) {
   const since = Math.floor((Date.now() - 7 * 864e5) / 1000);
-  return storyQuery()
-    .where(and(isLive(), sql`${articles.publishedAt} >= ${since}`, categoryId ? eq(articles.categoryId, categoryId) : undefined))
+  const inCategory = categoryId ? eq(articles.categoryId, categoryId) : undefined;
+  const week = await storyQuery()
+    .where(and(isLive(), sql`${articles.publishedAt} >= ${since}`, inCategory))
     .orderBy(desc(articles.views), desc(articles.id))
     .limit(limit);
+  if (week.length >= limit) return week;
+  const recent = await storyQuery()
+    .where(and(isLive(), inCategory, week.length ? notInArray(articles.id, week.map((s) => s.id)) : undefined))
+    .orderBy(...newestFirst)
+    .limit(limit - week.length);
+  return [...week, ...recent];
 }
 
 export async function storiesInCategory(categoryId: number, limit = 12, offset = 0) {
