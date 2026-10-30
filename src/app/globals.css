@@ -34,9 +34,10 @@
   --color-navy: #004666;
   --color-navy-2: #0b5a7e;
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-sans: var(--font-franklin), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --font-serif: var(--font-source-serif), Georgia, Cambria, "Times New Roman", serif;
   --font-display: var(--font-playfair), Georgia, serif;
+  --font-headline: var(--font-bodoni), "Didot", "Bodoni 72", Georgia, serif;
 }
 
 html {
@@ -74,10 +75,10 @@ ol,
   white-space: nowrap;
 }
 
-/* Every story headline uses Source Serif 4 Bold in ink. */
+/* Every story headline uses Libre Bodoni SemiBold in ink. */
 .headline {
-  font-family: var(--font-serif);
-  font-weight: 700;
+  font-family: var(--font-headline);
+  font-weight: 600;
   color: var(--color-ink);
 }
 
@@ -115,16 +116,16 @@ a.story-title:hover {
   margin-top: 1.1em;
 }
 .article-body h2 {
-  font-family: var(--font-serif);
+  font-family: var(--font-headline);
   font-size: 1.4em;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.25;
   margin-top: 1.6em;
 }
 .article-body h3 {
-  font-family: var(--font-serif);
+  font-family: var(--font-headline);
   font-size: 1.15em;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1.3;
   margin-top: 1.4em;
 }
