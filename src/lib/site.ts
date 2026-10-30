@@ -24,7 +24,7 @@ export const SOCIAL: { name: SocialName; url: string }[] = [
  * shows it follows.
  */
 export const CONTACT = {
-  owner: "Report Focus News",
+  owner: "Sambulo Senda",
   founded: "2020",
   city: "Harare, Zimbabwe",
   editor: "editor@reportfocusnews.com",
@@ -151,7 +151,7 @@ If you are not happy with how we handled your correction, write to the Editor-in
     description: "How Report Focus News collects and uses information.",
     body: `_Last updated: 30 October 2026_
 
-This policy explains what information Report Focus News collects when you use this website, why we collect it and what we do with it. The site is run by ${CONTACT.owner}, ${CONTACT.city}, which is responsible for your information.
+This policy explains what information Report Focus News collects when you use this website, why we collect it and what we do with it. The site is owned and run by ${CONTACT.owner}, ${CONTACT.city}, who is responsible for your information.
 
 ## Reading the site
 
