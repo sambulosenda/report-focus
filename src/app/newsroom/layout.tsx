@@ -33,7 +33,7 @@ export default async function NewsroomLayout({ children }: { children: React.Rea
     { href: "/newsroom/articles?status=scheduled", label: "Schedule", count: Number(scheduled ?? 0) },
     { href: "/newsroom/articles", label: "All stories" },
     { href: "/newsroom/media", label: "Media library" },
-    ...(editor ? [{ href: "/newsroom/categories", label: "Sections" }] : []),
+    ...(editor ? [{ href: "/newsroom/categories", label: "Sections" }, { href: "/newsroom/newsletters", label: "Newsletters" }] : []),
     ...(hasRole(user, "admin") ? [{ href: "/newsroom/users", label: "Staff" }] : []),
     { href: "/newsroom/profile", label: "My profile" },
   ];

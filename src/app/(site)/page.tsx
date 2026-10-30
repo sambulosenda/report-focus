@@ -4,7 +4,6 @@ import { excerpt, formatTime, siteUrl } from "@/lib/utils";
 import { ldJson, publisherLd } from "@/lib/seo";
 import { SITE_NAME, SOCIAL } from "@/lib/site";
 import { AdSlot } from "@/components/AdSlot";
-import { BreakingBanner } from "@/components/BreakingBanner";
 import { NewsletterBand } from "@/components/NewsletterForm";
 import {
   Kicker,
@@ -19,7 +18,6 @@ import {
   storyHref,
 } from "@/components/Story";
 import {
-  breakingStory,
   currentLiveStory,
   featuredStories,
   latestStories,
@@ -41,8 +39,7 @@ const siteLd = [
 ];
 
 export default async function HomePage() {
-  const [breaking, featured, latest, popular, cats, videos, opinion, live, chips] = await Promise.all([
-    breakingStory(),
+  const [featured, latest, popular, cats, videos, opinion, live, chips] = await Promise.all([
     featuredStories(5),
     latestStories(30),
     mostRead(8),
@@ -85,7 +82,6 @@ export default async function HomePage() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(siteLd) }} />
-      {breaking && <BreakingBanner story={breaking} />}
 
       {chips.length > 0 && (
         <div className="border-b border-line">

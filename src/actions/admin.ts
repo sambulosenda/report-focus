@@ -21,7 +21,7 @@ const CategoryInput = z.object({
 });
 
 const RESERVED = new Set([
-  "newsroom", "login", "search", "latest", "author", "tag", "media", "live", "video", "demo", "feed.xml", "sitemap.xml", "robots.txt", "api",
+  "newsroom", "login", "search", "latest", "author", "tag", "media", "live", "video", "demo", "feed.xml", "sitemap.xml", "robots.txt", "api", "newsletters",
   // Standing pages share the top-level URL space with sections.
   ...Object.keys(INFO_PAGES),
 ]);

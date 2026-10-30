@@ -117,16 +117,46 @@ export const media = sqliteTable("media", {
   createdAt: timestamp("created_at"),
 });
 
-/** Email sign-ups for newsletters such as The Morning Focus. */
-export const newsletterSignups = sqliteTable("newsletter_signups", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  email: text("email").notNull(),
-  list: text("list").notNull().default("morning-focus"),
-  createdAt: timestamp("created_at"),
-}, (t) => [uniqueIndex("newsletter_signups_email_list_idx").on(t.email, t.list)]);
+/**
+ * Email sign-ups for newsletters such as The Morning Focus and breaking-news alerts.
+ * A sign-up only gets email once the reader clicks the confirmation link; the token also signs the unsubscribe link.
+ */
+export const newsletterSignups = sqliteTable(
+  "newsletter_signups",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    email: text("email").notNull(),
+    list: text("list").notNull().default("morning-focus"),
+    token: text("token").notNull().default(sql`(lower(hex(randomblob(16))))`),
+    confirmedAt: integer("confirmed_at", { mode: "timestamp" }),
+    unsubscribedAt: integer("unsubscribed_at", { mode: "timestamp" }),
+    confirmSentAt: integer("confirm_sent_at", { mode: "timestamp" }),
+    createdAt: timestamp("created_at"),
+  },
+  (t) => [uniqueIndex("newsletter_signups_email_list_idx").on(t.email, t.list), uniqueIndex("newsletter_signups_token_idx").on(t.token)],
+);
+
+/** One row per newsletter edition or breaking alert sent, so nothing goes out twice. */
+export const emailSends = sqliteTable(
+  "email_sends",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    list: text("list").notNull(),
+    /** The breaking story an alert was about; empty for newsletter editions. */
+    articleId: integer("article_id").references(() => articles.id, { onDelete: "set null" }),
+    /** The edition date (YYYY-MM-DD in the site time zone) for newsletters. */
+    edition: text("edition"),
+    subject: text("subject").notNull(),
+    recipients: integer("recipients").notNull().default(0),
+    sentBy: integer("sent_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at"),
+  },
+  (t) => [index("email_sends_list_idx").on(t.list, t.createdAt), uniqueIndex("email_sends_alert_idx").on(t.list, t.articleId), uniqueIndex("email_sends_edition_idx").on(t.list, t.edition)],
+);
 
 export type User = typeof users.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Article = typeof articles.$inferSelect;
 export type Media = typeof media.$inferSelect;
 export type LiveUpdate = typeof liveUpdates.$inferSelect;
+export type NewsletterSignup = typeof newsletterSignups.$inferSelect;
