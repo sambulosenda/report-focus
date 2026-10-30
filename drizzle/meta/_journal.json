@@ -36,6 +36,13 @@
       "when": 1793373029250,
       "tag": "0004_wordpress_redirects",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1793377274305,
+      "tag": "0005_home_pins",
+      "breakpoints": true
     }
   ]
 }

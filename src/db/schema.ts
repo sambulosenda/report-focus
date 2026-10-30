@@ -94,6 +94,30 @@ export const articles = sqliteTable(
   ],
 );
 
+/**
+ * Home page spots an editor has fixed to a story. Slot 1 is the lead; slots 2 to 4 are the top of the headline list beside it.
+ * Any slot without a pin (or whose pin has run out) fills itself with the newest stories.
+ */
+export const HOME_SLOTS = [1, 2, 3, 4] as const;
+export const HOME_SLOT_LABEL: Record<number, string> = { 1: "Lead story", 2: "Second", 3: "Third", 4: "Fourth" };
+/** How long a pin can hold its slot, in hours. "0" keeps it until an editor changes it. */
+export const HOME_PIN_HOURS = ["3", "6", "12", "24", "48", "0"] as const;
+
+export const homePins = sqliteTable(
+  "home_pins",
+  {
+    slot: integer("slot").primaryKey(),
+    articleId: integer("article_id")
+      .notNull()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    /** When the pin lets go and the slot goes back to filling itself. Empty keeps it until someone changes it. */
+    expiresAt: integer("expires_at", { mode: "timestamp" }),
+    pinnedBy: integer("pinned_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at"),
+  },
+  (t) => [uniqueIndex("home_pins_article_idx").on(t.articleId)],
+);
+
 /** Timeline posts on a live story. */
 export const liveUpdates = sqliteTable(
   "live_updates",
@@ -181,3 +205,4 @@ export type Article = typeof articles.$inferSelect;
 export type Media = typeof media.$inferSelect;
 export type LiveUpdate = typeof liveUpdates.$inferSelect;
 export type NewsletterSignup = typeof newsletterSignups.$inferSelect;
+export type HomePin = typeof homePins.$inferSelect;
