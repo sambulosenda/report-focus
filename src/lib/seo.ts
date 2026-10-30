@@ -36,6 +36,7 @@ export function organizationLd() {
   return {
     ...publisherLd(),
     alternateName: "Report Focus",
+    foundingDate: CONTACT.founded,
     email: CONTACT.editor,
     publishingPrinciples: siteUrl("/standards"),
     ethicsPolicy: siteUrl("/standards"),

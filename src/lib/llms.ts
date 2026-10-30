@@ -32,7 +32,7 @@ export async function llmsTxt() {
   return [
     `# ${SITE_NAME}`,
     "",
-    `> ${SITE_NAME} is an independent English-language news site covering Zimbabwe, South Africa and the rest of Africa, along with major world stories. It is owned by ${CONTACT.owner}. Editor-in-Chief: ${CONTACT.editorInChief}. Managing Editor: ${CONTACT.owner}.`,
+    `> ${SITE_NAME} is an independent English-language news site covering Zimbabwe, South Africa and the rest of Africa, along with major world stories. It is owned by ${CONTACT.owner}, run from ${CONTACT.city} and founded in ${CONTACT.founded}. Editor-in-Chief: ${CONTACT.editorInChief}. Managing Editor: ${CONTACT.owner}.`,
     "",
     "## Sections",
     ...cats.map((c) => `- [${c.name}](${siteUrl(`/${c.slug}`)})`),

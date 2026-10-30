@@ -34,7 +34,7 @@ export const CONTACT = {
   owner: "Sambulo Senda",
   editorInChief: "Brilliant Pongo",
   founded: "2017",
-  city: "Harare, Zimbabwe",
+  city: "the United Kingdom",
   editor: "editor@reportfocusnews.com",
   tips: "tips@reportfocusnews.com",
   corrections: "corrections@reportfocusnews.com",
@@ -56,7 +56,7 @@ export const INFO_PAGES: Record<string, InfoPage> = {
     description: "Who we are and how Report Focus News works.",
     body: `Report Focus News is an independent news site covering Zimbabwe, South Africa and the rest of Africa, along with the biggest stories from around the world.
 
-We started in ${CONTACT.founded}. We are based in ${CONTACT.city} and work with reporters and contributors across Zimbabwe and South Africa.
+We started in ${CONTACT.founded}. We are run from ${CONTACT.city} and work with reporters and contributors across Zimbabwe and South Africa.
 
 ## What we cover
 
@@ -106,7 +106,7 @@ You can also find us on [X](https://x.com/reportfocus), [Facebook](https://www.f
 
 ## Where we are
 
-We are based in ${CONTACT.city}. We do not have a public office, so please get in touch by email.`,
+We are run from ${CONTACT.city}. We do not have a public office, so please get in touch by email.`,
   },
   careers: {
     title: "Careers",
@@ -224,7 +224,7 @@ If you are not happy with how we handled your correction, write to the Editor-in
     description: "How Report Focus News collects and uses information.",
     body: `_Last updated: 30 October 2026_
 
-This policy explains what information Report Focus News collects when you use this website, why we collect it and what we do with it. The site is owned and run by ${CONTACT.owner}, ${CONTACT.city}, who is responsible for your information.
+This policy explains what information Report Focus News collects when you use this website, why we collect it and what we do with it. The site is owned and run by ${CONTACT.owner}, in ${CONTACT.city}, who is responsible for your information.
 
 ## Reading the site
 
@@ -278,7 +278,7 @@ We keep newsletter addresses until you unsubscribe, messages to the newsroom for
 
 You can ask to see, correct or delete the information we hold about you, or object to how we use it. Email ${mail(CONTACT.privacy)} and we will reply within 30 days.
 
-If you are in Zimbabwe, you can complain to the Postal and Telecommunications Regulatory Authority of Zimbabwe (POTRAZ), the data protection authority under the Cyber and Data Protection Act. If you are in South Africa, you can complain to the [Information Regulator](https://inforegulator.org.za) under the Protection of Personal Information Act (POPIA). If you are in the UK or Europe, you have rights under the GDPR and can complain to your local data protection authority.
+If you are in Zimbabwe, you can complain to the Postal and Telecommunications Regulatory Authority of Zimbabwe (POTRAZ), the data protection authority under the Cyber and Data Protection Act. If you are in South Africa, you can complain to the [Information Regulator](https://inforegulator.org.za) under the Protection of Personal Information Act (POPIA). If you are in the UK, you have rights under the UK GDPR and can complain to the [Information Commissioner's Office](https://ico.org.uk). If you are in Europe, you can complain to your local data protection authority.
 
 ## Changes to this policy
 
@@ -291,7 +291,7 @@ If we change this policy, we will update the date at the top of this page.`,
 
 These terms apply when you use reportfocusnews.com. By using the site, you agree to them. If you do not agree, please do not use the site.
 
-Report Focus News is owned by ${CONTACT.owner}. In these terms, "we" and "us" mean Report Focus News.
+Report Focus News is owned by ${CONTACT.owner} and run from ${CONTACT.city}. In these terms, "we" and "us" mean Report Focus News.
 
 ## Using the site
 
