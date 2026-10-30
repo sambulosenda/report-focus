@@ -161,4 +161,12 @@ export function PinIcon({ size = 14, className, color = "currentColor" }: IconPr
   );
 }
 
-export const SOCIAL_ICONS = { X: XIcon, Facebook: FacebookIcon, Instagram: InstagramIcon, YouTube: YouTubeIcon, TikTok: TikTokIcon };
+export function LinkedInIcon({ size = 16, className, color = "currentColor" }: IconProps) {
+  return (
+    <svg {...base(size, className)}>
+      <path d="M3.5 8.5h4V21h-4V8.5ZM5.5 2.5a2.3 2.3 0 1 1 0 4.6 2.3 2.3 0 0 1 0-4.6ZM10 8.5h3.8v1.7h.1c.5-1 1.8-2 3.8-2 4 0 4.8 2.6 4.8 6V21h-4v-6c0-1.4 0-3.3-2-3.3s-2.3 1.6-2.3 3.2V21h-4V8.5Z" fill={color} />
+    </svg>
+  );
+}
+
+export const SOCIAL_ICONS = { X: XIcon, Facebook: FacebookIcon, Instagram: InstagramIcon, LinkedIn: LinkedInIcon, YouTube: YouTubeIcon, TikTok: TikTokIcon };
