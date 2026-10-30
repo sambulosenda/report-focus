@@ -10,6 +10,7 @@
  *   --dry-run                 Show what would be imported without changing anything
  *   --update                  Refresh stories already imported (otherwise they are skipped)
  *   --no-images               Leave images on the old site instead of copying them here
+ *   --image-delay=1000        Milliseconds between image downloads (the old host may block a fast burst)
  *   --author=<email>          Credit every story to this existing staff account
  *   --section-map=a:b,c:d     Put WordPress category "a" into section "b" (by slug; "b" is created if needed).
  *                             Unmapped categories become new sections of their own
@@ -37,6 +38,7 @@ const IMAGE_EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "p
 /** Categories WordPress sites use as flags (or, for Opinion, a story type) rather than places in the site. They become tags, never sections. */
 const NOT_SECTIONS = new Set(["uncategorized", "featured", "breaking-news", "breaking", "top-stories", "trending", "opinion"]);
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function parseArgs(argv: string[]) {
   const flags: Record<string, string | true> = {};
@@ -47,7 +49,7 @@ function parseArgs(argv: string[]) {
     else rest.push(a);
   }
   const str = (k: string) => (typeof flags[k] === "string" ? (flags[k] as string) : undefined);
-  const known = ["dry-run", "update", "no-images", "author", "section-map", "default-section", "include-pages", "since", "limit"];
+  const known = ["dry-run", "update", "no-images", "author", "section-map", "default-section", "include-pages", "since", "limit", "image-delay"];
   const unknown = Object.keys(flags).filter((k) => !known.includes(k));
   if (unknown.length) throw new Error(`Unknown option --${unknown[0]}. See the top of scripts/import-wordpress.ts for the options.`);
   const sectionMap = new Map(
@@ -67,6 +69,7 @@ function parseArgs(argv: string[]) {
     includePages: flags["include-pages"] === true,
     since: parseSince(str("since")),
     limit: str("limit") ? Number(str("limit")) : undefined,
+    imageDelay: str("image-delay") ? Math.max(0, Number(str("image-delay")) || 0) : 1000,
   };
 }
 
@@ -75,6 +78,28 @@ function parseSince(value?: string) {
   const d = new Date(/^\d{4}$/.test(value) ? `${value}-01-01T00:00:00Z` : /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00Z` : "invalid");
   if (Number.isNaN(d.getTime())) throw new Error(`--since needs a date like 2025-01-01 (got "${value}").`);
   return d;
+}
+
+/**
+ * Fetches an image politely. Shared hosts start answering 429 after a burst of downloads,
+ * so requests are spaced out and a 429 or 503 waits (as long as Retry-After asks, or longer each time) and tries again.
+ */
+function politeFetcher(gapMs: number, log = console.log) {
+  let last = 0;
+  return async function get(url: string) {
+    for (let attempt = 0; ; attempt++) {
+      const wait = last + gapMs - Date.now();
+      if (wait > 0) await sleep(wait);
+      last = Date.now();
+      const res = await fetch(url, { headers: { "User-Agent": "ReportFocusImporter/1.0" } });
+      if ((res.status !== 429 && res.status !== 503) || attempt >= 5) return res;
+      await res.body?.cancel().catch(() => {});
+      const retryAfter = Number(res.headers.get("retry-after"));
+      const pause = Math.min(Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 15_000 * 2 ** attempt, 5 * 60_000);
+      log(`  the old site asked us to slow down (HTTP ${res.status}); waiting ${Math.round(pause / 1000)}s…`);
+      await sleep(pause);
+    }
+  };
 }
 
 /** Reads a response body, giving up as soon as it passes `limit` bytes. */
@@ -206,6 +231,7 @@ async function main() {
   // --- Images ------------------------------------------------------------
   const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? "./uploads");
   const imageCache = new Map<string, string>();
+  const fetchImage = politeFetcher(opts.imageDelay);
   async function copyImage(url: string, alt: string, when: Date | null) {
     // Root-relative and protocol-relative addresses only make sense on the old site.
     let abs = url;
@@ -229,7 +255,7 @@ async function main() {
           return `/media/${rel}`;
         }
       }
-      const res = await fetch(abs, { headers: { "User-Agent": "ReportFocusImporter/1.0" } });
+      const res = await fetchImage(abs);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const type = (res.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
       const fileExt = path.extname(pathname).slice(1).toLowerCase().replace(/^jpg$/, "jpeg");

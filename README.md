@@ -90,6 +90,7 @@ npm run import:wordpress -- https://old-site.com
 | `--dry-run` | Show what would be imported, and how the first story will look, without changing anything |
 | `--update` | Refresh stories that were already imported (they're skipped otherwise) |
 | `--no-images` | Leave images on the old site instead of copying them into `UPLOAD_DIR` |
+| `--image-delay=1000` | Milliseconds between image downloads. If the old host answers "too many requests", the importer waits and retries; rerun with `--update` to fetch any that still failed |
 | `--author=<email>` | Credit every story to one existing staff account |
 | `--section-map=news:us,sport:sports` | Put a WordPress category into an existing section (by slug) |
 | `--default-section=<slug>` | Section for posts that are only "Uncategorized" (otherwise they go under `/news/…`) |
