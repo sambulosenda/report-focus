@@ -1,0 +1,122 @@
+{
+  "claim": "Chrome loads the homepage the way a reader does, including the srcset image it actually picks. Run 1 is a cold browser. Later runs reuse that profile. A warm median loadEventEnd above 500ms, or a batch of image responses above half of that, is the fix. An image status other than 200 invalidates that run.",
+  "throttle": "slow-4g",
+  "measuredAt": "2026-10-30T21:01:26.532Z",
+  "base": "http://127.0.0.1:3107",
+  "loadAverage": [
+    5.5556640625,
+    4.51220703125,
+    4.5185546875
+  ],
+  "runs": 5,
+  "desktop": null,
+  "phone": {
+    "label": "phone-390-dpr3",
+    "samples": [
+      {
+        "requests": 66,
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 264757,
+        "slowestImageMs": 2113,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 76.80000000074506,
+          "domContentLoadedMs": 606,
+          "loadMs": 3165.10000000149,
+          "transferSize": 21340,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 116,
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 74281,
+        "slowestImageMs": 1262,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 21.600000001490116,
+          "domContentLoadedMs": 204.70000000298023,
+          "loadMs": 219.5,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 150,
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 2.199999999254942,
+          "domContentLoadedMs": 163.89999999850988,
+          "loadMs": 175,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 136,
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 27.899999998509884,
+          "domContentLoadedMs": 210.5,
+          "loadMs": 221.89999999850988,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 137,
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 24.699999999254942,
+          "domContentLoadedMs": 208.5,
+          "loadMs": 218.19999999925494,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      }
+    ],
+    "warmLoadMedianMs": 218.84999999962747,
+    "warmLoadMinMs": 175,
+    "warmLoadMaxMs": 221.89999999850988,
+    "imageErrors": 0
+  }
+}

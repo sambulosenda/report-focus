@@ -1,0 +1,552 @@
+{
+  "claim": "Chrome loads the homepage the way a reader does, including the srcset image it actually picks. Run 1 is a cold browser. Later runs reuse that profile. A warm median loadEventEnd above 500ms, or a batch of image responses above half of that, is the fix. An image status other than 200 invalidates that run.",
+  "throttle": "slow-4g",
+  "measuredAt": "2026-10-30T21:07:31.819Z",
+  "base": "http://127.0.0.1:3107",
+  "loadAverage": [
+    5.009765625,
+    5.31201171875,
+    4.89599609375
+  ],
+  "runs": 5,
+  "desktop": null,
+  "phone": {
+    "label": "phone-390-dpr3",
+    "samples": [
+      {
+        "requests": 58,
+        "slowest": [
+          {
+            "url": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F03%2FED2030-campaign-7ae97508.gif&w=1280&q=75",
+            "ms": 1817,
+            "bytes": 74281,
+            "status": 200,
+            "mime": "image/webp"
+          },
+          {
+            "url": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F01%2FAFP__20260118__936P47H__v1__MidRes__FblAfr2025Match52SenMar-f0cd2395.webp&w=640&q=75",
+            "ms": 1615,
+            "bytes": 35769,
+            "status": 200,
+            "mime": "image/webp"
+          },
+          {
+            "url": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F02%2FTikTok-should-change-the-way-it-recommends-content-to-users--d1677e38.avif&w=640&q=75",
+            "ms": 1589,
+            "bytes": 32678,
+            "status": 200,
+            "mime": "image/webp"
+          },
+          {
+            "url": "/tag/madlanga-commission?_rsc=NgTdW3PjMTcaItul",
+            "ms": 1509,
+            "bytes": 13945,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/south-africa/bail-ruling-due-for-police-ballistics-expert-in-vereeniging-murder-case?_rsc=NgTdW3PjMTcaItul",
+            "ms": 1494,
+            "bytes": 10280,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/south-africa/mk-party-defends-zumas-india-meeting-with-ajay-gupta-as-dirco-probes-envoy?_rsc=NgTdW3PjMTcaItul",
+            "ms": 1467,
+            "bytes": 10510,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/_next/static/chunks/3683-944e8012413615d3.js",
+            "ms": 1458,
+            "bytes": 10628,
+            "status": 200,
+            "mime": "application/javascript"
+          },
+          {
+            "url": "/south-africa/mkhwanazi-demands-answers-after-idac-fails-to-arrest-him?_rsc=NgTdW3PjMTcaItul",
+            "ms": 1458,
+            "bytes": 10146,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/_next/static/chunks/app/(site)/error-fc8fcdaa72906da9.js",
+            "ms": 1437,
+            "bytes": 1691,
+            "status": 200,
+            "mime": "application/javascript"
+          },
+          {
+            "url": "/_next/static/chunks/app/(site)/layout-b9c88f4314d4db01.js",
+            "ms": 1408,
+            "bytes": 2067,
+            "status": 200,
+            "mime": "application/javascript"
+          },
+          {
+            "url": "/_next/static/chunks/3578-6ca2d6ee2748c6a3.js",
+            "ms": 1372,
+            "bytes": 6288,
+            "status": 200,
+            "mime": "application/javascript"
+          },
+          {
+            "url": "/_next/static/chunks/6463c1ef-5bc87d26b328d507.js",
+            "ms": 1322,
+            "bytes": 55172,
+            "status": 200,
+            "mime": "application/javascript"
+          }
+        ],
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 339038,
+        "slowestImageMs": 1817,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 7.700000002980232,
+          "domContentLoadedMs": 629.6000000014901,
+          "loadMs": 1628.4000000022352,
+          "transferSize": 21302,
+          "encodedBodySize": 21002
+        }
+      },
+      {
+        "requests": 108,
+        "slowest": [
+          {
+            "url": "/world/mutsvangwa-calls-for-dialogue-to-end-middle-east-conflict?_rsc=NgTdW3PjMTcaItul",
+            "ms": 670,
+            "bytes": 10383,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/world/iran-says-strait-of-hormuz-open-except-for-enemies?_rsc=NgTdW3PjMTcaItul",
+            "ms": 659,
+            "bytes": 10152,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/world/six-dead-as-qatari-military-helicopter-crashes-after-technical-fault?_rsc=NgTdW3PjMTcaItul",
+            "ms": 601,
+            "bytes": 10057,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/us/why-the-us-is-bombing-iran-for-dummies?_rsc=NgTdW3PjMTcaItul",
+            "ms": 558,
+            "bytes": 10260,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/zimbabwe/hopewell-chinono-weighs-in-on-the-iran-regime-change-war?_rsc=NgTdW3PjMTcaItul",
+            "ms": 529,
+            "bytes": 10715,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/sports/trump-booed-at-us-open-final-amid-security-delay?_rsc=NgTdW3PjMTcaItul",
+            "ms": 494,
+            "bytes": 11241,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/world/sri-lankan-navy-rescues-30-from-sinking-iranian-ship?_rsc=NgTdW3PjMTcaItul",
+            "ms": 479,
+            "bytes": 10116,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/politics/gauteng-budget-province-has-spent-over-80-of-annual-funds?_rsc=NgTdW3PjMTcaItul",
+            "ms": 472,
+            "bytes": 10372,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/sports/eff-warns-fifa-on-us-gun-violence-after-kirk-killing?_rsc=NgTdW3PjMTcaItul",
+            "ms": 451,
+            "bytes": 10999,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/south-africa/uebert-angel-and-the-lessons-of-the-darkest-night?_rsc=NgTdW3PjMTcaItul",
+            "ms": 444,
+            "bytes": 12271,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/business/hailstorm-forces-emergency-closure-of-festival-mall?_rsc=NgTdW3PjMTcaItul",
+            "ms": 438,
+            "bytes": 10359,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/technology/african-jurists-call-for-ai-adoption-to-safeguard-whistleblowers?_rsc=NgTdW3PjMTcaItul",
+            "ms": 422,
+            "bytes": 9952,
+            "status": 200,
+            "mime": "text/x-component"
+          }
+        ],
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 62.399999998509884,
+          "domContentLoadedMs": 238.89999999850988,
+          "loadMs": 251.39999999850988,
+          "transferSize": 300,
+          "encodedBodySize": 21002
+        }
+      },
+      {
+        "requests": 142,
+        "slowest": [
+          {
+            "url": "/us/trump-rejects-talks-as-iran-conflict-deepens?_rsc=NgTdW3PjMTcaItul",
+            "ms": 632,
+            "bytes": 10348,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/us/iran-rejects-trumps-diplomatic-claims-calls-them-fake-news?_rsc=NgTdW3PjMTcaItul",
+            "ms": 598,
+            "bytes": 10173,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/south-africa/iec-says-all-23706-voting-stations-ready-for-weekend-registration-drive?_rsc=NgTdW3PjMTcaItul",
+            "ms": 382,
+            "bytes": 10078,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/us/trump-maintains-us-should-help-choose-irans-next-leader?_rsc=NgTdW3PjMTcaItul",
+            "ms": 304,
+            "bytes": 0,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/us/why-the-us-is-bombing-iran-for-dummies?_rsc=NgTdW3PjMTcaItul",
+            "ms": 304,
+            "bytes": 0,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/accessibility?_rsc=NgTdW3PjMTcaItul",
+            "ms": 265,
+            "bytes": 907,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/_next/static/chunks/app/(site)/newsletters/page-85c2db8ad23c6c3a.js",
+            "ms": 250,
+            "bytes": 902,
+            "status": 200,
+            "mime": "application/javascript"
+          },
+          {
+            "url": "/business/hyundai-grand-i10-fails-global-safety-test?_rsc=NgTdW3PjMTcaItul",
+            "ms": 249,
+            "bytes": 0,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/business/zimra-revises-tax-clearance-rules-after-business-outcry?_rsc=NgTdW3PjMTcaItul",
+            "ms": 249,
+            "bytes": 0,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/business/hailstorm-forces-emergency-closure-of-festival-mall?_rsc=NgTdW3PjMTcaItul",
+            "ms": 249,
+            "bytes": 0,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/contact?_rsc=NgTdW3PjMTcaItul",
+            "ms": 221,
+            "bytes": 901,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/latest?_rsc=NgTdW3PjMTcaItul",
+            "ms": 215,
+            "bytes": 887,
+            "status": 200,
+            "mime": "text/x-component"
+          }
+        ],
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 16.100000001490116,
+          "domContentLoadedMs": 177.40000000223517,
+          "loadMs": 187.90000000223517,
+          "transferSize": 300,
+          "encodedBodySize": 21002
+        }
+      },
+      {
+        "requests": 134,
+        "slowest": [
+          {
+            "url": "/tag/madlanga-commission?_rsc=NgTdW3PjMTcaItul",
+            "ms": 492,
+            "bytes": 13945,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/south-africa/mkhwanazi-demands-answers-after-idac-fails-to-arrest-him?_rsc=NgTdW3PjMTcaItul",
+            "ms": 463,
+            "bytes": 10146,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/south-africa/bail-ruling-due-for-police-ballistics-expert-in-vereeniging-murder-case?_rsc=NgTdW3PjMTcaItul",
+            "ms": 401,
+            "bytes": 10280,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/entertainment/fuel-shortage-causes-major-disruptions-at-cape-town-airport?_rsc=NgTdW3PjMTcaItul",
+            "ms": 372,
+            "bytes": 10413,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/entertainment/uruguay-legalises-euthanasia?_rsc=NgTdW3PjMTcaItul",
+            "ms": 350,
+            "bytes": 10433,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/entertainment/eu-orders-tiktok-to-overhaul-addictive-design?_rsc=NgTdW3PjMTcaItul",
+            "ms": 349,
+            "bytes": 10364,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/entertainment/us-halts-immigration-applications-for-nineteen-nations?_rsc=NgTdW3PjMTcaItul",
+            "ms": 344,
+            "bytes": 10286,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/sports/new-zealand-beats-south-africa-24-17-in-rugby-championship?_rsc=NgTdW3PjMTcaItul",
+            "ms": 341,
+            "bytes": 10713,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/climate?_rsc=NgTdW3PjMTcaItul",
+            "ms": 314,
+            "bytes": 901,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/about?_rsc=NgTdW3PjMTcaItul",
+            "ms": 293,
+            "bytes": 901,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/latest?_rsc=NgTdW3PjMTcaItul",
+            "ms": 277,
+            "bytes": 887,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/accessibility?_rsc=NgTdW3PjMTcaItul",
+            "ms": 272,
+            "bytes": 907,
+            "status": 200,
+            "mime": "text/x-component"
+          }
+        ],
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 11.300000000745058,
+          "domContentLoadedMs": 189.5,
+          "loadMs": 201.19999999925494,
+          "transferSize": 300,
+          "encodedBodySize": 21002
+        }
+      },
+      {
+        "requests": 132,
+        "slowest": [
+          {
+            "url": "/technology/african-jurists-call-for-ai-adoption-to-safeguard-whistleblowers?_rsc=NgTdW3PjMTcaItul",
+            "ms": 403,
+            "bytes": 9951,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/business/ethiopia-volcano-ash-disrupts-flights-but-authorities-urge-calm?_rsc=NgTdW3PjMTcaItul",
+            "ms": 396,
+            "bytes": 10428,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/business/hailstorm-forces-emergency-closure-of-festival-mall?_rsc=NgTdW3PjMTcaItul",
+            "ms": 375,
+            "bytes": 10358,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/sports/caf-opens-investigation-into-chaotic-afcon-final-between-senegal-and-morocco?_rsc=NgTdW3PjMTcaItul",
+            "ms": 335,
+            "bytes": 10771,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/business/zimra-revises-tax-clearance-rules-after-business-outcry?_rsc=NgTdW3PjMTcaItul",
+            "ms": 332,
+            "bytes": 10456,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/health/ebola-outbreak-in-congo-claims-over-30-lives-who-confirms?_rsc=NgTdW3PjMTcaItul",
+            "ms": 329,
+            "bytes": 10366,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/health/south-african-doctor-faces-inquiry-over-palestine-posts?_rsc=NgTdW3PjMTcaItul",
+            "ms": 307,
+            "bytes": 10737,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/sports/eff-warns-fifa-on-us-gun-violence-after-kirk-killing?_rsc=NgTdW3PjMTcaItul",
+            "ms": 300,
+            "bytes": 10998,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/sports/trump-booed-at-us-open-final-amid-security-delay?_rsc=NgTdW3PjMTcaItul",
+            "ms": 300,
+            "bytes": 11240,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/business/hyundai-grand-i10-fails-global-safety-test?_rsc=NgTdW3PjMTcaItul",
+            "ms": 282,
+            "bytes": 10323,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/tips?_rsc=NgTdW3PjMTcaItul",
+            "ms": 280,
+            "bytes": 899,
+            "status": 200,
+            "mime": "text/x-component"
+          },
+          {
+            "url": "/accessibility?_rsc=NgTdW3PjMTcaItul",
+            "ms": 280,
+            "bytes": 907,
+            "status": 200,
+            "mime": "text/x-component"
+          }
+        ],
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 14.300000000745058,
+          "domContentLoadedMs": 198.80000000074506,
+          "loadMs": 208.40000000223517,
+          "transferSize": 300,
+          "encodedBodySize": 21002
+        }
+      }
+    ],
+    "warmLoadMedianMs": 204.80000000074506,
+    "warmLoadMinMs": 187.90000000223517,
+    "warmLoadMaxMs": 251.39999999850988,
+    "imageErrors": 0
+  }
+}
