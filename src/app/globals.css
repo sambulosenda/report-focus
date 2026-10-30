@@ -237,3 +237,55 @@ a.story-title:hover {
     scroll-behavior: auto;
   }
 }
+
+/* Ad spaces: a small label over the ad, hidden entirely when AdSense has nothing to show. */
+.ad-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.ad-slot:has(ins[data-ad-status="unfilled"]) {
+  display: none;
+}
+.ad-label {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+.ad-slot ins.adsbygoogle,
+.ad-placeholder {
+  width: 100%;
+}
+.ad-sidebar ins.adsbygoogle,
+.ad-inline ins.adsbygoogle {
+  min-height: 250px;
+}
+.ad-home ins.adsbygoogle {
+  min-height: 90px;
+}
+.ad-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 250px;
+  border: 1px dashed var(--color-line-2);
+  background: var(--color-mist);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--color-muted);
+}
+.ad-sidebar .ad-placeholder {
+  max-width: 300px;
+}
+.ad-home .ad-placeholder {
+  height: 90px;
+}
+.article-body .ad-inline {
+  margin-block: 1.6em;
+  padding-block: 12px;
+  border-block: 1px solid var(--color-line);
+}
