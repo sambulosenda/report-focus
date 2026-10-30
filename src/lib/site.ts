@@ -54,7 +54,7 @@ _Replace the text in square brackets before launch. This page is edited in src/l
     description: "How to reach the Report Focus News newsroom.",
     body: `## Newsroom
 
-For news, story ideas and press releases, email [news@reportfocusnews.com].
+For news and story ideas, email [editor@reportfocusnews.com]. Send press releases to [press@reportfocusnews.com], and anything else to [info@reportfocusnews.com].
 
 ## Tips
 
@@ -66,7 +66,7 @@ If you think we got something wrong, email [corrections@reportfocusnews.com] wit
 
 ## Advertising
 
-For advertising and partnerships, email [ads@reportfocusnews.com].
+For advertising and partnerships, email [advertising@reportfocusnews.com].
 
 ## Post and phone
 
@@ -158,7 +158,7 @@ We do not sell your information. We share it only with services that help us run
 
 ## Your rights
 
-You can ask to see, correct or delete the information we hold about you. Email [privacy@reportfocusnews.com]. [Add the rights that apply under your local law, for example POPIA in South Africa or GDPR in Europe, and how to complain to the regulator.]
+You can ask to see, correct or delete the information we hold about you. Email [info@reportfocusnews.com]. [Add the rights that apply under your local law, for example POPIA in South Africa or GDPR in Europe, and how to complain to the regulator.]
 
 ## Changes to this policy
 
