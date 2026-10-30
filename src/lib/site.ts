@@ -157,7 +157,7 @@ This policy explains what information Report Focus News collects when you use th
 
 You can read Report Focus News without an account. Our own pages do not set tracking cookies. Our advertising partner does, as explained under Advertising below.
 
-We may count visits with a privacy-friendly stats service such as Plausible or Umami. It records which pages are read, which site sent you here, and your browser, device type and country. It does not use cookies, does not store your IP address and cannot identify you. We use these numbers only to understand what readers find useful.
+We count visits with Umami, a privacy-friendly stats service. It records which pages are read, which site sent you here, and your browser, device type and country. It does not use cookies, does not store your IP address and cannot identify you. We use these numbers only to understand what readers find useful.
 
 Our servers keep short-lived technical logs, including IP addresses, to keep the site secure and fix problems. We also use an error-reporting service, Sentry, which receives technical details when a page breaks.
 
@@ -192,6 +192,7 @@ We do not sell your information. We share it only with services that help us run
 - Cloudflare, which delivers pages and photos
 - Resend, which sends our emails
 - Sentry, which reports errors
+- Umami, which counts visits
 - Google, for advertising
 
 Some of these services store data outside Zimbabwe and South Africa, including in the European Union and the United States. We may also share information when the law requires it.
@@ -224,7 +225,7 @@ One cookie keeps newsroom staff signed in. Readers get no cookies from Report Fo
 
 ## Visitor stats
 
-We may count visits with a privacy-friendly stats service such as Plausible or Umami. It works without cookies and cannot identify you.
+We count visits with Umami, a privacy-friendly stats service. It works without cookies and cannot identify you.
 
 ## Advertising cookies
 
