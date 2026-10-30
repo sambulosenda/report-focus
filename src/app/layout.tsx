@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Libre_Franklin, Newsreader, Playfair_Display, Source_Serif_4 } from "next/font/google";
 import { ROBOTS, RSS_ALTERNATE, SHARE_IMAGE } from "@/lib/seo";
-import { HOME_DESCRIPTION, HOME_TITLE, TWITTER_HANDLE } from "@/lib/site";
+import { HOME_DESCRIPTION, HOME_TITLE, OG_LOCALE, TWITTER_HANDLE } from "@/lib/site";
 import { siteUrl } from "@/lib/utils";
 import "./globals.css";
 
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   title: { default: HOME_TITLE, template: "%s | Report Focus News" },
   description: HOME_DESCRIPTION,
   robots: ROBOTS,
-  openGraph: { siteName: "Report Focus News", locale: "en_ZA", type: "website", images: [SHARE_IMAGE] },
+  openGraph: { siteName: "Report Focus News", locale: OG_LOCALE, type: "website", images: [SHARE_IMAGE] },
   twitter: { card: "summary_large_image", site: TWITTER_HANDLE, images: [SHARE_IMAGE] },
   alternates: { types: RSS_ALTERNATE },
   // Proves to Google Search Console that this site belongs to the newsroom's account.

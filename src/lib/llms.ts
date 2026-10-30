@@ -2,7 +2,7 @@ import "server-only";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, categories, users } from "@/db/schema";
-import { isLive, navCategories } from "@/lib/queries";
+import { allCategories, isLive } from "@/lib/queries";
 import { CONTACT, INFO_PAGES, SITE_NAME } from "@/lib/site";
 import { excerpt, siteUrl } from "@/lib/utils";
 
@@ -26,16 +26,27 @@ async function newest(limit: number) {
 
 const storyUrl = (s: { section: string | null; slug: string }) => siteUrl(`/${s.section ?? "news"}/${s.slug}`);
 
+/** The desks the site is known for, listed first even when they are not in the top menu. */
+const LEAD_SECTIONS = ["zimbabwe", "south-africa", "africa", "politics", "crime", "business", "world"];
+
+function sectionsForLlms(cats: { name: string; slug: string }[]) {
+  const lead = LEAD_SECTIONS.flatMap((slug) => {
+    const cat = cats.find((c) => c.slug === slug);
+    return cat ? [cat] : [];
+  });
+  return [...lead, ...cats.filter((c) => !LEAD_SECTIONS.includes(c.slug))];
+}
+
 /** The short file: who we are, where things are, and the newest stories. */
 export async function llmsTxt() {
-  const [cats, stories] = await Promise.all([navCategories(), newest(20)]);
+  const [cats, stories] = await Promise.all([allCategories(), newest(20)]);
   return [
     `# ${SITE_NAME}`,
     "",
-    `> ${SITE_NAME} is an independent English-language news site covering Zimbabwe, South Africa and the rest of Africa, along with major world stories. It is owned by ${CONTACT.owner}, run from ${CONTACT.city} and founded in ${CONTACT.founded}. Editor-in-Chief: ${CONTACT.editorInChief}. Managing Editor: ${CONTACT.owner}.`,
+    `> ${SITE_NAME} was founded in ${CONTACT.city} in ${CONTACT.founded} to cover Zimbabwe news. It also reports on South Africa and the rest of Africa, along with major world stories. It is owned by ${CONTACT.owner}. Editor-in-Chief: ${CONTACT.editorInChief}. Managing Editor: ${CONTACT.owner}.`,
     "",
     "## Sections",
-    ...cats.map((c) => `- [${c.name}](${siteUrl(`/${c.slug}`)})`),
+    ...sectionsForLlms(cats).map((c) => `- [${c.name}](${siteUrl(`/${c.slug}`)})`),
     `- [Latest news](${siteUrl("/latest")})`,
     "",
     "## About and standards",

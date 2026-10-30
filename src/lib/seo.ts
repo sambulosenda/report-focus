@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CONTACT, SITE_NAME, SOCIAL, TWITTER_HANDLE } from "@/lib/site";
+import { authorBlurb, CONTACT, NOT_FOUND_DESCRIPTION, OG_LOCALE, sectionBlurb, SITE_NAME, SOCIAL, topicBlurb, TWITTER_HANDLE } from "@/lib/site";
 import { siteUrl } from "@/lib/utils";
 
 /** Branded card used when a page or story has no picture of its own. */
@@ -36,7 +36,11 @@ export function organizationLd() {
   return {
     ...publisherLd(),
     alternateName: "Report Focus",
+    description: `Founded in the United Kingdom in ${CONTACT.founded} to cover Zimbabwe news.`,
     foundingDate: CONTACT.founded,
+    foundingLocation: { "@type": "Country", name: "United Kingdom" },
+    address: { "@type": "PostalAddress", addressCountry: CONTACT.countryCode },
+    areaServed: { "@type": "Country", name: "Zimbabwe" },
     email: CONTACT.editor,
     publishingPrinciples: siteUrl("/standards"),
     ethicsPolicy: siteUrl("/standards"),
@@ -81,6 +85,16 @@ export function isWireByline(name: string) {
 }
 
 /**
+ * Sign-ups whose names are still raw usernames. Their profile pages stay out of search, and they get no Person
+ * record, until the owner confirms they are real reporters. The stories themselves stay published.
+ */
+const UNCONFIRMED_AUTHORS = new Set(["samvanatta799", "rosariavalenzuel", "rethakroeger"]);
+
+export function isUnconfirmedAuthor(slug: string) {
+  return UNCONFIRMED_AUTHORS.has(slug);
+}
+
+/**
  * A story's author for structured data. A person stays a Person; a desk byline such as "Staff Reporter"
  * becomes the newsroom, and a wire byline the agency, so search engines don't take them for real people.
  */
@@ -93,17 +107,76 @@ export function authorLd(author: { name: string; slug: string }) {
   return { "@type": "Person", "@id": `${url}#person`, name: author.name, url };
 }
 
+/** A wire dateline at the start of a story, such as "KIGALI, Rwanda – " or "HARARE- ". */
+const DATELINE = /^[A-Z]{2,}(?:\s+[A-Z]{2,})*(?:,\s*[A-Za-z][A-Za-z .'-]{0,60})?\s*[–—-]\s+/;
+/** "By Brilliant Pongo Report Focus News | " left over from an old byline line. */
+const BYLINE_MASTHEAD = /^By\s+.+?\bReport Focus News\s*\|\s*/i;
+/** "By Brilliant Pongo " when the byline and the first sentence share a line. */
+const BYLINE_PREFIX = /^By\s+(?:[A-Z][\p{L}.'’-]+)(?:\s+[A-Z][\p{L}.'’-]+){0,3}\s+/u;
+
+/** Drops a leading dateline, byline and a trailing ellipsis so the description starts on the news. */
+export function cleanLead(text: string) {
+  let t = text.replace(/\s+/g, " ").trim().replace(/(?:\.{3}|…)+$/u, "").trim();
+  let prev = "";
+  while (t && t !== prev) {
+    prev = t;
+    t = t.replace(DATELINE, "").replace(BYLINE_MASTHEAD, "").replace(BYLINE_PREFIX, "").trim();
+  }
+  return t;
+}
+
 /**
- * Text for a meta description: at most 155 characters, which is about what Google shows.
- * Ends on a whole sentence when one fits, otherwise on a whole word.
+ * Text for a meta description: at most 155 characters, cut on a word.
+ * "No." and "U.S." are not treated as the end of a sentence. A cut ends with a full stop, not an ellipsis.
  */
 export function metaDescription(text: string, max = 155) {
-  const t = text.replace(/\s+/g, " ").trim();
-  if (t.length <= max) return t;
-  const cut = t.slice(0, max);
-  const sentence = cut.match(/^.*[.!?](?=\s)/)?.[0];
-  if (sentence && sentence.length >= max * 0.5) return sentence;
-  return `${cut.slice(0, cut.lastIndexOf(" ")).replace(/[\s,;:–—-]+$/, "")}…`;
+  const t = cleanLead(text);
+  if (!t) return "";
+  const ended = (s: string) => /[.!?]$/.test(s);
+  const tidy = (s: string) => s.replace(/[\s,;:–—-]+$/u, "").trim();
+  const finish = (s: string) => {
+    const cleaned = tidy(s);
+    if (!cleaned) return "";
+    if (ended(cleaned)) return cleaned.length <= max ? cleaned : cleaned.slice(0, max);
+    if (cleaned.length < max) return `${cleaned}.`;
+    return finish(cleaned.slice(0, max - 1));
+  };
+  if (t.length <= max) return finish(t);
+  const room = t.slice(0, max - 1);
+  const space = room.lastIndexOf(" ");
+  return finish(space > 40 ? room.slice(0, space) : room);
+}
+
+/** The sentence search engines should quote: the standfirst, or the first real paragraph of the story. */
+export function storyDescription(summary: string, body: string) {
+  const pieces = [summary, ...body.split(/\n+/)];
+  for (const raw of pieces) {
+    const line = raw
+      .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+      .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+      .replace(/^[#>*\s]+/, "")
+      .replace(/[*_`]/g, "")
+      .trim();
+    if (!line) continue;
+    const cleaned = cleanLead(line);
+    if (cleaned.length >= 40) return metaDescription(cleaned);
+  }
+  return metaDescription(summary || body);
+}
+
+/** Section, topic and author descriptions: a real standfirst when the newsroom wrote one, otherwise a full sentence. */
+export function sectionMetaDescription(cat: { slug: string; name: string; description?: string | null }) {
+  const stored = cat.description?.replace(/\s+/g, " ").trim() ?? "";
+  return metaDescription(stored.length >= 120 ? stored : sectionBlurb(cat.slug, cat.name));
+}
+
+export function authorMetaDescription(name: string, bio?: string | null) {
+  const stored = bio?.replace(/\s+/g, " ").trim() ?? "";
+  return metaDescription(stored.length >= 120 ? stored : authorBlurb(name));
+}
+
+export function topicMetaDescription(name: string) {
+  return metaDescription(topicBlurb(name));
 }
 
 /**
@@ -146,6 +219,16 @@ export function ldJson(data: object) {
 /** Lets feed readers find the RSS feed from any page. */
 export const RSS_ALTERNATE = { "application/rss+xml": [{ url: "/feed.xml", title: SITE_NAME }] };
 
+/**
+ * Used when a page calls notFound(). The missing page's own metadata has to say this too:
+ * otherwise the browser puts the homepage title back after the page loads.
+ */
+export const NOT_FOUND_METADATA: Metadata = {
+  title: "Page not found",
+  description: NOT_FOUND_DESCRIPTION,
+  robots: { index: false, follow: true },
+};
+
 /** Large pictures in Google Discover and Top Stories, and full-length snippets. */
 export const ROBOTS: Metadata["robots"] = {
   index: true,
@@ -175,13 +258,15 @@ type PageMeta = {
 export function pageMeta({ title, absoluteTitle, description, path, image, noindex, openGraph }: PageMeta): Metadata {
   // WhatsApp, Facebook and X can't show SVG pictures, so those fall back to the branded card too.
   const images = image?.url && !/\.svg($|\?)/i.test(image.url) ? [{ url: image.url, alt: image.alt ?? title }] : [SHARE_IMAGE];
+  // The homepage canonical is written in the page itself. Next drops the trailing slash on "/".
+  const home = path === "/";
   return {
     title: absoluteTitle ? { absolute: title } : title,
     description,
     // A page's alternates replace the site's, so the RSS feed link is repeated here.
-    alternates: { canonical: path, types: RSS_ALTERNATE },
+    alternates: { ...(home ? {} : { canonical: path }), types: RSS_ALTERNATE },
     robots: noindex ? { index: false, follow: true } : ROBOTS,
-    openGraph: { siteName: SITE_NAME, locale: "en_ZA", type: "website", title, description, url: path, images, ...openGraph },
+    openGraph: { siteName: SITE_NAME, locale: OG_LOCALE, type: "website", title, description, ...(home ? {} : { url: path }), images, ...openGraph },
     twitter: { card: "summary_large_image", site: TWITTER_HANDLE, title, description, images },
   };
 }

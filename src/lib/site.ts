@@ -3,8 +3,42 @@
 export const SITE_NAME = "Report Focus News";
 /** Homepage title and description, which also stand in for any page without its own. */
 export const HOME_TITLE = "Report Focus News | Zimbabwe, South Africa and Africa News";
-export const HOME_DESCRIPTION =
-  "Independent reporting and analysis on Zimbabwe, South Africa and the rest of Africa: politics, crime, business and more.";
+/** Share-card language. The newsroom is in the UK, and Facebook has no Zimbabwe locale. */
+export const OG_LOCALE = "en_GB";
+
+export const LATEST_DESCRIPTION =
+  "The latest stories from Report Focus News on Zimbabwe, South Africa and the rest of Africa, newest first: politics, crime, business and more.";
+
+export const NOT_FOUND_DESCRIPTION =
+  "That page is not on Report Focus News. Search the archive, or read the latest news on Zimbabwe, South Africa and the rest of Africa.";
+
+/** Longer descriptions for the sections readers actually search for. Other sections use sectionBlurb's general line. */
+const SECTION_BLURBS: Record<string, string> = {
+  zimbabwe:
+    "Independent reporting and analysis on Zimbabwe: politics, crime, business and the news that matters to Zimbabweans at home and in the diaspora.",
+  "south-africa":
+    "Independent reporting and analysis on South Africa: politics, crime, business and the news that matters to South Africans at home and abroad.",
+  africa:
+    "Independent reporting and analysis on Africa beyond the Zimbabwe and South Africa desks: politics, conflict, business, health and climate.",
+};
+
+/** Meta description for a section. A stored newsroom description is used instead when it is already a full sentence. */
+export function sectionBlurb(slug: string, name: string) {
+  return (
+    SECTION_BLURBS[slug] ??
+    `The latest ${name} news from Report Focus News: independent reporting and analysis on Zimbabwe, South Africa and the rest of Africa.`
+  );
+}
+
+/** Meta description for a writer who has not written a biography yet. */
+export function authorBlurb(name: string) {
+  return `Read the stories by ${name} for Report Focus News, with reporting and analysis on Zimbabwe, South Africa and the rest of Africa.`;
+}
+
+/** Meta description for a topic page. */
+export function topicBlurb(name: string) {
+  return `The latest news and analysis on ${name} from Report Focus News, covering politics and crime in Zimbabwe, South Africa and the rest of Africa.`;
+}
 
 export const TAGLINE = "Independent reporting. Fast when it breaks, thorough when it matters.";
 
@@ -39,12 +73,16 @@ export const CONTACT = {
   editorInChief: "Brilliant Pongo",
   founded: "2017",
   city: "the United Kingdom",
+  countryCode: "GB",
   editor: "editor@reportfocusnews.com",
   tips: "tips@reportfocusnews.com",
   corrections: "corrections@reportfocusnews.com",
   advertising: "advertising@reportfocusnews.com",
   privacy: "privacy@reportfocusnews.com",
 };
+
+/** Homepage description. Written after CONTACT so the founding year and country stay in one place. */
+export const HOME_DESCRIPTION = `Founded in ${CONTACT.city} in ${CONTACT.founded}, Report Focus News covers Zimbabwe news, plus South Africa and the rest of Africa.`;
 const mail = (address: string) => `[${address}](mailto:${address})`;
 /** "[X](…), [Facebook](…) and [LinkedIn](…)", from the same accounts as the footer. */
 const socialLinks = () => {
@@ -62,10 +100,10 @@ export type InfoPage = { title: string; description: string; body: string; noind
 export const INFO_PAGES: Record<string, InfoPage> = {
   about: {
     title: "About us",
-    description: "Who we are and how Report Focus News works.",
-    body: `Report Focus News is an independent news site covering Zimbabwe, South Africa and the rest of Africa, along with the biggest stories from around the world.
+    description: `Founded in ${CONTACT.city} in ${CONTACT.founded}, Report Focus News is an independent site for Zimbabwe news, plus South Africa and the rest of Africa.`,
+    body: `Report Focus News was founded in ${CONTACT.city} in ${CONTACT.founded} to cover Zimbabwe news. We also report on South Africa and the rest of Africa, along with the biggest stories from around the world.
 
-We started in ${CONTACT.founded}. We are run from ${CONTACT.city} and work with reporters and contributors across Zimbabwe and South Africa.
+We are run from ${CONTACT.city} and work with reporters and contributors across Zimbabwe and South Africa.
 
 ## What we cover
 
@@ -88,7 +126,7 @@ To reach the newsroom, see our [contact page](/contact).`,
   },
   contact: {
     title: "Contact",
-    description: "How to reach the Report Focus News newsroom.",
+    description: "Email the Report Focus News newsroom for story ideas, confidential tips, corrections, advertising and questions about your information.",
     body: `## Newsroom
 
 For news, story ideas and press releases, email ${mail(CONTACT.editor)}. We read every message, but we cannot reply to them all or promise to publish a press release.

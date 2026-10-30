@@ -3,8 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { CardStory, RiverStory } from "@/components/Story";
 import { storiesByTag } from "@/lib/queries";
-import { collectionLd, ldJson, pageMeta } from "@/lib/seo";
-import { SITE_NAME } from "@/lib/site";
+import { collectionLd, ldJson, NOT_FOUND_METADATA, pageMeta, topicMetaDescription } from "@/lib/seo";
 import { TAG_INDEX_MIN, tagName, tagSlug } from "@/lib/tags";
 import { siteUrl, timeAgo } from "@/lib/utils";
 
@@ -30,11 +29,11 @@ const findTag = cache(async (param: string) => {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { tag, slug, stories } = await findTag((await params).tag);
-  if (!stories.length) return {};
+  if (!stories.length) return NOT_FOUND_METADATA;
   const name = tagName(tag);
   return pageMeta({
     title: `${name} News`,
-    description: `The latest news and analysis on ${name} from ${SITE_NAME}.`,
+    description: topicMetaDescription(name),
     path: `/tag/${encodeURIComponent(slug)}`,
     noindex: stories.length < TAG_INDEX_MIN,
   });
@@ -48,7 +47,8 @@ export default async function TagPage({ params }: Props) {
   if (moved) permanentRedirect(`/tag/${encodeURIComponent(slug)}`);
   const name = tagName(tag);
   const url = siteUrl(`/tag/${encodeURIComponent(slug)}`);
-  const ld = collectionLd({ name, url, description: `The latest news and analysis on ${name} from ${SITE_NAME}.`, stories });
+  const description = topicMetaDescription(name);
+  const ld = collectionLd({ name, url, description, stories });
   const [first, second, ...rest] = stories;
   return (
     <div className="mx-auto max-w-[1280px] px-4 pb-16 pt-6 md:px-6 md:pt-8">
