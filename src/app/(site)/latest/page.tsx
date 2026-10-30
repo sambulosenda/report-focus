@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
-import { Pager } from "@/components/StoryGrid";
-import { RowStory } from "@/components/Story";
+import { RiverStory } from "@/components/Story";
+import { LoadMore } from "@/components/StoryGrid";
 import { latestStories } from "@/lib/queries";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatTime, pageParam } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Latest News" };
 const PER_PAGE = 25;
 
 export default async function LatestPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const page = Math.max(1, Number((await searchParams).page) || 1);
+  const page = pageParam((await searchParams).page);
   const stories = await latestStories(PER_PAGE + 1, (page - 1) * PER_PAGE);
   const shown = stories.slice(0, PER_PAGE);
 
@@ -20,21 +20,23 @@ export default async function LatestPage({ searchParams }: { searchParams: Promi
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 pt-8">
-      <h1 className="headline flex items-center gap-3 text-4xl">
-        <span className="live-dot inline-block h-3 w-3 rounded-full bg-brand" /> Latest news
+    <div className="mx-auto max-w-[880px] px-4 pb-16 pt-6 md:px-6 md:pt-8">
+      <h1 className="flex items-center gap-3 border-b-[3px] border-ink pb-[18px] text-[32px] font-extrabold leading-none tracking-[-0.02em] md:text-[44px]">
+        <span aria-hidden className="live-dot h-3 w-3 rounded-full bg-brand" /> Latest news
       </h1>
       {[...groups].map(([day, list]) => (
-        <section key={day} className="mt-8">
-          <h2 className="mb-4 border-b-2 border-ink pb-1 text-sm font-black uppercase tracking-wider">{day}</h2>
-          <div className="flex flex-col gap-6">
+        <section key={day} className="mt-8" aria-label={day}>
+          <h2 className="inline-block border-b-[3px] border-brand pb-2 text-xl font-extrabold">{day}</h2>
+          <ol className="mt-2">
             {list.map((s) => (
-              <RowStory key={s.id} story={s} />
+              <li key={s.id} className="border-b border-line">
+                <RiverStory story={s} time={formatTime(s.publishedAt)} imageWidth="md:w-[160px]" />
+              </li>
             ))}
-          </div>
+          </ol>
         </section>
       ))}
-      <Pager base="/latest" page={page} hasNext={stories.length > PER_PAGE} />
+      <LoadMore base="/latest" page={page} hasNext={stories.length > PER_PAGE} />
     </div>
   );
 }

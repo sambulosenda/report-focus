@@ -1,11 +1,23 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
 export const ROLES = ["admin", "editor", "journalist"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const STATUSES = ["draft", "review", "published", "archived"] as const;
 export type Status = (typeof STATUSES)[number];
+
+/** What kind of story this is. Live stories get a timeline; video stories get the player layout. */
+export const KINDS = ["news", "analysis", "opinion", "explainer", "live", "video"] as const;
+export type Kind = (typeof KINDS)[number];
+export const KIND_LABEL: Record<Kind, string> = {
+  news: "News",
+  analysis: "Analysis",
+  opinion: "Opinion",
+  explainer: "Explainer",
+  live: "Live updates",
+  video: "Video",
+};
 
 const timestamp = (name: string) =>
   integer(name, { mode: "timestamp" }).notNull().default(sql`(unixepoch())`);
@@ -52,6 +64,11 @@ export const articles = sqliteTable(
     body: text("body").notNull().default(""),
     heroImage: text("hero_image"),
     heroCaption: text("hero_caption"),
+    heroCredit: text("hero_credit"),
+    heroAlt: text("hero_alt"),
+    kind: text("kind", { enum: KINDS }).notNull().default("news"),
+    videoUrl: text("video_url"),
+    videoDuration: text("video_duration"),
     tags: text("tags").notNull().default(""),
     categoryId: integer("category_id").references(() => categories.id, {
       onDelete: "set null",
@@ -75,6 +92,23 @@ export const articles = sqliteTable(
   ],
 );
 
+/** Timeline posts on a live story. */
+export const liveUpdates = sqliteTable(
+  "live_updates",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    articleId: integer("article_id")
+      .notNull()
+      .references(() => articles.id, { onDelete: "cascade" }),
+    authorId: integer("author_id").references(() => users.id, { onDelete: "set null" }),
+    title: text("title").notNull().default(""),
+    body: text("body").notNull(),
+    isPinned: integer("is_pinned", { mode: "boolean" }).notNull().default(false),
+    createdAt: timestamp("created_at"),
+  },
+  (t) => [index("live_updates_article_idx").on(t.articleId, t.createdAt)],
+);
+
 export const media = sqliteTable("media", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   url: text("url").notNull(),
@@ -83,7 +117,16 @@ export const media = sqliteTable("media", {
   createdAt: timestamp("created_at"),
 });
 
+/** Email sign-ups for newsletters such as The Morning Focus. */
+export const newsletterSignups = sqliteTable("newsletter_signups", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  email: text("email").notNull(),
+  list: text("list").notNull().default("morning-focus"),
+  createdAt: timestamp("created_at"),
+}, (t) => [uniqueIndex("newsletter_signups_email_list_idx").on(t.email, t.list)]);
+
 export type User = typeof users.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Article = typeof articles.$inferSelect;
 export type Media = typeof media.$inferSelect;
+export type LiveUpdate = typeof liveUpdates.$inferSelect;

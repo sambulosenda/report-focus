@@ -22,16 +22,17 @@ export async function verifyPassword(password: string, hash: string) {
   return bcrypt.compare(password, hash);
 }
 
-export async function createSession(userId: number) {
+/** "Keep me signed in" lasts SESSION_DAYS; otherwise the cookie ends with the browser and the session after 12 hours. */
+export async function createSession(userId: number, remember = true) {
   const token = randomBytes(32).toString("base64url");
-  const expiresAt = new Date(Date.now() + SESSION_DAYS * 864e5);
+  const expiresAt = new Date(Date.now() + (remember ? SESSION_DAYS * 864e5 : 12 * 3600e3));
   await db.insert(sessions).values({ id: hashToken(token), userId, expiresAt });
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    expires: expiresAt,
+    ...(remember ? { expires: expiresAt } : {}),
   });
 }
 

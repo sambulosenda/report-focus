@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { categories, media, ROLES, sessions, users } from "@/db/schema";
 import { hashPassword, requireUser } from "@/lib/auth";
+import { INFO_PAGES } from "@/lib/site";
 import { slugify } from "@/lib/utils";
 import type { FormState } from "./auth";
 
@@ -19,7 +20,11 @@ const CategoryInput = z.object({
   inNav: z.boolean(),
 });
 
-const RESERVED = new Set(["newsroom", "login", "search", "latest", "author", "tag", "media", "feed.xml", "sitemap.xml", "robots.txt", "api"]);
+const RESERVED = new Set([
+  "newsroom", "login", "search", "latest", "author", "tag", "media", "live", "video", "demo", "feed.xml", "sitemap.xml", "robots.txt", "api",
+  // Standing pages share the top-level URL space with sections.
+  ...Object.keys(INFO_PAGES),
+]);
 
 export async function saveCategory(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireUser("editor");

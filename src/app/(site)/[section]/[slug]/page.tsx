@@ -3,11 +3,18 @@ import Link from "next/link";
 import { after } from "next/server";
 import { notFound, permanentRedirect } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
+import { LiveBadge } from "@/components/LiveBadge";
+import { NewsletterCard } from "@/components/NewsletterForm";
+import { ReadingProgress } from "@/components/ReadingProgress";
 import { ShareButtons } from "@/components/ShareButtons";
-import { CardStory, TextStory } from "@/components/Story";
+import { CardStory, NumberedList, SectionTitle } from "@/components/Story";
+import { VideoWatch } from "@/components/VideoWatch";
+import { KIND_LABEL } from "@/db/schema";
 import { renderMarkdown } from "@/lib/markdown";
-import { incrementViews, mostRead, publicArticle, relatedStories } from "@/lib/queries";
-import { formatDateTime, readingTime, siteUrl, timeAgo } from "@/lib/utils";
+import { incrementViews, liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
+import { SITE_NAME } from "@/lib/site";
+import { formatDateTime, formatTime, readingTime, siteUrl, timeAgo } from "@/lib/utils";
+import { videoEmbedUrl } from "@/lib/video";
 
 type Props = { params: Promise<{ section: string; slug: string }> };
 
@@ -21,11 +28,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: article.summary,
     alternates: { canonical: url },
     openGraph: {
-      type: "article",
+      type: article.kind === "video" ? "video.other" : "article",
       title: article.title,
       description: article.summary,
       url,
-      images: article.heroImage ? [{ url: article.heroImage }] : undefined,
+      images: article.heroImage ? [{ url: article.heroImage, alt: article.heroAlt ?? undefined }] : undefined,
       publishedTime: article.publishedAt?.toISOString(),
       modifiedTime: article.updatedAt.toISOString(),
       authors: [author.name],
@@ -45,116 +52,222 @@ export default async function ArticlePage({ params }: Props) {
 
   after(() => incrementViews(article.id));
 
-  const [related, popular] = await Promise.all([relatedStories(article.id, article.categoryId), mostRead(5)]);
   const url = siteUrl(`/${canonicalSection}/${article.slug}`);
-  const updated = article.publishedAt && article.updatedAt.getTime() - article.publishedAt.getTime() > 10 * 60e3;
-  const tags = article.tags.split(",").map((t) => t.trim()).filter(Boolean);
+
+  if (article.kind === "video") {
+    const videos = (await storiesOfKind(["video"], 10)).filter((v) => v.id !== article.id);
+    const moreVideos = videos.slice(5, 9);
+    const abs = (u: string) => (u.startsWith("/") ? siteUrl(u) : u);
+    const embed = article.videoUrl ? videoEmbedUrl(article.videoUrl) : null;
+    const videoLd = {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      name: article.title,
+      description: article.summary || article.title,
+      thumbnailUrl: article.heroImage ? [abs(article.heroImage)] : undefined,
+      uploadDate: article.publishedAt?.toISOString(),
+      duration: isoDuration(article.videoDuration),
+      embedUrl: embed ?? undefined,
+      contentUrl: article.videoUrl && !embed ? abs(article.videoUrl) : undefined,
+      publisher: { "@type": "NewsMediaOrganization", name: SITE_NAME, url: siteUrl() },
+    };
+    return (
+      <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(videoLd).replace(/</g, "\\u003c") }} />
+      <VideoWatch
+        video={{ ...article, categoryName: category?.name }}
+        upNext={videos.slice(0, 5)}
+        more={moreVideos.length ? moreVideos : await relatedStories(article.id, article.categoryId, 4)}
+        moreTitle={moreVideos.length ? "More videos" : `More from ${category?.name ?? SITE_NAME}`}
+      />
+      </>
+    );
+  }
+
+  const [related, popular, updates] = await Promise.all([
+    relatedStories(article.id, article.categoryId),
+    mostRead(5),
+    article.kind === "live" ? liveUpdatesFor(article.id) : Promise.resolve([]),
+  ]);
+  const lastUpdate = updates.reduce<Date | null>((d, u) => (!d || u.createdAt > d ? u.createdAt : d), null);
+  const updatedAt = lastUpdate && lastUpdate > article.updatedAt ? lastUpdate : article.updatedAt;
+  const updated = article.publishedAt && updatedAt.getTime() - article.publishedAt.getTime() > 10 * 60e3;
+  const tags = article.tags.split(",").map((t) => t.trim()).filter((t) => t && t.toLowerCase() !== "sample");
+  const latestUpdates = [...updates].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 3);
 
   const jsonLd = {
     "@context": "https://schema.org",
-    "@type": "NewsArticle",
+    "@type": article.kind === "live" ? "LiveBlogPosting" : article.kind === "opinion" ? "OpinionNewsArticle" : article.kind === "analysis" ? "AnalysisNewsArticle" : "NewsArticle",
     headline: article.title,
     description: article.summary,
-    image: article.heroImage ? [article.heroImage] : undefined,
+    image: article.heroImage ? [article.heroImage.startsWith("/") ? siteUrl(article.heroImage) : article.heroImage] : undefined,
     datePublished: article.publishedAt?.toISOString(),
-    dateModified: article.updatedAt.toISOString(),
+    dateModified: updatedAt.toISOString(),
     author: [{ "@type": "Person", name: author.name, url: siteUrl(`/author/${author.slug}`) }],
-    publisher: { "@type": "NewsMediaOrganization", name: "Report Focus", url: siteUrl() },
+    publisher: { "@type": "NewsMediaOrganization", name: SITE_NAME, url: siteUrl() },
     mainEntityOfPage: url,
     articleSection: category?.name,
   };
 
   return (
-    <article className="mx-auto max-w-7xl px-4 pt-8">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
-      <div className="mx-auto max-w-3xl">
-        <div className="flex items-center gap-3 text-sm font-bold uppercase tracking-wide">
-          {article.isBreaking && (
-            <span className="flex items-center gap-1.5 rounded-sm bg-brand px-2 py-0.5 text-xs text-white">
-              <span className="live-dot inline-block h-1.5 w-1.5 rounded-full bg-white" /> Breaking
-            </span>
-          )}
-          {category && (
-            <Link href={`/${category.slug}`} style={{ color: category.color }} className="hover:underline">
-              {category.name}
-            </Link>
-          )}
-        </div>
-        <h1 className="headline mt-3 text-4xl md:text-5xl">{article.title}</h1>
-        {article.summary && <p className="mt-4 text-xl leading-relaxed text-muted">{article.summary}</p>}
+    <>
+      <ReadingProgress targetId="story" />
+      <article id="story" className="mx-auto max-w-[1280px] px-4 pb-16 pt-[18px] md:px-6 md:pb-[72px] md:pt-9">
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+        <header className="mx-auto max-w-[780px]">
+          <nav aria-label="Breadcrumb" className="mb-2.5 flex flex-wrap items-center gap-2 text-xs font-bold md:mb-3.5 md:gap-2.5 md:text-[13px]">
+            {article.kind === "live" && <LiveBadge />}
+            {article.isBreaking && article.kind !== "live" && (
+              <span className="rounded bg-brand px-[9px] py-1 text-[11px] font-extrabold tracking-[0.08em] text-white">BREAKING</span>
+            )}
+            {category && (
+              <Link href={`/${category.slug}`} className="text-ink hover:underline">
+                {category.name}
+              </Link>
+            )}
+            {article.kind !== "news" && article.kind !== "live" && (
+              <>
+                <span aria-hidden className="text-[#9ca3af]">/</span>
+                <span className="uppercase tracking-[0.05em] text-brand">{KIND_LABEL[article.kind]}</span>
+              </>
+            )}
+          </nav>
+          <h1 className="headline text-[30px] leading-[1.12] tracking-[-0.01em] md:text-[48px] md:leading-[1.07] md:tracking-[-0.015em]">{article.title}</h1>
+          {article.summary && <p className="mt-3 text-lg leading-normal text-ink-2 md:mt-[18px] md:text-xl">{article.summary}</p>}
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-line py-4">
-          <div className="flex items-center gap-3">
-            <Avatar name={author.name} url={author.avatarUrl} size={44} />
-            <div className="text-sm">
-              <p>
-                By{" "}
-                <Link href={`/author/${author.slug}`} className="font-bold hover:underline">
-                  {author.name}
+          <div className="mt-4 md:mt-6 md:flex md:flex-wrap md:items-center md:gap-x-5 md:gap-y-3.5 md:border-y md:border-line md:py-4">
+            <div className="flex items-center gap-2.5 md:flex-[1_1_260px] md:gap-3">
+              <span className="hidden md:block">
+                <Avatar name={author.name} url={author.avatarUrl} size={44} />
+              </span>
+              <span className="md:hidden">
+                <Avatar name={author.name} url={author.avatarUrl} size={40} />
+              </span>
+              <div className="text-[13px] leading-[1.4] md:text-sm md:leading-[1.45]">
+                <p>
+                  By{" "}
+                  <Link href={`/author/${author.slug}`} className="font-extrabold text-ink hover:underline">
+                    {author.name}
+                  </Link>
+                  {author.title && <span className="hidden md:inline">, {author.title}</span>}
+                </p>
+                <p className="text-muted">
+                  <time dateTime={article.publishedAt?.toISOString()}>{formatDateTime(article.publishedAt)}</time>
+                  {updated && (
+                    <>
+                      {" · "}Updated <time dateTime={updatedAt.toISOString()}>{timeAgo(updatedAt)}</time>
+                    </>
+                  )}
+                  <span className="hidden md:inline"> · {readingTime(article.body)} min read</span>
+                </p>
+              </div>
+            </div>
+            <ShareButtons url={url} title={article.title} className="mt-3 justify-between border-y border-line py-2 md:mt-0 md:justify-start md:border-0 md:py-0" />
+          </div>
+        </header>
+
+        {article.heroImage && (
+          <figure className="-mx-4 mt-4 md:mx-auto md:mt-[30px] md:max-w-[1080px]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={article.heroImage} alt={article.heroAlt ?? ""} className="block aspect-video w-full object-cover md:rounded" />
+            {(article.heroCaption || article.heroCredit) && (
+              <figcaption className="px-4 pt-2 text-xs leading-[1.45] text-muted md:mt-2.5 md:px-0 md:pt-0 md:text-[13px]">
+                {article.heroCaption}
+                {article.heroCredit && <span className="text-[#6b7280]"> {article.heroCredit}</span>}
+              </figcaption>
+            )}
+          </figure>
+        )}
+
+        <div className="mt-5 flex flex-col gap-14 md:mt-10 lg:flex-row lg:justify-center">
+          <div className="min-w-0 lg:max-w-[680px] lg:flex-[999_1_560px]">
+            {latestUpdates.length > 0 && (
+              <section aria-labelledby="latest-updates" className="mb-5 rounded-lg border border-line p-3.5 md:mb-8 md:px-5 md:py-[18px]">
+                <div className="mb-1.5 flex items-center justify-between md:mb-3">
+                  <h2 id="latest-updates" className="inline-flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.08em] text-brand md:text-xs">
+                    <span aria-hidden className="live-dot h-[7px] w-[7px] rounded-full bg-brand" />
+                    Latest updates
+                  </h2>
+                  <Link href={`/live/${article.slug}`} className="hidden text-[13px] font-bold text-ink hover:underline md:inline">
+                    All updates →
+                  </Link>
+                </div>
+                <ol>
+                  {latestUpdates.map((u) => (
+                    <li key={u.id} className="border-t border-[#f0f1f3]">
+                      <Link href={`/live/${article.slug}#update-${u.id}`} className="flex gap-3 py-2 hover:underline md:gap-3.5 md:py-[9px]">
+                        <time dateTime={u.createdAt.toISOString()} className="w-[58px] flex-none text-xs font-extrabold text-ink md:w-16 md:text-[13px] md:font-bold">
+                          {formatTime(u.createdAt)}
+                        </time>
+                        <span className="text-sm leading-[1.45] text-ink md:text-[15px]">{u.title || u.body}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+                <Link href={`/live/${article.slug}`} className="flex min-h-11 items-center border-t border-[#f0f1f3] text-sm font-bold md:hidden">
+                  See all updates →
                 </Link>
-                {author.title && <span className="text-muted">, {author.title}</span>}
-              </p>
-              <p className="text-muted">
-                <time dateTime={article.publishedAt?.toISOString()}>{formatDateTime(article.publishedAt)}</time>
-                {updated && <> · Updated {timeAgo(article.updatedAt)}</>} · {readingTime(article.body)} min read
-              </p>
+              </section>
+            )}
+
+            <div className="article-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(article.body) }} />
+
+            {tags.length > 0 && (
+              <ul className="mt-6 flex flex-wrap gap-2" aria-label="Topics">
+                {tags.map((t) => (
+                  <li key={t}>
+                    <Link href={`/tag/${encodeURIComponent(t.toLowerCase())}`} className="inline-flex rounded-full border border-line-2 px-3.5 py-2 text-[13px] font-bold capitalize text-ink hover:border-ink">
+                      {t}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <div className="mt-8 flex items-start gap-4 rounded-lg border border-line p-5">
+              <Avatar name={author.name} url={author.avatarUrl} size={52} />
+              <div className="text-[15px] leading-normal">
+                <p className="font-extrabold text-ink">{author.name}</p>
+                <p className="text-muted">{author.bio ?? `${author.name} reports for ${SITE_NAME}.`}</p>
+                <Link href={`/author/${author.slug}`} className="mt-1.5 inline-block text-sm font-bold text-brand hover:underline">
+                  More from {author.name.split(" ")[0]} →
+                </Link>
+              </div>
             </div>
           </div>
-          <ShareButtons url={url} title={article.title} />
+
+          <aside className="min-w-0 lg:max-w-[320px] lg:flex-[1_1_280px]">
+            <div className="flex flex-col gap-7 lg:sticky lg:top-6">
+              <div>
+                <SectionTitle>Most Read</SectionTitle>
+                <NumberedList stories={popular} numberSize="lg" />
+              </div>
+              <NewsletterCard text="Five stories before 8 a.m., every weekday." />
+            </div>
+          </aside>
         </div>
-      </div>
 
-      {article.heroImage && (
-        <figure className="mx-auto mt-8 max-w-5xl">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={article.heroImage} alt={article.heroCaption ?? ""} className="w-full rounded object-cover" />
-          {article.heroCaption && <figcaption className="mt-2 text-sm text-muted">{article.heroCaption}</figcaption>}
-        </figure>
-      )}
-
-      <div className="mx-auto mt-10 grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,1fr)_300px]">
-        <div className="mx-auto w-full max-w-3xl lg:mx-0 lg:ml-auto">
-          <div className="article-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(article.body) }} />
-          {tags.length > 0 && (
-            <ul className="mt-10 flex flex-wrap gap-2">
-              {tags.map((t) => (
-                <li key={t}>
-                  <Link href={`/tag/${encodeURIComponent(t.toLowerCase())}`} className="rounded-full bg-mist px-3 py-1 text-sm font-semibold hover:bg-line">
-                    {t}
-                  </Link>
-                </li>
+        {related.length > 0 && (
+          <section className="mt-16" aria-labelledby="more-from">
+            <SectionTitle id="more-from" className="mb-5">
+              More from {category?.name ?? SITE_NAME}
+            </SectionTitle>
+            <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+              {related.map((s) => (
+                <CardStory key={s.id} story={s} />
               ))}
-            </ul>
-          )}
-          <div className="mt-10 rounded-lg border border-line bg-mist p-5 text-sm">
-            <p className="font-bold">About the author</p>
-            <p className="mt-1 text-muted">{author.bio ?? `${author.name} reports for Report Focus.`}</p>
-          </div>
-        </div>
-        <aside className="hidden lg:block">
-          <div className="sticky top-6">
-            <h2 className="border-b-2 border-ink pb-2 text-sm font-black uppercase tracking-wider">Most read</h2>
-            <ol className="divide-y divide-line">
-              {popular.map((s, i) => (
-                <li key={s.id}>
-                  <TextStory story={s} index={i} />
-                </li>
-              ))}
-            </ol>
-          </div>
-        </aside>
-      </div>
-
-      {related.length > 0 && (
-        <section className="mx-auto mt-16 max-w-6xl border-t-2 border-ink pt-6">
-          <h2 className="mb-6 text-xl font-black uppercase">More from {category?.name ?? "Report Focus"}</h2>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {related.map((s) => (
-              <CardStory key={s.id} story={s} size="sm" />
-            ))}
-          </div>
-        </section>
-      )}
-    </article>
+            </div>
+          </section>
+        )}
+      </article>
+    </>
   );
+}
+
+/** "4:12" or "1:02:30" as an ISO 8601 duration for search engines. */
+function isoDuration(d: string | null) {
+  const parts = d?.split(":").map(Number);
+  if (!parts || parts.some(Number.isNaN)) return undefined;
+  const [h, m, sec] = parts.length === 3 ? parts : [0, ...parts];
+  return `PT${h ? `${h}H` : ""}${m}M${sec}S`;
 }

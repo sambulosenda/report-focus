@@ -10,7 +10,7 @@ function safeUrl(href: string) {
   return "#";
 }
 
-const marked = new Marked({
+const marked: Marked = new Marked({
   gfm: true,
   breaks: false,
   renderer: {
@@ -24,6 +24,24 @@ const marked = new Marked({
       return `<a href="${escapeHtml(safeUrl(href))}"${title ? ` title="${escapeHtml(title)}"` : ""}${
         external ? ' target="_blank" rel="noopener noreferrer"' : ""
       }>${text}</a>`;
+    },
+    // "> **What to know**" as the first line turns a quote into the grey key-points box.
+    // A quote whose last line starts with an em dash gets that line as its attribution.
+    blockquote({ tokens, text }: Tokens.Blockquote): string {
+      const [first] = tokens;
+      const label = /^\*\*what to know\*\*[ \t]*(?:\n|$)/i;
+      if (first?.type === "paragraph" && label.test((first as Tokens.Paragraph).text.trim())) {
+        // Points typed straight under the label, with no blank line, are parsed again on their own.
+        const rest = text.trim().replace(label, "");
+        return `<aside class="what-to-know"><p class="what-to-know-label">What to know</p>${marked.parse(rest, { async: false })}</aside>`;
+      }
+      const lines = text.trim().split("\n");
+      const cite = lines[lines.length - 1].match(/^(?:—|--)\s*(.+)$/);
+      if (lines.length > 1 && cite) {
+        const quote = lines.slice(0, -1).join("\n");
+        return `<blockquote>${marked.parse(quote, { async: false })}<footer>— ${marked.parseInline(cite[1], { async: false })}</footer></blockquote>`;
+      }
+      return `<blockquote>${this.parser.parse(tokens)}</blockquote>`;
     },
     image({ href, title, text }: Tokens.Image) {
       const caption = title || "";

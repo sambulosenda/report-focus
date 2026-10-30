@@ -32,19 +32,51 @@ const STAFF = [
   { name: "Marcus Bell", email: "marcus@reportfocus.news", role: "journalist", title: "Science and Health Reporter", bio: "Marcus covers health, science and the climate." },
 ] as const;
 
-type Sample = { title: string; section: string; author: number; summary: string; body: string[]; tags: string; breaking?: boolean; featured?: boolean; hoursAgo: number };
+type Sample = {
+  title: string;
+  section: string;
+  author: number;
+  summary: string;
+  body: string[];
+  tags: string;
+  breaking?: boolean;
+  featured?: boolean;
+  hoursAgo: number;
+  image?: string;
+  kind?: "news" | "analysis" | "opinion" | "explainer" | "live" | "video";
+  duration?: string;
+};
+
+// Sample illustrations live in public/demo. IMAGES[i] is the picture for the i-th sample unless it names its own.
+const IMAGES = ["storm", "capitol", "markets", "hospital", "city", "summit", "phone", "stadium", "film", "transit", "city", "park", "smoke", "phone", "flood", "transit", "stadium", "film"];
+const ALT: Record<string, string> = {
+  storm: "Illustration of heavy rain over coastal homes",
+  capitol: "Illustration of the Capitol at dusk",
+  markets: "Illustration of a rising market chart",
+  hospital: "Illustration of a hospital entrance",
+  city: "Illustration of a city skyline",
+  summit: "Illustration of flags outside a summit venue",
+  phone: "Illustration of a smartphone",
+  stadium: "Illustration of a stadium under lights",
+  film: "Illustration of a film reel",
+  transit: "Illustration of a commuter train",
+  park: "Illustration of a path through a park",
+  smoke: "Illustration of a hazy, smoke-filled sky",
+  flood: "Illustration of a flooded street",
+};
 
 const SAMPLES: Sample[] = [
   {
     title: "Storm system brings record rainfall to the Gulf Coast as crews prepare for flooding",
-    section: "climate", author: 4, breaking: true, featured: true, hoursAgo: 1, tags: "weather, flooding, sample",
+    section: "climate", author: 4, breaking: true, featured: true, hoursAgo: 1, tags: "weather, flooding, sample", kind: "live",
     summary: "Forecasters say parts of the region could see a month’s worth of rain in two days, and emergency managers are opening shelters.",
     body: [
       "A slow-moving storm system parked over the Gulf Coast on Wednesday, dropping more than eight inches of rain in some areas and prompting flash flood warnings for several coastal counties.",
       "Emergency managers opened shelters overnight and urged residents in low-lying neighborhoods to move to higher ground before the heaviest bands arrive this evening.",
+      "> **What to know**\n>\n> - Flash flood warnings cover six coastal counties until Friday morning.\n> - Shelters are open in four cities; pets are allowed at two.\n> - Avoid driving through standing water, even when it looks shallow.",
       "## What forecasters expect",
       "The weather service said the system is expected to stall for at least another 24 hours. Rivers in the area are already running high after a wet autumn.",
-      "> “The ground simply can’t take any more water,” one regional forecaster said. “That’s what makes this dangerous.”",
+      "> The ground simply can’t take any more water. That’s what makes this dangerous.\n>\n> — Regional forecaster",
       "Officials are asking drivers to avoid flooded roads. Just six inches of moving water can knock a person off their feet, and a foot of water can float most cars.",
       "This is a sample story included with Report Focus so the site has content to display.",
     ],
@@ -240,12 +272,69 @@ const SAMPLES: Sample[] = [
       "This is a sample story included with Report Focus so the site has content to display.",
     ],
   },
+  {
+    title: "Drone video shows flooded streets across the coast",
+    section: "us", author: 4, hoursAgo: 2, tags: "flooding, sample", kind: "video", image: "flood", duration: "1:38",
+    summary: "Aerial footage shows how far the water has spread in low-lying neighborhoods.",
+    body: ["Footage recorded on Wednesday afternoon shows water covering streets and yards across several coastal neighborhoods.", "This is a sample video story included with Report Focus so the site has content to display."],
+  },
+  {
+    title: "What is in the late-night funding deal",
+    section: "politics", author: 2, hoursAgo: 4, tags: "congress, budget, sample", kind: "video", image: "capitol", duration: "3:04",
+    summary: "Our political correspondent walks through the agreement in three minutes.",
+    body: ["The deal keeps the government open through March and adds money for disaster recovery.", "This is a sample video story included with Report Focus so the site has content to display."],
+  },
+  {
+    title: "Doctors explain why flu season came early",
+    section: "health", author: 4, hoursAgo: 7, tags: "flu, sample", kind: "video", image: "hospital", duration: "2:12",
+    summary: "Two emergency physicians on what they are seeing and when to get a flu shot.",
+    body: ["Hospitals are reporting more flu cases than usual for this time of year.", "This is a sample video story included with Report Focus so the site has content to display."],
+  },
+  {
+    title: "The final seconds of an overtime upset",
+    section: "sports", author: 1, hoursAgo: 13, tags: "playoffs, sample", kind: "video", image: "stadium", duration: "0:58",
+    summary: "Watch the play that ended the champions’ season.",
+    body: ["The underdogs scored with four seconds left in overtime.", "This is a sample video story included with Report Focus so the site has content to display."],
+  },
+  {
+    title: "Why this autumn has been so wet across the South",
+    section: "climate", author: 4, hoursAgo: 18, tags: "weather, sample", kind: "video", image: "storm", duration: "4:20",
+    summary: "A meteorologist explains the pattern behind weeks of heavy rain.",
+    body: ["A stalled jet stream has steered storm after storm across the region.", "This is a sample video story included with Report Focus so the site has content to display."],
+  },
+  {
+    title: "The funding deal buys time, not peace, in Congress",
+    section: "politics", author: 2, hoursAgo: 9, tags: "congress, sample", kind: "analysis", image: "capitol",
+    summary: "Both parties got something they wanted. The hard choices are still waiting in March.",
+    body: ["The short-term deal ends the immediate threat of a shutdown, but it settles none of the arguments that caused it.", "This is a sample story included with Report Focus so the site has content to display."],
+  },
+  {
+    title: "Our coastal towns cannot keep rebuilding the same way",
+    section: "climate", author: 4, hoursAgo: 16, tags: "flooding, sample", kind: "opinion", image: "flood",
+    summary: "Every storm brings the same promise to rebuild. It is time to rebuild differently.",
+    body: ["After every flood, the same streets are rebuilt in the same places with the same materials.", "This is a sample story included with Report Focus so the site has content to display."],
+  },
+  {
+    title: "Right to repair, explained in five questions",
+    section: "technology", author: 3, hoursAgo: 22, tags: "right to repair, sample", kind: "explainer", image: "phone",
+    summary: "What the new rules would change, who supports them and what it means for your phone.",
+    body: ["Right-to-repair rules would require device makers to sell parts and tools to the public.", "This is a sample story included with Report Focus so the site has content to display."],
+  },
+];
+
+// Timeline posts for the live sample story. Minutes are counted back from now.
+const LIVE_UPDATES = [
+  { minutes: 190, title: "Flash flood warnings issued", body: "The weather service issued flash flood warnings for four coastal counties as rain bands moved ashore." },
+  { minutes: 120, title: "Shelters open in four cities", body: "Emergency managers opened shelters in four cities and asked residents in low-lying neighborhoods to leave before dark." },
+  { minutes: 64, title: "Levee crews work through the afternoon", body: "Crews are stacking sandbags along a two-mile stretch of levee that officials say is most at risk." },
+  { minutes: 18, title: "Warnings now cover six counties", body: "Two more counties were added to the flash flood warning as the storm stalled over the coast." },
+  { minutes: 5, title: "What we know right now", body: "More than eight inches of rain has fallen in some areas. Rivers are expected to crest overnight. Avoid driving through flooded roads.", pinned: true },
 ];
 
 async function main() {
   mkdirSync("data", { recursive: true });
   const { db } = await import("../src/db");
-  const { articles, categories, media, sessions, users } = await import("../src/db/schema");
+  const { articles, categories, liveUpdates, media, sessions, users } = await import("../src/db/schema");
 
   const [{ n }] = await db.select({ n: sql<number>`count(*)` }).from(users);
   if (n > 0 && !force) {
@@ -253,6 +342,7 @@ async function main() {
     return;
   }
   if (force) {
+    await db.delete(liveUpdates);
     await db.delete(articles);
     await db.delete(media);
     await db.delete(sessions);
@@ -279,29 +369,51 @@ async function main() {
   const catId = Object.fromEntries(cats.map((c) => [c.slug, c.id]));
 
   const now = Date.now();
-  await db.insert(articles).values(
-    SAMPLES.map((s, i) => {
-      const publishedAt = new Date(now - s.hoursAgo * 3600e3);
-      return {
-        title: s.title,
-        slug: s.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 90),
-        summary: s.summary,
-        body: s.body.join("\n\n"),
-        heroImage: `https://picsum.photos/seed/reportfocus-${i + 1}/1600/900`,
-        heroCaption: "Sample photo. (Photo: Picsum)",
-        tags: s.tags,
-        categoryId: catId[s.section],
-        authorId: staff[s.author].id,
-        status: "published" as const,
-        isBreaking: !!s.breaking,
-        isFeatured: !!s.featured,
-        views: Math.round(Math.random() * 5000),
-        publishedAt,
-        createdAt: publishedAt,
-        updatedAt: publishedAt,
-      };
-    }),
-  );
+  const inserted = await db
+    .insert(articles)
+    .values(
+      SAMPLES.map((s, i) => {
+        const publishedAt = new Date(now - s.hoursAgo * 3600e3);
+        const image = s.image ?? IMAGES[i] ?? "city";
+        return {
+          title: s.title,
+          slug: s.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "").slice(0, 90),
+          summary: s.summary,
+          body: s.body.join("\n\n"),
+          heroImage: `/demo/${image}.svg`,
+          heroCaption: "Sample illustration.",
+          heroCredit: "Illustration: Report Focus News",
+          heroAlt: ALT[image] ?? "",
+          kind: s.kind ?? "news",
+          videoDuration: s.duration ?? null,
+          tags: s.tags,
+          categoryId: catId[s.section],
+          authorId: staff[s.author].id,
+          status: "published" as const,
+          isBreaking: !!s.breaking,
+          isFeatured: !!s.featured,
+          views: Math.round(Math.random() * 5000),
+          publishedAt,
+          createdAt: publishedAt,
+          updatedAt: publishedAt,
+        };
+      }),
+    )
+    .returning({ id: articles.id, kind: articles.kind, authorId: articles.authorId });
+
+  const live = inserted.find((a) => a.kind === "live");
+  if (live) {
+    await db.insert(liveUpdates).values(
+      LIVE_UPDATES.map((u) => ({
+        articleId: live.id,
+        authorId: live.authorId,
+        title: u.title,
+        body: u.body,
+        isPinned: !!u.pinned,
+        createdAt: new Date(now - u.minutes * 60e3),
+      })),
+    );
+  }
 
   // A couple of in-progress stories so the newsroom workflow has something to show.
   await db.insert(articles).values([
