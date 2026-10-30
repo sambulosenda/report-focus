@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { excerpt, formatTime } from "@/lib/utils";
+import { excerpt, formatTime, siteUrl } from "@/lib/utils";
+import { ldJson, publisherLd } from "@/lib/seo";
+import { SITE_NAME, SOCIAL } from "@/lib/site";
 import { AdSlot } from "@/components/AdSlot";
 import { BreakingBanner } from "@/components/BreakingBanner";
 import { NewsletterBand } from "@/components/NewsletterForm";
@@ -28,6 +31,14 @@ import {
   storiesOfKind,
   trendingTags,
 } from "@/lib/queries";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+/** Tells Google the site's name and who publishes it. */
+const siteLd = [
+  { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: siteUrl() },
+  { "@context": "https://schema.org", ...publisherLd(), sameAs: SOCIAL.map((s) => s.url).filter(Boolean) },
+];
 
 export default async function HomePage() {
   const [breaking, featured, latest, popular, cats, videos, opinion, live, chips] = await Promise.all([
@@ -73,6 +84,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(siteLd) }} />
       {breaking && <BreakingBanner story={breaking} />}
 
       {chips.length > 0 && (

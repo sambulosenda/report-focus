@@ -15,34 +15,39 @@ import { KIND_LABEL } from "@/db/schema";
 import { inlineAdHtml } from "@/lib/ads";
 import { renderMarkdownWithBreaks } from "@/lib/markdown";
 import { incrementViews, liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
+import { absoluteUrl, ldJson, pageMeta, publisherLd, SHARE_IMAGE } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
-import { formatDateTime, formatTime, readingTime, siteUrl, timeAgo } from "@/lib/utils";
+import { excerpt, formatDateTime, formatTime, readingTime, siteUrl, timeAgo } from "@/lib/utils";
 import { videoEmbedUrl } from "@/lib/video";
 
 type Props = { params: Promise<{ section: string; slug: string }> };
+
+/** A story's tags as a list, without the placeholder "sample" tag. */
+function storyTags(tags: string) {
+  return tags.split(",").map((t) => t.trim()).filter((t) => t && t.toLowerCase() !== "sample");
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const row = await publicArticle((await params).slug);
   if (!row) return {};
   const { article, category, author } = row;
-  const url = `/${category?.slug ?? "news"}/${article.slug}`;
-  return {
+  return pageMeta({
     title: article.title,
-    description: article.summary,
-    alternates: { canonical: url },
-    openGraph: {
-      type: article.kind === "video" ? "video.other" : "article",
-      title: article.title,
-      description: article.summary,
-      url,
-      images: article.heroImage ? [{ url: article.heroImage, alt: article.heroAlt ?? undefined }] : undefined,
-      publishedTime: article.publishedAt?.toISOString(),
-      modifiedTime: article.updatedAt.toISOString(),
-      authors: [author.name],
-      section: category?.name,
-    },
-    twitter: { card: "summary_large_image", title: article.title, description: article.summary },
-  };
+    description: article.summary || excerpt(article.body, 160),
+    path: `/${category?.slug ?? "news"}/${article.slug}`,
+    image: article.heroImage ? { url: article.heroImage, alt: article.heroAlt } : null,
+    openGraph:
+      article.kind === "video"
+        ? { type: "video.other" }
+        : {
+            type: "article",
+            publishedTime: article.publishedAt?.toISOString(),
+            modifiedTime: article.updatedAt.toISOString(),
+            authors: [siteUrl(`/author/${author.slug}`)],
+            section: category?.name,
+            tags: storyTags(article.tags),
+          },
+  });
 }
 
 export default async function ArticlePage({ params }: Props) {
@@ -60,23 +65,22 @@ export default async function ArticlePage({ params }: Props) {
   if (article.kind === "video") {
     const videos = (await storiesOfKind(["video"], 10)).filter((v) => v.id !== article.id);
     const moreVideos = videos.slice(5, 9);
-    const abs = (u: string) => (u.startsWith("/") ? siteUrl(u) : u);
     const embed = article.videoUrl ? videoEmbedUrl(article.videoUrl) : null;
     const videoLd = {
       "@context": "https://schema.org",
       "@type": "VideoObject",
       name: article.title,
       description: article.summary || article.title,
-      thumbnailUrl: article.heroImage ? [abs(article.heroImage)] : undefined,
+      thumbnailUrl: [absoluteUrl(article.heroImage ?? SHARE_IMAGE.url)],
       uploadDate: article.publishedAt?.toISOString(),
       duration: isoDuration(article.videoDuration),
       embedUrl: embed ?? undefined,
-      contentUrl: article.videoUrl && !embed ? abs(article.videoUrl) : undefined,
-      publisher: { "@type": "NewsMediaOrganization", name: SITE_NAME, url: siteUrl() },
+      contentUrl: article.videoUrl && !embed ? absoluteUrl(article.videoUrl) : undefined,
+      publisher: publisherLd(),
     };
     return (
       <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(videoLd).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(videoLd) }} />
       <VideoWatch
         video={{ ...article, categoryName: category?.name }}
         upNext={videos.slice(0, 5)}
@@ -95,28 +99,33 @@ export default async function ArticlePage({ params }: Props) {
   const lastUpdate = updates.reduce<Date | null>((d, u) => (!d || u.createdAt > d ? u.createdAt : d), null);
   const updatedAt = lastUpdate && lastUpdate > article.updatedAt ? lastUpdate : article.updatedAt;
   const updated = article.publishedAt && updatedAt.getTime() - article.publishedAt.getTime() > 10 * 60e3;
-  const tags = article.tags.split(",").map((t) => t.trim()).filter((t) => t && t.toLowerCase() !== "sample");
+  const tags = storyTags(article.tags);
   const latestUpdates = [...updates].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()).slice(0, 3);
 
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": article.kind === "live" ? "LiveBlogPosting" : article.kind === "opinion" ? "OpinionNewsArticle" : article.kind === "analysis" ? "AnalysisNewsArticle" : "NewsArticle",
     headline: article.title,
-    description: article.summary,
-    image: article.heroImage ? [article.heroImage.startsWith("/") ? siteUrl(article.heroImage) : article.heroImage] : undefined,
+    description: article.summary || excerpt(article.body, 160),
+    image: [absoluteUrl(article.heroImage ?? SHARE_IMAGE.url)],
     datePublished: article.publishedAt?.toISOString(),
     dateModified: updatedAt.toISOString(),
     author: [{ "@type": "Person", name: author.name, url: siteUrl(`/author/${author.slug}`) }],
-    publisher: { "@type": "NewsMediaOrganization", name: SITE_NAME, url: siteUrl() },
-    mainEntityOfPage: url,
+    publisher: publisherLd(),
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
     articleSection: category?.name,
+    keywords: tags.length ? tags.join(", ") : undefined,
+    inLanguage: "en",
+    isAccessibleForFree: true,
+    ...(article.kind === "live" && { coverageStartTime: article.publishedAt?.toISOString() }),
   };
 
   return (
     <>
       <ReadingProgress targetId="story" />
       <article id="story" className="mx-auto max-w-[1280px] px-4 pb-16 pt-[18px] md:px-6 md:pb-[72px] md:pt-9">
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(jsonLd) }} />
         <header className="mx-auto max-w-[780px]">
           <nav aria-label="Breadcrumb" className="mb-2.5 flex flex-wrap items-center gap-2 text-xs font-bold md:mb-3.5 md:gap-2.5 md:text-[13px]">
             {article.kind === "live" && <LiveBadge />}

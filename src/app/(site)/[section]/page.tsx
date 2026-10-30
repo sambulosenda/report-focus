@@ -6,6 +6,7 @@ import { NewsletterCard, NewsletterForm } from "@/components/NewsletterForm";
 import { Kicker, NumberedList, RiverStory, SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
 import { renderMarkdown } from "@/lib/markdown";
+import { pagedPath, pageMeta } from "@/lib/seo";
 import { categoryBySlug, mostRead, storiesInCategory, trendingTags } from "@/lib/queries";
 import { INFO_PAGES, SITE_NAME } from "@/lib/site";
 import { dayOffset, formatDate, formatTime, pageParam, timeAgo } from "@/lib/utils";
@@ -14,12 +15,15 @@ const RIVER = 10;
 
 type Props = { params: Promise<{ section: string }>; searchParams: Promise<{ page?: string }> };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const slug = (await params).section;
   const cat = await categoryBySlug(slug);
-  if (cat) return { title: `${cat.name} News`, description: cat.description ?? `The latest ${cat.name} news from ${SITE_NAME}.` };
+  if (cat) {
+    const path = pagedPath(`/${cat.slug}`, pageParam((await searchParams).page));
+    return pageMeta({ title: `${cat.name} News`, description: cat.description ?? `The latest ${cat.name} news from ${SITE_NAME}.`, path });
+  }
   const info = INFO_PAGES[slug];
-  return info ? { title: info.title, description: info.description } : {};
+  return info ? pageMeta({ title: info.title, description: info.description, path: `/${slug}` }) : {};
 }
 
 /** River time column: clock time today, "Yesterday", then the date, by the site's calendar. */
