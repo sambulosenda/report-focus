@@ -94,6 +94,7 @@ npm run import:wordpress -- https://old-site.com
 | `--section-map=news:us,sport:sports` | Put a WordPress category into an existing section (by slug) |
 | `--default-section=<slug>` | Section for posts that are only "Uncategorized" (otherwise they go under `/news/…`) |
 | `--include-pages` | Also import WordPress pages such as About |
+| `--since=2025-01-01` | Only import posts published on or after this date |
 | `--limit=<n>` | Only import the first n posts |
 
 Good to know:

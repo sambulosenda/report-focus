@@ -14,6 +14,7 @@
  *   --section-map=a:b,c:d     Put WordPress category "a" into section "b" (by slug); unmapped ones become new sections
  *   --default-section=<slug>  Section for posts that are only "Uncategorized"
  *   --include-pages           Also import WordPress pages (About, Contact…) as stories
+ *   --since=<YYYY-MM-DD>      Only import posts published on or after this date (older ones are left out)
  *   --limit=<n>               Only import the first n posts (handy for a trial run)
  *
  * Running it again is safe: posts are matched by their WordPress ID and never imported twice.
@@ -42,7 +43,7 @@ function parseArgs(argv: string[]) {
     else rest.push(a);
   }
   const str = (k: string) => (typeof flags[k] === "string" ? (flags[k] as string) : undefined);
-  const known = ["dry-run", "update", "no-images", "author", "section-map", "default-section", "include-pages", "limit"];
+  const known = ["dry-run", "update", "no-images", "author", "section-map", "default-section", "include-pages", "since", "limit"];
   const unknown = Object.keys(flags).filter((k) => !known.includes(k));
   if (unknown.length) throw new Error(`Unknown option --${unknown[0]}. See the top of scripts/import-wordpress.ts for the options.`);
   const sectionMap = new Map(
@@ -60,8 +61,16 @@ function parseArgs(argv: string[]) {
     sectionMap,
     defaultSection: str("default-section")?.toLowerCase(),
     includePages: flags["include-pages"] === true,
+    since: parseSince(str("since")),
     limit: str("limit") ? Number(str("limit")) : undefined,
   };
+}
+
+function parseSince(value?: string) {
+  if (!value) return undefined;
+  const d = new Date(/^\d{4}$/.test(value) ? `${value}-01-01T00:00:00Z` : /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00Z` : "invalid");
+  if (Number.isNaN(d.getTime())) throw new Error(`--since needs a date like 2025-01-01 (got "${value}").`);
+  return d;
 }
 
 async function main() {
@@ -77,7 +86,10 @@ async function main() {
     ? await readFromSite(opts.source, { includePages: opts.includePages })
     : await readExportFile(opts.source, { includePages: opts.includePages });
 
-  const posts = site.posts.filter((p) => p.status !== "private").slice(0, opts.limit);
+  const since = opts.since;
+  const tooOld = since ? site.posts.filter((p) => p.status !== "private" && !(p.date && p.date >= since)).length : 0;
+  if (tooOld) site.skipped[`posts from before ${since!.toISOString().slice(0, 10)}`] = tooOld;
+  const posts = site.posts.filter((p) => p.status !== "private" && (!since || (p.date && p.date >= since))).slice(0, opts.limit);
   const privateCount = site.posts.filter((p) => p.status === "private").length;
   if (privateCount) site.skipped["private posts"] = privateCount;
   console.log(`Found ${site.posts.length} ${site.posts.length === 1 ? "post" : "posts"}${site.url ? ` from ${site.url}` : ""}.`);
