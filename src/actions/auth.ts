@@ -3,10 +3,12 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { sessions, users } from "@/db/schema";
 import { createSession, destroySession, hashPassword, requireUser, verifyPassword } from "@/lib/auth";
+import { userForLink } from "@/lib/invites";
 
-export type FormState = { error?: string; ok?: string } | undefined;
+/** `link` carries a sign-in link for an admin to copy and send. */
+export type FormState = { error?: string; ok?: string; link?: string } | undefined;
 
 // Simple per-process throttle against password guessing.
 const attempts = new Map<string, { count: number; until: number }>();
@@ -44,4 +46,18 @@ export async function changePassword(_prev: FormState, formData: FormData): Prom
   if (!(await verifyPassword(current, user.passwordHash))) return { error: "Current password is incorrect." };
   await db.update(users).set({ passwordHash: await hashPassword(next) }).where(eq(users.id, user.id));
   return { ok: "Password updated." };
+}
+
+/** Someone opening an invite or reset link chooses their password and is signed straight in. */
+export async function acceptSignInLink(_prev: FormState, formData: FormData): Promise<FormState> {
+  const user = await userForLink(String(formData.get("token") ?? ""));
+  if (!user) return { error: "This link has expired or was already used. Ask a newsroom admin for a new one." };
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 10) return { error: "Your password must be at least 10 characters." };
+  if (password !== formData.get("confirm")) return { error: "The two passwords don’t match." };
+  await db.update(users).set({ passwordHash: await hashPassword(password) }).where(eq(users.id, user.id));
+  // Sign out anywhere else, in case the old password was known to someone.
+  await db.delete(sessions).where(eq(sessions.userId, user.id));
+  await createSession(user.id);
+  redirect("/newsroom");
 }

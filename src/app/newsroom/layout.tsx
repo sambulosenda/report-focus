@@ -5,7 +5,7 @@ import { logout } from "@/actions/auth";
 import { Avatar } from "@/components/Avatar";
 import { Logo } from "@/components/Logo";
 import { db } from "@/db";
-import { articles } from "@/db/schema";
+import { articles, ROLE_LABEL } from "@/db/schema";
 import { hasRole, requireUser } from "@/lib/auth";
 import { NavLink } from "./NavLink";
 
@@ -70,7 +70,7 @@ export default async function NewsroomLayout({ children }: { children: React.Rea
           </span>
           <div className="min-w-0 flex-1 text-[13px] leading-[1.3]">
             <p className="truncate font-bold">{user.name}</p>
-            <p className="capitalize text-on-teal-muted">{user.role}</p>
+            <p className="text-on-teal-muted">{ROLE_LABEL[user.role]}</p>
           </div>
           <form action={logout}>
             <button className="rounded px-1.5 py-1 text-xs font-semibold text-on-teal hover:bg-white/10 hover:text-white">Sign out</button>

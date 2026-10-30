@@ -21,14 +21,15 @@ A fast, modern news site with a built-in newsroom. Readers get an ABC News–sty
 
 | Role | Can do |
 | --- | --- |
-| Journalist | Write drafts, upload images, submit stories for review, edit their own story until it's published |
+| Writer | Write drafts, upload images, submit stories for review, edit their own story until it's published. Writers can't publish: an editor approves every story first |
 | Editor | Everything above, plus edit any story, publish, schedule, unpublish, return a story to the writer with a note, archive, flag **Breaking** or **Top story**, manage sections |
-| Admin | Everything above, plus create staff accounts, change roles, deactivate people and reset passwords |
+| Admin | Everything above, plus add staff, change roles, deactivate people and make password reset links |
 
 - Story editor with a "Ready to publish" checklist, headline counter, story type (news, analysis, opinion, explainer, live updates, video), lead image with required credit and alt text, tags, homepage placement, scheduling, and a search and social preview
 - Markdown body with a formatting toolbar, live preview, word count, Ctrl/⌘+S to save and a warning before leaving with unsaved changes. Start a quote with `> **What to know**` to make a key-points box, and end a quote with `> — Name` to attribute it
 - Live stories get a panel under the editor to post, pin and delete timeline updates
 - Workflow: Draft → In review → Published (or Scheduled, if the publish time is in the future) → Archived
+- Staff sign-in links: an admin adds someone on the Staff page and gets a link to send them. They choose their own password with it, so nobody else ever knows it. The same page makes a reset link for anyone who forgets their password. Links work once and last 7 days
 - Image library with uploads (JPEG, PNG, WebP, GIF, AVIF up to 8 MB)
 - Newsletters page for editors: readers per newsletter, a "send today's edition" button and a log of every send. Admins can download the reader list as CSV
 - Dashboard with the breaking banner switch, an "email this alert" button for breaking-news subscribers, stats, a story table with status tabs and a breaking switch on each published story, what's scheduled next and recent activity
@@ -57,9 +58,19 @@ The seed creates these accounts, all with the password `newsroom-demo-2026` (set
 | --- | --- |
 | Admin | admin@reportfocus.news |
 | Editor | editor@reportfocus.news |
-| Journalist | daniel@reportfocus.news, grace@reportfocus.news, marcus@reportfocus.news |
+| Writer | daniel@reportfocus.news, grace@reportfocus.news, marcus@reportfocus.news |
 
 **The sample stories are fictional placeholders.** Remove them, and change every password, before launch. `npm run db:seed -- --force` wipes and reseeds the database.
+
+### Your own admin account
+
+Create your admin account from the terminal. It asks for the password, so it's never typed into a file:
+
+```bash
+npm run admin:create -- --name "Your Name" --email you@example.com --replace-demo
+```
+
+`--replace-demo` moves the demo admin's stories to you and deletes `admin@reportfocus.news`. Leave it off to keep the demo account. Running the command again for the same email sets a new password. Add everyone else from the Staff page in the newsroom.
 
 ## Scripts
 
@@ -70,6 +81,7 @@ The seed creates these accounts, all with the password `newsroom-demo-2026` (set
 | `npm run db:generate` | Create a migration after editing `src/db/schema.ts` |
 | `npm run db:migrate` | Apply migrations |
 | `npm run db:seed` | Load sample staff, sections and stories into an empty database |
+| `npm run admin:create` | Create your own admin account (see above) |
 | `npm run typecheck` / `npm run lint` | Checks |
 
 ## Email
