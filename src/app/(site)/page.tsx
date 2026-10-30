@@ -1,7 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { excerpt, formatTime } from "@/lib/utils";
+import { excerpt, formatTime, siteUrl } from "@/lib/utils";
+import { ldJson, publisherLd } from "@/lib/seo";
+import { SITE_NAME, SOCIAL } from "@/lib/site";
 import { AdSlot } from "@/components/AdSlot";
-import { BreakingBanner } from "@/components/BreakingBanner";
 import { NewsletterBand } from "@/components/NewsletterForm";
 import {
   Kicker,
@@ -16,7 +18,6 @@ import {
   storyHref,
 } from "@/components/Story";
 import {
-  breakingStory,
   currentLiveStory,
   featuredStories,
   latestStories,
@@ -29,9 +30,16 @@ import {
   trendingTags,
 } from "@/lib/queries";
 
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+/** Tells Google the site's name and who publishes it. */
+const siteLd = [
+  { "@context": "https://schema.org", "@type": "WebSite", name: SITE_NAME, url: siteUrl() },
+  { "@context": "https://schema.org", ...publisherLd(), sameAs: SOCIAL.map((s) => s.url).filter(Boolean) },
+];
+
 export default async function HomePage() {
-  const [breaking, featured, latest, popular, cats, videos, opinion, live, chips] = await Promise.all([
-    breakingStory(),
+  const [featured, latest, popular, cats, videos, opinion, live, chips] = await Promise.all([
     featuredStories(5),
     latestStories(30),
     mostRead(8),
@@ -73,7 +81,7 @@ export default async function HomePage() {
 
   return (
     <>
-      {breaking && <BreakingBanner story={breaking} />}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(siteLd) }} />
 
       {chips.length > 0 && (
         <div className="border-b border-line">

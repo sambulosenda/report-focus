@@ -2,9 +2,10 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { RiverStory, SectionTitle } from "@/components/Story";
 import { currentLiveStory, latestStories, storiesOfKind } from "@/lib/queries";
+import { pageMeta } from "@/lib/seo";
 import { timeAgo } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Live" };
+export const metadata: Metadata = pageMeta({ title: "Live", description: "Live coverage of breaking news from Report Focus News.", path: "/live" });
 
 /** "Live" in the nav: open the current live story, or list recent live coverage when nothing is live. */
 export default async function LivePage() {

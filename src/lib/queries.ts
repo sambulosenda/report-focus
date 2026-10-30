@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, inArray, like, lte, ne, notInArray, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, like, lte, ne, notInArray, or, sql, type Column } from "drizzle-orm";
 import { cache } from "react";
 import { db } from "@/db";
 import { articles, categories, liveUpdates, users, type Kind } from "@/db/schema";
@@ -201,16 +201,34 @@ export async function relatedStories(articleId: number, categoryId: number | nul
     .limit(limit);
 }
 
+/** The stories for a newsletter edition: the past day's top stories, editors' picks first, then the most read. */
+export async function editionStories(categoryId?: number, limit = 5) {
+  const since = Math.floor((Date.now() - 864e5) / 1000);
+  return storyQuery()
+    .where(and(isLive(), sql`${articles.publishedAt} >= ${since}`, categoryId ? eq(articles.categoryId, categoryId) : undefined))
+    .orderBy(desc(articles.isFeatured), desc(articles.views), ...newestFirst)
+    .limit(limit);
+}
+
 export type SearchType = "all" | "stories" | "video" | "live";
 export type SearchSort = "relevance" | "newest";
 
+/** Matches stories containing every word of the search, anywhere in the headline, summary, tags or text. */
 export async function searchStories(q: string, { type = "all", sort = "relevance", limit = 20, offset = 0 }: { type?: SearchType; sort?: SearchSort; limit?: number; offset?: number } = {}) {
-  const term = `%${q.replace(/[%_]/g, "")}%`;
+  const clean = q.replace(/[%_]/g, "").trim();
+  const words = [...new Set(clean.toLowerCase().split(/\s+/).filter(Boolean))].slice(0, 8);
+  if (words.length === 0) return { rows: [], total: 0 };
+  const phrase = `%${clean}%`;
   const kindFilter =
     type === "video" ? eq(articles.kind, "video") : type === "live" ? eq(articles.kind, "live") : type === "stories" ? sql`${articles.kind} not in ('video','live')` : undefined;
-  const where = and(isLive(), kindFilter, or(like(articles.title, term), like(articles.summary, term), like(articles.tags, term), like(articles.body, term)));
-  // Relevance: headline matches first, then summary or tag matches, then body-only matches.
-  const rank = sql`case when ${articles.title} like ${term} then 0 when ${articles.summary} like ${term} or ${articles.tags} like ${term} then 1 else 2 end`;
+  const matches = words.map((w) => {
+    const term = `%${w}%`;
+    return or(like(articles.title, term), like(articles.summary, term), like(articles.tags, term), like(articles.body, term));
+  });
+  const where = and(isLive(), kindFilter, ...matches);
+  const allIn = (col: Column) => and(...words.map((w) => like(col, `%${w}%`)));
+  // Relevance: the exact phrase in the headline first, then every word in the headline, then in the summary or tags, then text-only matches.
+  const rank = sql`case when ${articles.title} like ${phrase} then 0 when ${allIn(articles.title)} then 1 when ${or(allIn(articles.summary), allIn(articles.tags))} then 2 else 3 end`;
   const [rows, [{ n }]] = await Promise.all([
     storyQuery()
       .where(where)

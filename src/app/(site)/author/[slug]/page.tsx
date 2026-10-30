@@ -9,6 +9,7 @@ import { MailIcon } from "@/components/icons";
 import { RiverStory, SectionTitle } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
 import { storiesByAuthor } from "@/lib/queries";
+import { pagedPath, pageMeta } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
 import { formatDate, pageParam } from "@/lib/utils";
 
@@ -19,9 +20,15 @@ type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ page?:
 const getAuthor = async (slug: string) =>
   db.select({ id: users.id, name: users.name, slug: users.slug, title: users.title, bio: users.bio, avatarUrl: users.avatarUrl }).from(users).where(eq(users.slug, slug)).get();
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const a = await getAuthor((await params).slug);
-  return a ? { title: a.name, description: a.bio ?? `Stories by ${a.name} for ${SITE_NAME}.` } : {};
+  if (!a) return {};
+  return pageMeta({
+    title: a.name,
+    description: a.bio ?? `Stories by ${a.name} for ${SITE_NAME}.`,
+    path: pagedPath(`/author/${a.slug}`, pageParam((await searchParams).page)),
+    openGraph: { type: "profile" },
+  });
 }
 
 export default async function AuthorPage({ params, searchParams }: Props) {

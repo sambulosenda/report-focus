@@ -18,6 +18,7 @@ export function NewsletterForm({ list = "morning-focus", variant = "row", cta = 
   return (
     <form action={action} className={cn("flex flex-wrap gap-2.5", variant === "row" && "md:flex-nowrap")}>
       <input type="hidden" name="list" value={list} />
+      <input type="text" name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
       <label htmlFor={id} className={cn(variant === "row" ? "w-full text-[13px] font-semibold md:sr-only" : "sr-only")}>
         Email address
       </label>

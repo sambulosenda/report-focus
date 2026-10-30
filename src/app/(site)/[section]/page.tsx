@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
-import { NewsletterCard, NewsletterForm } from "@/components/NewsletterForm";
+import { NewsletterCard } from "@/components/NewsletterForm";
 import { Kicker, NumberedList, RiverStory, SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
 import { renderMarkdown } from "@/lib/markdown";
+import { pagedPath, pageMeta } from "@/lib/seo";
 import { categoryBySlug, mostRead, storiesInCategory, trendingTags } from "@/lib/queries";
 import { INFO_PAGES, SITE_NAME } from "@/lib/site";
 import { dayOffset, formatDate, formatTime, pageParam, timeAgo } from "@/lib/utils";
@@ -14,12 +15,15 @@ const RIVER = 10;
 
 type Props = { params: Promise<{ section: string }>; searchParams: Promise<{ page?: string }> };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const slug = (await params).section;
   const cat = await categoryBySlug(slug);
-  if (cat) return { title: `${cat.name} News`, description: cat.description ?? `The latest ${cat.name} news from ${SITE_NAME}.` };
+  if (cat) {
+    const path = pagedPath(`/${cat.slug}`, pageParam((await searchParams).page));
+    return pageMeta({ title: `${cat.name} News`, description: cat.description ?? `The latest ${cat.name} news from ${SITE_NAME}.`, path });
+  }
   const info = INFO_PAGES[slug];
-  return info ? { title: info.title, description: info.description } : {};
+  return info ? pageMeta({ title: info.title, description: info.description, path: `/${slug}` }) : {};
 }
 
 /** River time column: clock time today, "Yesterday", then the date, by the site's calendar. */
@@ -37,7 +41,7 @@ export default async function SectionPage({ params, searchParams }: Props) {
   if (!cat) {
     const info = INFO_PAGES[slug];
     if (!info) notFound();
-    return <InfoPage slug={slug} {...info} />;
+    return <InfoPage {...info} />;
   }
 
   const page = pageParam((await searchParams).page);
@@ -141,16 +145,11 @@ export default async function SectionPage({ params, searchParams }: Props) {
   );
 }
 
-function InfoPage({ slug, title, body }: { slug: string; title: string; body: string }) {
+function InfoPage({ title, body }: { title: string; body: string }) {
   return (
     <div className="mx-auto max-w-[780px] px-4 pb-16 pt-8 md:px-6 md:pt-12">
       <h1 className="headline border-b-[3px] border-ink pb-[18px] text-[32px] leading-[1.1] md:text-[44px]">{title}</h1>
       <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }} />
-      {slug === "newsletters" && (
-        <div className="mt-8 max-w-[520px]">
-          <NewsletterForm />
-        </div>
-      )}
     </div>
   );
 }

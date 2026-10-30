@@ -15,6 +15,13 @@
       "when": 1793318554128,
       "tag": "0001_design_refresh",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793369668837,
+      "tag": "0002_newsletter_alerts",
+      "breakpoints": true
     }
   ]
 }

@@ -7,8 +7,9 @@ import { LiveRefresh } from "@/components/LiveRefresh";
 import { CopyLinkButton } from "@/components/ShareButtons";
 import { Duration, SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { renderMarkdown } from "@/lib/markdown";
+import { pageMeta } from "@/lib/seo";
 import { liveUpdatesFor, liveUpdateStats, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
-import { formatTime, siteUrl, timeAgo } from "@/lib/utils";
+import { excerpt, formatTime, siteUrl, timeAgo } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug: string }>; searchParams: Promise<{ all?: string }> };
 const FIRST_PAGE = 20;
@@ -16,11 +17,14 @@ const FIRST_PAGE = 20;
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const row = await publicArticle((await params).slug);
   if (!row || row.article.kind !== "live") return {};
-  return {
-    title: `Live updates: ${row.article.title}`,
-    description: row.article.summary,
-    alternates: { canonical: `/live/${row.article.slug}` },
-  };
+  const { article } = row;
+  return pageMeta({
+    title: `Live updates: ${article.title}`,
+    description: article.summary || excerpt(article.body, 160),
+    path: `/live/${article.slug}`,
+    image: article.heroImage ? { url: article.heroImage, alt: article.heroAlt } : null,
+    openGraph: { type: "article", publishedTime: article.publishedAt?.toISOString(), modifiedTime: article.updatedAt.toISOString() },
+  });
 }
 
 export default async function LiveUpdatesPage({ params, searchParams }: Props) {

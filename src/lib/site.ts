@@ -116,11 +116,6 @@ Email [corrections@reportfocusnews.com] with a link to the story and what you th
 
 _Replace the text in square brackets before launch. This page is edited in src/lib/site.ts._`,
   },
-  newsletters: {
-    title: "Newsletters",
-    description: "Sign up for The Morning Focus and other newsletters.",
-    body: "**The Morning Focus** brings you the five stories you need before 8 a.m., every weekday. Sign up with the form below.",
-  },
   podcasts: {
     title: "Podcasts",
     description: "Listen to Report Focus News.",
@@ -139,9 +134,9 @@ You can read Report Focus News without an account. Our own pages do not set trac
 
 We count visits with [Plausible / Umami], a privacy-friendly stats service. It records which pages are read, which site sent you here, and your browser, device type and country. It does not use cookies, does not store your IP address and cannot identify you. We use these numbers only to understand what readers find useful.
 
-## Newsletters
+## Newsletters and alerts
 
-If you sign up for a newsletter, we keep your email address and the newsletters you chose. We use it only to send those newsletters. Every email has a link to unsubscribe, and you can ask us to delete your address at any time.
+If you sign up for a newsletter or breaking-news alerts, we keep your email address and what you chose. We use it only to send those emails. Every email has a link to unsubscribe, and you can ask us to delete your address at any time.
 
 ## Contacting us
 
