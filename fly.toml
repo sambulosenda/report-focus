@@ -1,0 +1,55 @@
+# Fly.io settings for Report Focus News. Deploy steps are in the README under "Deploying on Fly.io".
+app = "report-focus"
+primary_region = "lhr"
+
+[build.args]
+  DATABASE_URL = "libsql://report-focus-CHANGE-ME.turso.io"
+  SITE_URL = "https://reportfocusnews.com"
+  S3_PUBLIC_URL = "https://media.reportfocusnews.com"
+  SITE_TIMEZONE = "America/New_York"
+  NEXT_PUBLIC_SITE_TIMEZONE = "America/New_York"
+
+[env]
+  DATABASE_URL = "libsql://report-focus-CHANGE-ME.turso.io"
+  SITE_URL = "https://reportfocusnews.com"
+  S3_PUBLIC_URL = "https://media.reportfocusnews.com"
+  S3_REGION = "auto"
+  SITE_TIMEZONE = "America/New_York"
+  NEXT_PUBLIC_SITE_TIMEZONE = "America/New_York"
+  EMAIL_PROVIDER = "console"
+  SENTRY_ENVIRONMENT = "production"
+
+[processes]
+  app = "npx next start -H 0.0.0.0 -p 3000"
+  cron = "/app/deploy/cron.sh"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  # Keep one machine always on: page caches and the view counter live in its memory.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 200
+    hard_limit = 250
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "30s"
+    timeout = "5s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
+  processes = ["app"]
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+  processes = ["cron"]

@@ -149,6 +149,24 @@ The app needs a database and somewhere to keep uploaded images.
 - **Images:** set the `S3_*` settings in `.env.example` to store uploads in Cloudflare R2 or S3. Most hosts wipe the server's own disk on each deploy, so `UPLOAD_DIR` is only for local work or a server with a persistent volume. Moving later? Run `npm run uploads:move` once.
 - **Order:** run `npm run db:migrate && npm run build && npm start`. The build reads the database to prepare the homepage, so `DATABASE_URL` must be set at build time too.
 
+### Deploying on Fly.io
+
+`Dockerfile` and `fly.toml` run the site on [Fly.io](https://fly.io) with Turso as the database and an R2 bucket for images. Fly starts two kinds of machine:
+
+- `app`: the website. One machine stays on all the time, because page caches and the view counter live in its memory. Keep it at one (`fly scale count app=1`).
+- `cron`: the scheduled jobs in `deploy/cron.sh`. It sends the day's newsletters each weekday at `NEWSLETTER_TIME` (default 06:30, in `SITE_TIMEZONE`) and, when `BACKUP_S3_BUCKET` is set, backs up the database every night at 02:15.
+
+First deploy:
+
+1. Put the Turso database address in both `DATABASE_URL` lines of `fly.toml`, and the bucket's public address in both `S3_PUBLIC_URL` lines.
+2. Create the app without deploying: `fly launch --no-deploy --copy-config`.
+3. Set the secrets (each one is typed into your terminal, never into a file):
+   `fly secrets set DATABASE_AUTH_TOKEN=... CRON_SECRET=... S3_BUCKET=... S3_ENDPOINT=... S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=...`
+   Add `RESEND_API_KEY` (and `EMAIL_PROVIDER = "resend"` in `fly.toml`), `BACKUP_S3_BUCKET` and `SENTRY_DSN` when you have them.
+4. Deploy. The build runs the migrations and reads the database, so it needs the Turso token too:
+   `fly deploy --ha=false --build-secret DATABASE_AUTH_TOKEN="$(turso db tokens create <db name>)"`
+5. Check `https://<app>.fly.dev`, then point the domain at it: `fly certs add reportfocusnews.com` and follow what it prints.
+
 ### Caching and traffic spikes
 
 Reader pages are cached and rebuilt at most once a minute (live pages every 15 seconds). Publishing, editing or posting a live update refreshes them straight away. Each page is sent with `Cache-Control: s-maxage=…`, so a CDN can serve it too:
