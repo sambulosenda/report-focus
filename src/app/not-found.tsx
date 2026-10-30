@@ -4,8 +4,14 @@ import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { storyHref } from "@/components/Story";
 import { latestStories } from "@/lib/queries";
+import { NOT_FOUND_METADATA } from "@/lib/seo";
 
-export const metadata: Metadata = { title: "Page not found", robots: { index: false, follow: true } };
+export const metadata: Metadata = {
+  ...NOT_FOUND_METADATA,
+  // Next.js inserts its own noindex tag when notFound() runs. An empty value here
+  // replaces the site-wide index tag without adding a second robots tag.
+  robots: "",
+};
 
 export default async function NotFound() {
   const top = await latestStories(4).catch(() => []);

@@ -3,13 +3,13 @@ import { RiverStory } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
 import { latestStories } from "@/lib/queries";
 import { pagedPath, pageMeta } from "@/lib/seo";
-import { SITE_NAME } from "@/lib/site";
+import { LATEST_DESCRIPTION } from "@/lib/site";
 import { formatDate, formatTime, pageParam } from "@/lib/utils";
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<{ page?: string }> }): Promise<Metadata> {
   return pageMeta({
     title: "Latest News",
-    description: `Every story from ${SITE_NAME}, newest first.`,
+    description: LATEST_DESCRIPTION,
     path: pagedPath("/latest", pageParam((await searchParams).page)),
   });
 }

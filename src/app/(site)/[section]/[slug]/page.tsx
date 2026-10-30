@@ -18,7 +18,7 @@ import { canOptimize } from "@/lib/images";
 import { redirectLegacyOrNotFound } from "@/lib/legacy-redirect";
 import { renderMarkdownWithBreaks } from "@/lib/markdown";
 import { liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
-import { absoluteUrl, authorLd, isWireByline, ldJson, metaDescription, pageMeta, publisherLd, SHARE_IMAGE } from "@/lib/seo";
+import { absoluteUrl, authorLd, isWireByline, ldJson, NOT_FOUND_METADATA, pageMeta, publisherLd, SHARE_IMAGE, storyDescription } from "@/lib/seo";
 import { SITE_NAME } from "@/lib/site";
 import { tagHref } from "@/lib/tags";
 import { excerpt, formatDateTime, formatTime, readingTime, siteUrl, timeAgo } from "@/lib/utils";
@@ -36,13 +36,13 @@ function storyTags(tags: string) {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const row = await publicArticle((await params).slug);
-  if (!row) return {};
+  if (!row) return NOT_FOUND_METADATA;
   const { article, category, author } = row;
   return pageMeta({
     title: article.title,
     // Google cuts titles at about 65 characters, so a long headline goes without the site name after it.
     absoluteTitle: article.title.length + ` | ${SITE_NAME}`.length > 65,
-    description: metaDescription(article.summary || excerpt(article.body, 300)),
+    description: storyDescription(article.summary, article.body),
     noindex: isWireByline(author.name),
     path: `/${category?.slug ?? "news"}/${article.slug}`,
     image: article.heroImage ? { url: article.heroImage, alt: article.heroAlt } : null,
@@ -115,7 +115,7 @@ export default async function ArticlePage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": article.kind === "live" ? "LiveBlogPosting" : article.kind === "opinion" ? "OpinionNewsArticle" : article.kind === "analysis" ? "AnalysisNewsArticle" : "NewsArticle",
     headline: article.title,
-    description: metaDescription(article.summary || excerpt(article.body, 300)),
+    description: storyDescription(article.summary, article.body),
     image: article.heroImage
       ? [{ "@type": "ImageObject", url: absoluteUrl(article.heroImage), caption: article.heroCaption || undefined, creditText: article.heroCredit || undefined }]
       : [absoluteUrl(SHARE_IMAGE.url)],
