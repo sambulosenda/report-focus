@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { after } from "next/server";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -10,6 +11,7 @@ import { ShareButtons } from "@/components/ShareButtons";
 import { CardStory, NumberedList, SectionTitle } from "@/components/Story";
 import { VideoWatch } from "@/components/VideoWatch";
 import { KIND_LABEL } from "@/db/schema";
+import { canOptimize } from "@/lib/images";
 import { renderMarkdown } from "@/lib/markdown";
 import { incrementViews, liveUpdatesFor, mostRead, publicArticle, relatedStories, storiesOfKind } from "@/lib/queries";
 import { SITE_NAME } from "@/lib/site";
@@ -172,8 +174,17 @@ export default async function ArticlePage({ params }: Props) {
 
         {article.heroImage && (
           <figure className="-mx-4 mt-4 md:mx-auto md:mt-[30px] md:max-w-[1080px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={article.heroImage} alt={article.heroAlt ?? ""} className="block aspect-video w-full object-cover " />
+            <span className="relative block aspect-video w-full bg-mist">
+              <Image
+                src={article.heroImage}
+                alt={article.heroAlt ?? ""}
+                fill
+                priority
+                sizes="(min-width: 1080px) 1080px, 100vw"
+                unoptimized={!canOptimize(article.heroImage)}
+                className="object-cover"
+              />
+            </span>
             {(article.heroCaption || article.heroCredit) && (
               <figcaption className="px-4 pt-2 text-xs leading-[1.45] text-muted md:mt-2.5 md:px-0 md:pt-0 md:text-[13px]">
                 {article.heroCaption}

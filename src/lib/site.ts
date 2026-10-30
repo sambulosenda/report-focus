@@ -25,12 +25,59 @@ export const INFO_PAGES: Record<string, InfoPage> = {
   about: {
     title: "About us",
     description: "Who we are and how Report Focus News works.",
-    body: "Report Focus News is an independent newsroom covering the US and the world, with a focus on politics, the economy, health, climate and sport.\n\nOur reporters and editors work to one standard: get it right, then get it fast. Every story is read by an editor before it is published.\n\n_This page is a placeholder. Replace it with the newsroom’s own story before launch._",
+    body: `Report Focus News is an independent news site covering South Africa, Zimbabwe and the rest of Africa, along with the biggest stories from around the world.
+
+We were founded in [year] by [founder names]. Our newsroom is based in [city] and works with reporters and contributors across [countries or regions].
+
+## What we cover
+
+Politics, crime, business, health, climate and sport, with a focus on what the news means for the people living through it.
+
+## How we work
+
+Every story is read by an editor before it is published. We say where our information comes from, we give people the chance to respond before we publish claims about them, and we correct our mistakes in the open. Read our [editorial standards](/standards) and [corrections policy](/corrections).
+
+## Who owns us
+
+Report Focus News is owned by [company or owner name]. [Say how the newsroom is funded, for example advertising and reader support.] No advertiser or funder has a say in what we report.
+
+## The team
+
+- [Name], Editor
+- [Name], News editor
+- [Name], Reporter
+
+_Replace the text in square brackets before launch. This page is edited in src/lib/site.ts._`,
   },
   contact: {
     title: "Contact",
     description: "How to reach the Report Focus News newsroom.",
-    body: "To reach the newsroom, send a tip, report an error or ask about advertising, use the contact details below.\n\n_Add the newsroom’s email addresses and phone numbers here before launch._",
+    body: `## Newsroom
+
+For news, story ideas and press releases, email [news@reportfocusnews.com].
+
+## Tips
+
+If you have information you think we should look into, see [Send a tip](/tips), or email [tips@reportfocusnews.com]. Tell us if you need to stay anonymous.
+
+## Corrections
+
+If you think we got something wrong, email [corrections@reportfocusnews.com] with a link to the story and what needs fixing. Read how we handle it on our [corrections page](/corrections).
+
+## Advertising
+
+For advertising and partnerships, email [ads@reportfocusnews.com].
+
+## Post and phone
+
+[Company name]  
+[Street address]  
+[City, postal code]  
+[Country]
+
+Phone: [+00 00 000 0000]
+
+_Replace the text in square brackets before launch. This page is edited in src/lib/site.ts._`,
   },
   careers: {
     title: "Careers",
@@ -50,7 +97,24 @@ export const INFO_PAGES: Record<string, InfoPage> = {
   corrections: {
     title: "Corrections",
     description: "How Report Focus News corrects its mistakes.",
-    body: "When we make a mistake, we correct it promptly and add a note to the story explaining what changed.\n\nTo report an error, use the contact page and include a link to the story.\n\n_List recent corrections here before launch._",
+    body: `We work hard to get things right. When we get something wrong, we fix it quickly and say so.
+
+## How we correct a story
+
+- **Errors of fact**, such as a wrong name, number, date or quote, are fixed in the story. We add a note at the bottom saying what was wrong and when it was corrected.
+- **Serious errors**, where the mistake changed the meaning of the story, get a note at the top of the story as well.
+- **Small fixes**, such as spelling or grammar, are made without a note.
+- We do not quietly delete stories. If a story cannot stand, we say why.
+
+## Report an error
+
+Email [corrections@reportfocusnews.com] with a link to the story and what you think is wrong. An editor reads every message and we aim to reply within [two working days].
+
+## Recent corrections
+
+- [Date]: [Story headline, linked]. [What was wrong and what we changed.]
+
+_Replace the text in square brackets before launch. This page is edited in src/lib/site.ts._`,
   },
   newsletters: {
     title: "Newsletters",
@@ -65,7 +129,47 @@ export const INFO_PAGES: Record<string, InfoPage> = {
   privacy: {
     title: "Privacy policy",
     description: "How Report Focus News collects and uses information.",
-    body: "_The privacy policy has not been written yet. Publish the policy approved by your legal adviser here before launch._",
+    body: `_Last updated: [date]_
+
+This policy explains what information Report Focus News collects when you use this website, why we collect it and what we do with it. Report Focus News is run by [company name], [address], which is responsible for your information.
+
+## Reading the site
+
+You can read Report Focus News without an account. Our own pages do not set tracking cookies. Our advertising partner does, as explained under Advertising below.
+
+We count visits with [Plausible / Umami], a privacy-friendly stats service. It records which pages are read, which site sent you here, and your browser, device type and country. It does not use cookies, does not store your IP address and cannot identify you. We use these numbers only to understand what readers find useful.
+
+## Newsletters
+
+If you sign up for a newsletter, we keep your email address and the newsletters you chose. We use it only to send those newsletters. Every email has a link to unsubscribe, and you can ask us to delete your address at any time.
+
+## Contacting us
+
+If you email us, send a tip or report an error, we keep your message and contact details so we can reply and follow up. We will not publish your name or details without your permission.
+
+## Advertising
+
+Report Focus News is paid for partly by advertising. Ads on this site are served by Google AdSense. Google and its partners may use cookies and similar technology to show ads, to limit how often you see the same ad, to measure how ads perform and, if you agree, to show ads based on your interests and the sites you have visited.
+
+You can turn off personalised ads at [Google's ad settings](https://adssettings.google.com), and read how Google uses information from sites that use its services at [policies.google.com/technologies/partner-sites](https://policies.google.com/technologies/partner-sites). [If you show a cookie consent banner, say here how readers can change their choice.]
+
+## Newsroom staff
+
+Staff who sign in to the newsroom get one cookie that keeps them signed in. It is removed when they sign out.
+
+## Sharing your information
+
+We do not sell your information. We share it only with services that help us run the site, such as our hosting provider, our email provider, our visitor stats service and Google for advertising, and only as far as they need it. [List them here.]
+
+## Your rights
+
+You can ask to see, correct or delete the information we hold about you. Email [privacy@reportfocusnews.com]. [Add the rights that apply under your local law, for example POPIA in South Africa or GDPR in Europe, and how to complain to the regulator.]
+
+## Changes to this policy
+
+If we change this policy, we will update the date at the top of this page.
+
+_This is a starting draft, not legal advice. Have it checked by a legal adviser and replace the text in square brackets before launch. This page is edited in src/lib/site.ts._`,
   },
   terms: {
     title: "Terms of use",
@@ -75,7 +179,23 @@ export const INFO_PAGES: Record<string, InfoPage> = {
   cookies: {
     title: "Cookie settings",
     description: "How Report Focus News uses cookies.",
-    body: "Report Focus News uses one cookie, which keeps newsroom staff signed in. Readers are not tracked.\n\n_Update this page if you add analytics or advertising._",
+    body: `## Cookies we set
+
+One cookie keeps newsroom staff signed in. Readers get no cookies from Report Focus News itself.
+
+## Visitor stats
+
+We count visits with [Plausible / Umami], which works without cookies and cannot identify you.
+
+## Advertising cookies
+
+Ads on this site come from Google AdSense. Google and its partners use cookies to show and measure ads, and, if you agree, to choose ads based on your interests. You can turn off personalised ads at [Google's ad settings](https://adssettings.google.com), or block or delete cookies in your browser settings.
+
+[If you show a cookie consent banner, add a link here for readers to change their choice.]
+
+Read our [privacy policy](/privacy) for more.
+
+_Replace the text in square brackets before launch. This page is edited in src/lib/site.ts._`,
   },
   accessibility: {
     title: "Accessibility",

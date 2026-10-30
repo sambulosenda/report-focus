@@ -106,6 +106,8 @@ a.story-title:hover {
   line-height: 1.65;
   color: var(--color-ink);
   max-width: 680px;
+  /* Long email addresses and pasted links wrap instead of pushing the page sideways on small phones. */
+  overflow-wrap: break-word;
 }
 @media (min-width: 768px) {
   .article-body {

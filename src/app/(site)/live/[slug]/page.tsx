@@ -118,7 +118,7 @@ export default async function LiveUpdatesPage({ params, searchParams }: Props) {
             <Link href={storyHref(video)} className="story-link group flex flex-col gap-2">
               {video.heroImage && (
                 <span className="relative block">
-                  <StoryImage story={video} />
+                  <StoryImage story={video} sizes="(min-width: 1024px) 340px, 100vw" />
                   <Duration story={video} />
                 </span>
               )}

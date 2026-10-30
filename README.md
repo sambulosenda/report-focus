@@ -14,6 +14,8 @@ A fast, modern news site with a built-in newsroom. Readers get an ABC News–sty
 - Article pages with breadcrumb, byline, share buttons, reading progress, "What to know" boxes, pull quotes, tags, author box, most read and more from the section
 - Newsletter sign-up (The Morning Focus and one list per section), saved to the database
 - Standing pages linked from the footer (about, contact, standards, privacy and so on) live in `src/lib/site.ts`
+- Pictures are resized and served as AVIF or WebP at the size each screen needs, and load only as they scroll into view
+- Visitor stats with Plausible or Umami (no cookies): set `PLAUSIBLE_DOMAIN` or `UMAMI_WEBSITE_ID`. Reader pages only; the newsroom is never counted
 - SEO built in: NewsArticle structured data, Open Graph and Twitter cards, canonical URLs, `sitemap.xml`, `robots.txt` and an RSS feed at `/feed.xml`
 - Mobile-first layout, keyboard and screen-reader friendly, and respects reduced motion
 

@@ -81,7 +81,7 @@ export default async function SectionPage({ params, searchParams }: Props) {
       {lead && (
         <section aria-label={`Top ${cat.name} stories`} className="mt-7 flex flex-col gap-8 lg:flex-row">
           <Link href={storyHref(lead)} className="story-link group flex min-w-0 flex-col gap-3 lg:flex-[2_1_560px]">
-            <StoryImage story={lead} priority />
+            <StoryImage story={lead} priority sizes="(min-width: 1280px) 820px, (min-width: 1024px) 64vw, 100vw" />
             <Kicker story={lead} />
             <span className="story-title headline text-[26px] leading-[1.12] tracking-[-0.01em] md:text-[32px] md:leading-[1.1]">{lead.title}</span>
             {lead.summary && <span className="text-base leading-normal text-ink-2 md:text-lg">{lead.summary}</span>}
@@ -93,7 +93,7 @@ export default async function SectionPage({ params, searchParams }: Props) {
             <div className="flex min-w-0 flex-col gap-6 lg:flex-[1_1_300px]">
               {second.map((s) => (
                 <Link key={s.id} href={storyHref(s)} className="story-link group flex flex-col gap-2">
-                  <StoryImage story={s} />
+                  <StoryImage story={s} sizes="(min-width: 1280px) 400px, (min-width: 1024px) 32vw, 100vw" />
                   <Kicker story={s} />
                   <span className="story-title headline text-[22px] leading-[1.2]">{s.title}</span>
                   <span className="text-[13px] text-muted">{timeAgo(s.publishedAt)}</span>
