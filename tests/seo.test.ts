@@ -21,7 +21,7 @@ test("metadata preserves abbreviations and does not invent sentence endings", ()
 });
 
 test("legacy bylines and datelines do not leak into metadata", () => {
-  assert.doesNotMatch(metaDescription("Muhoozi vs Trump is not a tweet-war — it’s Uganda’s election crisis entering Washington’s bloodstream By Brilliant Pongo Report Focus News | Political analysis …"), /By Brilliant|\|/);
+  assert.doesNotMatch(metaDescription("Muhoozi vs Trump is not a tweet-war — it’s Uganda’s election crisis entering Washington’s bloodstream By Brilliant Pongo Report Focus News | Political Analyst & Editor’s Desk The Update Uganda’s Chief of Defence Forces, Gen. Muhoozi Kainerugaba, has issued a public warning aimed at U.S. President…"), /By Brilliant|\|/);
   assert.equal(metaDescription("KIGALI, Rwanda – The report was released."), "The report was released.");
   assert.doesNotMatch(sectionMetaDescription({slug: "us", name: "US"}), /independent reporting and analysis on Zimbabwe/);
 });

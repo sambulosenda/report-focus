@@ -20,9 +20,8 @@ export async function middleware(req: NextRequest) {
     // sections and old WordPress redirects still reach their normal server rendering.
     if (slug && !slug.includes("/") && !slug.includes(".") && !known.has(slug) && !RESERVED_SLUGS.has(slug) && !INFO_PAGES[slug]) {
       try {
-        const url = req.nextUrl.clone();
-        url.pathname = "/api/route-exists";
-        url.search = "";
+        const port = process.env.PORT || req.nextUrl.port || "3000";
+        const url = new URL(`http://127.0.0.1:${port}/api/route-exists`);
         url.searchParams.set("slug", slug);
         const result = await fetch(url, { signal: AbortSignal.timeout(3000) });
         if (result.ok && (await result.json()).exists === false) {

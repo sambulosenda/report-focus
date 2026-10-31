@@ -123,7 +123,7 @@ export function cleanLead(text: string) {
     prev = t;
     t = t.replace(DATELINE, "").replace(BYLINE_MASTHEAD, "").replace(BYLINE_PREFIX, "").trim();
   }
-  return t.replace(/\s+By\s+[^|.]{2,60}?Report Focus News\s*(?:\|[^.!?]*)?$/i, "").trim();
+  return t.replace(/\s+By\s+[^|.]{2,60}?Report Focus News\b[\s\S]*$/i, "").trim();
 }
 
 const ABBREV = /\b(?:No|Nos|Mr|Mrs|Ms|Dr|Prof|St|Gen|Lt|Col|Maj|Capt|Sgt|Rev|Hon|Adv|Jr|Sr|Inc|Ltd|Co|vs|etc|U\.S|U\.K|S\.A|e\.g|i\.e)\.$/i;
