@@ -14,6 +14,7 @@ export const NOT_FOUND_DESCRIPTION =
 
 /** Longer descriptions for the sections readers actually search for. Other sections use sectionBlurb's general line. */
 const SECTION_BLURBS: Record<string, string> = {
+  us: "US politics, policy and foreign affairs, and what Washington's decisions mean for Zimbabwe, South Africa and the rest of Africa.",
   zimbabwe:
     "Independent reporting and analysis on Zimbabwe: politics, crime, business and the news that matters to Zimbabweans at home and in the diaspora.",
   "south-africa":
@@ -26,7 +27,7 @@ const SECTION_BLURBS: Record<string, string> = {
 export function sectionBlurb(slug: string, name: string) {
   return (
     SECTION_BLURBS[slug] ??
-    `The latest ${name} news from Report Focus News: independent reporting and analysis on Zimbabwe, South Africa and the rest of Africa.`
+    `The latest ${name} news from Report Focus News.`
   );
 }
 

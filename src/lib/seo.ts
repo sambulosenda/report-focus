@@ -123,33 +123,31 @@ export function cleanLead(text: string) {
     prev = t;
     t = t.replace(DATELINE, "").replace(BYLINE_MASTHEAD, "").replace(BYLINE_PREFIX, "").trim();
   }
-  return t;
+  return t.replace(/\s+By\s+[^|.]{2,60}?Report Focus News\s*(?:\|[^.!?]*)?$/i, "").trim();
 }
 
-/**
- * Text for a meta description: at most 155 characters, cut on a word.
- * "No." and "U.S." are not treated as the end of a sentence. A cut ends with a full stop, not an ellipsis.
- */
+const ABBREV = /\b(?:No|Nos|Mr|Mrs|Ms|Dr|Prof|St|Gen|Lt|Col|Maj|Capt|Sgt|Rev|Hon|Adv|Jr|Sr|Inc|Ltd|Co|vs|etc|U\.S|U\.K|S\.A|e\.g|i\.e)\.$/i;
+const TRAILING_STOP = /\s+(?:a|an|the|and|or|but|of|to|in|on|at|for|with|by|from|over|through|that|as|is|are|was|were)$/i;
+
+/** Keep a complete sentence when possible; never invent punctuation for a clipped phrase. */
 export function metaDescription(text: string, max = 155) {
   const t = cleanLead(text);
-  if (!t) return "";
-  const ended = (s: string) => /[.!?]$/.test(s);
-  const tidy = (s: string) => s.replace(/[\s,;:–—-]+$/u, "").trim();
-  const finish = (s: string) => {
-    const cleaned = tidy(s);
-    if (!cleaned) return "";
-    if (ended(cleaned)) return cleaned.length <= max ? cleaned : cleaned.slice(0, max);
-    if (cleaned.length < max) return `${cleaned}.`;
-    return finish(cleaned.slice(0, max - 1));
-  };
-  if (t.length <= max) return finish(t);
-  const room = t.slice(0, max - 1);
-  const space = room.lastIndexOf(" ");
-  return finish(space > 40 ? room.slice(0, space) : room);
+  if (t.length <= max) return t;
+  let cut = -1;
+  for (const m of t.slice(0, max + 1).matchAll(/[.!?](?=\s|$)/g)) {
+    const end = m.index! + 1;
+    if (end <= max && !ABBREV.test(t.slice(0, end))) cut = end;
+  }
+  if (cut >= 70) return t.slice(0, cut);
+  let out = t.slice(0, max);
+  if (t[max] !== " " && out.lastIndexOf(" ") > 0) out = out.slice(0, out.lastIndexOf(" "));
+  out = out.replace(/[\s,;:–—-]+$/, "");
+  while (TRAILING_STOP.test(out)) out = out.replace(TRAILING_STOP, "");
+  return out.replace(/[\s,;:–—-]+$/, "").trim();
 }
 
 /** The sentence search engines should quote: the standfirst, or the first real paragraph of the story. */
-export function storyDescription(summary: string, body: string) {
+export function storyDescription(summary: string, body: string, clip = true) {
   const pieces = [summary, ...body.split(/\n+/)];
   for (const raw of pieces) {
     const line = raw
@@ -160,9 +158,9 @@ export function storyDescription(summary: string, body: string) {
       .trim();
     if (!line) continue;
     const cleaned = cleanLead(line);
-    if (cleaned.length >= 40) return metaDescription(cleaned);
+    if (cleaned.length >= 40) return clip ? metaDescription(cleaned) : cleaned;
   }
-  return metaDescription(summary || body);
+  return clip ? metaDescription(summary || body) : cleanLead(summary || body);
 }
 
 /** Section, topic and author descriptions: a real standfirst when the newsroom wrote one, otherwise a full sentence. */

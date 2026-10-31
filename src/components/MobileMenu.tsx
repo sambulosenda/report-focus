@@ -13,7 +13,7 @@ type Props = {
 };
 
 /** Full-screen section menu for phones. */
-export function MobileMenu({ sections, live, channelUrl }: Props) {
+export function MobileMenu({ sections, channelUrl }: Props) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -91,11 +91,6 @@ export function MobileMenu({ sections, live, channelUrl }: Props) {
           </form>
           <nav aria-label="Sections" className="flex-1 overflow-y-auto px-4">
             <Link href="/saved" onClick={() => setOpen(false)} className={`${row} font-bold text-teal`}>Saved articles</Link>
-            <Link href={live?.href ?? "/live"} onClick={() => setOpen(false)} className={`${row} gap-2.5 font-extrabold text-brand`}>
-              <span className="h-2 w-2 rounded-full bg-brand" aria-hidden />
-              Follow live
-              {live && <span className="ml-auto max-w-[55%] truncate text-[13px] font-semibold text-muted">{live.title}</span>}
-            </Link>
             {sections.map((s) => (
               <Link key={s.href} href={s.href} onClick={() => setOpen(false)} className={`${row} font-bold text-ink`}>
                 {s.label}

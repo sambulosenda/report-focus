@@ -5,7 +5,7 @@ import { articles, categories, users } from "@/db/schema";
 import { allCategories, isLive } from "@/lib/queries";
 import { absoluteUrl, isDeskByline, isUnconfirmedAuthor, isWireByline } from "@/lib/seo";
 import { INFO_PAGES } from "@/lib/site";
-import { TAG_INDEX_MIN, tagSlug } from "@/lib/tags";
+import { indexedTopics } from "@/lib/topic-queries";
 import { siteUrl } from "@/lib/utils";
 import { whatsappChannelUrl } from "@/lib/whatsapp";
 
@@ -45,19 +45,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   };
   const bySection = new Map<string, Date>();
   const byWriter = new Map<string, Date>();
-  const byTag = new Map<string, { at: Date; n: number }>();
+  const byTag = await indexedTopics();
   let latest: Date | undefined;
-  // Agency stories are noindex (see isWireByline), so they are left out of the story list.
-  // Their tags still count: a topic page indexes every live story that carries the tag.
   const listed = stories.filter((s) => !isWireByline(s.author.name));
-  for (const s of stories) {
-    for (const raw of s.tags.split(",")) {
-      const slug = tagSlug(raw);
-      if (!slug || slug === "sample") continue;
-      const prev = byTag.get(slug);
-      byTag.set(slug, { n: (prev?.n ?? 0) + 1, at: !prev || s.updatedAt > prev.at ? s.updatedAt : prev.at });
-    }
-  }
   for (const s of listed) {
     if (!latest || s.updatedAt > latest) latest = s.updatedAt;
     if (s.section) newest(bySection, s.section, s.updatedAt);
@@ -78,7 +68,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     ...[...byWriter].map(([slug, d]) => ({ url: siteUrl(`/author/${slug}`), lastModified: d })),
     ...[...byTag]
-      .filter(([, t]) => t.n >= TAG_INDEX_MIN)
       .map(([slug, t]) => ({ url: siteUrl(`/tag/${encodeURIComponent(slug)}`), lastModified: t.at })),
     ...Object.entries(INFO_PAGES)
       .filter(([slug, page]) => !page.noindex && !sectionSlugs.has(slug))

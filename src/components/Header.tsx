@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { currentLiveStory, navCategories, storiesOfKind } from "@/lib/queries";
+import { currentLiveStory, allCategories, storiesOfKind } from "@/lib/queries";
 import { whatsappChannelUrl } from "@/lib/whatsapp";
 import { formatLongDate } from "@/lib/utils";
 import { Logo } from "./Logo";
@@ -12,14 +12,21 @@ export async function Header() {
   // The header also frames error and 404 pages, so a database outage leaves it with just the basics.
   // It reads no sign-in cookie, so reader pages can be cached for everyone. Staff signed in already are sent on from /login.
   const [cats, live, videos] = await Promise.all([
-    navCategories().catch(() => []),
+    allCategories().catch(() => []),
     currentLiveStory().catch(() => null),
     // If the lookup fails, keep the link rather than hide it until the next rebuild.
     storiesOfKind(["video"], 1).catch(() => null),
   ]);
-  const sections = cats.map((c) => ({ label: c.name, href: `/${c.slug}` }));
-  // The Video link appears once there is a video to watch.
-  const nav = [{ label: "SA Elections", href: "/elections/south-africa-2026" }, ...(videos === null || videos.length ? [{ label: "Video", href: "/video" }, ...sections] : sections)];
+  const order = ["zimbabwe", "south-africa", "africa", "world", "politics", "crime", "business", "us", "technology", "health", "climate", "sports", "entertainment"];
+  const sections = order.flatMap((slug) => {
+    const cat = cats.find((c) => c.slug === slug);
+    return cat ? [{ label: cat.name, href: `/${cat.slug}` }] : [];
+  });
+  const core = sections.filter((s) => ["/zimbabwe", "/south-africa", "/africa"].includes(s.href));
+  const nav = [...core, { label: "SA Elections", href: "/elections/south-africa-2026" },
+    ...(live ? [{ label: "Live", href: "/live" }] : []),
+    ...sections.filter((s) => !core.includes(s)),
+    ...(videos === null || videos.length ? [{ label: "Video", href: "/video" }] : [])];
 
   return (
     <header className="border-b border-line bg-white">

@@ -122,7 +122,7 @@ export default async function ArticlePage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": article.kind === "live" ? "LiveBlogPosting" : article.kind === "opinion" ? "OpinionNewsArticle" : article.kind === "analysis" ? "AnalysisNewsArticle" : "NewsArticle",
     headline: article.title,
-    description: storyDescription(article.summary, article.body),
+    description: storyDescription(article.summary, article.body, false),
     image: article.heroImage
       ? [{ "@type": "ImageObject", url: absoluteUrl(article.heroImage), caption: article.heroCaption || undefined, creditText: article.heroCredit || undefined }]
       : [absoluteUrl(SHARE_IMAGE.url)],

@@ -1,3 +1,4 @@
+import { indexedTopics } from "@/lib/topic-queries";
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
@@ -6,7 +7,7 @@ import { FollowCard } from "@/components/FollowCard";
 import { topicFollowList } from "@/lib/following";
 import { storiesByTag } from "@/lib/queries";
 import { collectionLd, ldJson, NOT_FOUND_METADATA, pageMeta, topicMetaDescription } from "@/lib/seo";
-import { TAG_INDEX_MIN, tagName, tagSlug } from "@/lib/tags";
+import { tagName, tagSlug } from "@/lib/tags";
 import { siteUrl, timeAgo } from "@/lib/utils";
 
 type Props = { params: Promise<{ tag: string }> };
@@ -37,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${name} News`,
     description: topicMetaDescription(name),
     path: `/tag/${encodeURIComponent(slug)}`,
-    noindex: stories.length < TAG_INDEX_MIN,
+    noindex: !(new Map(await indexedTopics())).has(slug),
   });
 }
 

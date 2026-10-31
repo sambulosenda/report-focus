@@ -1,18 +1,19 @@
 import Link from "next/link";
 
 /** "Load more stories" for paged lists. Links to the next page, so it works without JavaScript. */
-export function LoadMore({ base, page, hasNext }: { base: string; page: number; hasNext: boolean }) {
+export function LoadMore({ base, page, hasNext, pathPages = false }: { base: string; page: number; hasNext: boolean; pathPages?: boolean }) {
   if (!hasNext && page <= 1) return null;
   const sep = base.includes("?") ? "&" : "?";
+  const pageHref = (n: number) => n === 1 ? base : pathPages ? `${base}/page/${n}` : `${base}${sep}page=${n}`;
   return (
     <nav aria-label="More stories" className="mt-6 flex flex-wrap items-center justify-center gap-3">
       {page > 1 && (
-        <Link href={page === 2 ? base : `${base}${sep}page=${page - 1}`} className="inline-flex h-[46px] items-center border border-line-2 px-6 text-[15px] font-bold text-ink hover:border-ink">
+        <Link href={pageHref(page - 1)} className="inline-flex h-[46px] items-center border border-line-2 px-6 text-[15px] font-bold text-ink hover:border-ink">
           ← Newer stories
         </Link>
       )}
       {hasNext && (
-        <Link href={`${base}${sep}page=${page + 1}`} className="inline-flex h-[46px] items-center border border-ink px-7 text-[15px] font-bold text-ink hover:bg-ink hover:text-white">
+        <Link href={pageHref(page + 1)} className="inline-flex h-[46px] items-center border border-ink px-7 text-[15px] font-bold text-ink hover:bg-ink hover:text-white">
           Load more stories
         </Link>
       )}
