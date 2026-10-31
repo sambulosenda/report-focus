@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
 import { LiveBadge } from "@/components/LiveBadge";
+import { FollowCard } from "@/components/FollowCard";
+import { storyFollowList } from "@/lib/following";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { CopyLinkButton } from "@/components/ShareButtons";
 import { Duration, SectionTitle, StoryImage, storyHref } from "@/components/Story";
@@ -73,6 +75,8 @@ export async function LiveUpdates({ slug, showAll }: { slug: string; showAll: bo
           </Link>
         </p>
       </header>
+
+      <div className="max-w-[820px]"><FollowCard list={storyFollowList(article.id)} title="Follow this live story" description="Get a weekday email when new updates are posted. Confirm your email to start; unsubscribe at any time." /></div>
 
       <div className="mt-8 flex flex-col gap-12 lg:flex-row lg:items-start">
         <section id="updates" aria-label="Updates" className="min-w-0 max-w-[760px] scroll-mt-4 lg:flex-[999_1_560px]">

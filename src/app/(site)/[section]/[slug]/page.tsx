@@ -4,6 +4,8 @@ import Link from "next/link";
 import { permanentRedirect } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
 import { Avatar } from "@/components/Avatar";
+import { FollowCard } from "@/components/FollowCard";
+import { storyFollowList } from "@/lib/following";
 import { LiveBadge } from "@/components/LiveBadge";
 import { NewsletterCard } from "@/components/NewsletterForm";
 import { ReadingProgress } from "@/components/ReadingProgress";
@@ -96,6 +98,7 @@ export default async function ArticlePage({ params }: Props) {
         more={moreVideos.length ? moreVideos : await relatedStories(article.id, article.categoryId, 4)}
         moreTitle={moreVideos.length ? "More videos" : `More from ${category?.name ?? SITE_NAME}`}
       />
+      <div className="mx-auto max-w-[820px] px-4"><FollowCard list={storyFollowList(article.id)} title="Follow this story" description="Get a weekday email when this story changes or new live updates are posted. Confirm your email to start; unsubscribe at any time." /></div>
       </>
     );
   }
@@ -269,6 +272,8 @@ export default async function ArticlePage({ params }: Props) {
             )}
 
             <div className="article-body" dangerouslySetInnerHTML={{ __html: renderMarkdownWithBreaks(article.body, inlineAdHtml()) }} />
+
+            <FollowCard list={storyFollowList(article.id)} title="Follow this story" description="Get a weekday email when this story changes or new live updates are posted. Confirm your email to start; unsubscribe at any time." />
 
             {tags.length > 0 && (
               <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-1" aria-label="Topics">

@@ -15,7 +15,7 @@ export type SignupState = { ok?: string; error?: string } | undefined;
 
 const Signup = z.object({
   email: z.string().trim().toLowerCase().email("Enter a valid email address.").max(200),
-  list: z.string().regex(/^[a-z0-9-]{1,60}$/).default("morning-focus"),
+  list: z.string().max(1000).regex(/^[a-zA-Z0-9%_.!~*'()-]+$/).default("morning-focus"),
 });
 
 // Asking again within this window doesn't send another confirmation, so the form can't be used to flood an inbox.

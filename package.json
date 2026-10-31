@@ -14,6 +14,7 @@
     "setup": "npm run db:migrate && npm run db:seed",
     "admin:create": "tsx --env-file-if-exists=.env scripts/create-admin.ts",
     "typecheck": "tsc --noEmit",
+    "test:following": "node --import tsx --test tests/following.test.ts",
     "db:backup": "tsx --env-file-if-exists=.env scripts/backup.ts",
     "uploads:move": "tsx --env-file-if-exists=.env scripts/move-uploads.ts",
     "sections:review": "tsx --env-file-if-exists=.env scripts/section-review.ts"

@@ -109,7 +109,7 @@ export default async function NewslettersAdminPage() {
           </table>
         </Card>
         <p className="text-sm text-muted">
-          Each edition carries the five top stories of the past 24 hours. To send them automatically every weekday morning, have a scheduler call{" "}
+          Newsletters carry the five top stories of the past 24 hours. Story and topic follows send only new coverage or updates since the previous digest. To send them automatically every weekday morning, have a scheduler call{" "}
           <code>POST /api/newsletter/send</code> with the <code>CRON_SECRET</code>. An edition never goes out twice on the same day.
         </p>
 

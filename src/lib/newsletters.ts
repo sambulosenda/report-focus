@@ -1,9 +1,11 @@
 import "server-only";
-import { and, eq, isNotNull, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { emailSends, newsletterSignups, type NewsletterSignup } from "@/db/schema";
 import { sendEmails, type EmailMessage } from "./email";
-import { categoryBySlug, editionStories, type StoryCard } from "./queries";
+import { categoryBySlug, editionStories, followedStories, type StoryCard } from "./queries";
+import { followTarget, isFollowList } from "./following";
+import { tagName } from "./tags";
 import { SITE_NAME } from "./site";
 import { SITE_TIMEZONE, siteUrl } from "./utils";
 
@@ -21,6 +23,17 @@ export const STANDING_LISTS: ListInfo[] = [
 export async function listInfo(list: string): Promise<ListInfo | null> {
   const standing = STANDING_LISTS.find((l) => l.list === list);
   if (standing) return standing;
+  if (isFollowList(list)) {
+    const target = followTarget(list);
+    if (!target) return null;
+    const [story] = await followedStories(target, new Date(0), new Date());
+    if (!story) return null;
+    return {
+      list,
+      name: "storyId" in target ? `Updates: ${story.title}` : `${tagName(target.topic.replace(/-/g, " "))} updates`,
+      description: "A weekday email when there’s new coverage or an update. Nothing to report? No email.",
+    };
+  }
   if (!list.startsWith("section-")) return null;
   const cat = await categoryBySlug(list.slice("section-".length));
   if (!cat) return null;
@@ -138,12 +151,14 @@ export type SendResult = { ok: true; sent: number; subject: string } | { ok: fal
 async function claimAndSend(
   claim: { list: string; articleId?: number; edition?: string; subject: string; sentBy?: number },
   build: (signup: NewsletterSignup) => EmailMessage,
+  eligible: (signup: NewsletterSignup) => boolean = () => true,
+  createdAt = new Date(),
 ): Promise<SendResult> {
-  const recipients = await db.select().from(newsletterSignups).where(and(eq(newsletterSignups.list, claim.list), active()));
+  const recipients = (await db.select().from(newsletterSignups).where(and(eq(newsletterSignups.list, claim.list), active()))).filter(eligible);
   if (recipients.length === 0) return { ok: false, error: "Nobody has confirmed a sign-up to this list yet." };
   const [row] = await db
     .insert(emailSends)
-    .values({ ...claim, recipients: recipients.length })
+    .values({ ...claim, recipients: recipients.length, createdAt })
     .onConflictDoNothing()
     .returning({ id: emailSends.id });
   if (!row) return { ok: false, error: claim.articleId ? "An alert for this story has already gone out." : "Today’s edition has already gone out." };
@@ -164,10 +179,40 @@ export async function sendBreakingAlert(story: StoryCard, sentBy?: number) {
 
 /** Sends today's edition of a newsletter: the top stories of the past 24 hours, once per day. */
 export async function sendEdition(list: string, sentBy?: number): Promise<SendResult> {
+  if (isFollowList(list)) return sendFollowEdition(list, sentBy);
   const info = await listInfo(list);
   if (!info || list === BREAKING) return { ok: false, error: "That newsletter doesn’t exist." };
   const stories = await editionStories(info.categoryId);
   if (stories.length === 0) return { ok: false, error: "No stories were published in the past 24 hours, so there is nothing to send." };
   const date = editionDate();
   return claimAndSend({ list, edition: date, subject: `${info.name}: ${stories[0].title}`, sentBy }, (s) => editionEmail(info, stories, s, date));
+}
+
+/** Resume from the last successful digest, so weekends and missed cron runs do not lose updates. */
+async function sendFollowEdition(list: string, sentBy?: number): Promise<SendResult> {
+  const target = followTarget(list);
+  const info = await listInfo(list);
+  if (!target || !info) return { ok: false, error: "That follow subscription doesn’t exist." };
+  // Freeze a completed second: writes during delivery belong to the next digest.
+  const now = new Date(Math.floor(Date.now() / 1000) * 1000 - 1000);
+  const [previous] = await db.select().from(emailSends).where(eq(emailSends.list, list)).orderBy(desc(emailSends.createdAt)).limit(1);
+  const readers = await db.select().from(newsletterSignups).where(and(eq(newsletterSignups.list, list), active()));
+  if (!readers.length) return { ok: false, error: "Nobody has confirmed a sign-up to this list yet." };
+  const since = previous?.createdAt ?? new Date(Math.min(...readers.map((r) => r.confirmedAt!.getTime())));
+  const stories = await followedStories(target, since, now);
+  const forReader = (reader: NewsletterSignup) => stories.filter((s) => s.changedAt > Math.floor(reader.confirmedAt!.getTime() / 1000));
+  if (!readers.some((r) => forReader(r).length)) return { ok: true, sent: 0, subject: "No new updates." };
+  return claimAndSend(
+    { list, edition: editionDate(now), subject: info.name, sentBy },
+    (reader) => {
+      const items = forReader(reader);
+      const content = `<h1 style="font-family:${SERIF};font-size:26px;">${esc(info.name)}</h1><p>New coverage and updates since your last email.</p>${items.map((s, i) => storyBlock(s, i === 0)).join("")}`;
+      return { to: reader.email, subject: info.name,
+        html: layout({ preheader: items[0].title, content, footer: unsubscribeFooter(info, reader) }),
+        text: `${info.name}\n\n${items.map((s) => `${s.title}\n${storyUrl(s)}`).join("\n\n")}\n\nUnsubscribe: ${unsubscribeUrl(reader)}`,
+        headers: unsubscribeHeaders(reader) };
+    },
+    (reader) => forReader(reader).length > 0,
+    now,
+  );
 }
