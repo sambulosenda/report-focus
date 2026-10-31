@@ -10,6 +10,7 @@ import { LiveBadge } from "@/components/LiveBadge";
 import { NewsletterCard } from "@/components/NewsletterForm";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { ShareButtons } from "@/components/ShareButtons";
+import { SaveArticleButton } from "@/components/SavedArticles";
 import { SupportCard } from "@/components/SupportCard";
 import { CardStory, NumberedList, SectionTitle } from "@/components/Story";
 import { VideoWatch } from "@/components/VideoWatch";
@@ -92,6 +93,7 @@ export default async function ArticlePage({ params }: Props) {
       <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(videoLd) }} />
       <ViewBeacon articleId={article.id} />
+      <div className="mx-auto max-w-[1280px] px-4"><SaveArticleButton id={article.id} title={article.title} href={`/${canonicalSection}/${article.slug}`} /></div>
       <VideoWatch
         video={{ ...article, categoryName: category?.name }}
         upNext={videos.slice(0, 5)}
@@ -215,6 +217,7 @@ export default async function ArticlePage({ params }: Props) {
               </div>
             </div>
             <ShareButtons url={url} title={article.title} className="mt-3 justify-between border-y border-line py-2 md:mt-0 md:justify-start md:border-0 md:py-0" />
+            <SaveArticleButton id={article.id} title={article.title} href={`/${canonicalSection}/${article.slug}`} />
           </div>
         </header>
 

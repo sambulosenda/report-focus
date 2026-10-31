@@ -33,6 +33,7 @@ export async function Header() {
           <Logo className="text-[22px] md:text-[clamp(30px,2.8vw,40px)]" />
         </Link>
         <div className="flex items-center justify-end gap-2.5 md:flex-[1_1_180px]">
+          <Link href="/saved" className="hidden min-h-11 items-center text-sm font-bold text-teal hover:underline md:inline-flex">Saved articles</Link>
           <Link href="/search" aria-label="Search" className="inline-flex h-11 w-11 items-center justify-center text-ink hover:text-teal">
             <SearchIcon />
           </Link>
