@@ -31,7 +31,16 @@ import {
   trendingTags,
 } from "@/lib/queries";
 
-export const metadata: Metadata = pageMeta({ title: HOME_TITLE, absoluteTitle: true, description: HOME_DESCRIPTION, path: "/" });
+export async function generateMetadata(): Promise<Metadata> {
+  const { lead } = await homeTop(5);
+  return pageMeta({
+    title: HOME_TITLE,
+    absoluteTitle: true,
+    description: HOME_DESCRIPTION,
+    path: "/",
+    image: lead?.heroImage ? { url: lead.heroImage, alt: lead.heroAlt } : null,
+  });
+}
 
 /** Tells Google and AI answer engines the site's name, who publishes it and the newsroom's policies. */
 const siteLd = {

@@ -1,5 +1,5 @@
 /** Hosts whose pictures Next.js may resize. Pictures from anywhere else are shown as they are. */
-export const IMAGE_HOSTS = ["backend.reportfocusnews.com", "reportfocusnews.com", "www.reportfocusnews.com"];
+export const IMAGE_HOSTS = ["media.reportfocusnews.com", "backend.reportfocusnews.com", "reportfocusnews.com", "www.reportfocusnews.com"];
 
 /** Host of the S3/R2 image bucket. next.config.ts reads it from S3_PUBLIC_URL at build time. */
 const MEDIA_HOST = process.env.MEDIA_HOST;

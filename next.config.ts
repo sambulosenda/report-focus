@@ -35,6 +35,8 @@ const mediaHost = (() => {
 const nextConfig: NextConfig = {
   env: { MEDIA_HOST: mediaHost },
   poweredByHeader: false,
+  // sharp is a native module. Leave it outside the server bundle so the share-image crop can load it.
+  serverExternalPackages: ["sharp"],
   // Newsroom photo uploads are server actions, and the newsroom sits behind middleware.
   // The framework default stops reading at 1 MB and then never answers, so the button stays on "Uploading…".
   // 10 MB covers an 8 MB image plus the form around it.
@@ -84,7 +86,7 @@ const nextConfig: NextConfig = {
     imageSizes: [104, 140, 180, 256],
     // Resized copies are cached for 30 days. Uploads never change once saved.
     minimumCacheTTL: 60 * 60 * 24 * 30,
-    remotePatterns: [...IMAGE_HOSTS, ...(mediaHost ? [mediaHost] : [])].map((hostname) => ({ protocol: "https" as const, hostname })),
+    remotePatterns: [...new Set([...IMAGE_HOSTS, ...(mediaHost ? [mediaHost] : [])])].map((hostname) => ({ protocol: "https" as const, hostname })),
   },
 };
 

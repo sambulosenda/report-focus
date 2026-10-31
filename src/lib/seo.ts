@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { authorBlurb, CONTACT, NOT_FOUND_DESCRIPTION, OG_LOCALE, sectionBlurb, SITE_NAME, SOCIAL, topicBlurb, TWITTER_HANDLE } from "@/lib/site";
+import { SOCIAL_HEIGHT, SOCIAL_WIDTH, socialImagePath } from "@/lib/social-image";
 import { siteUrl } from "@/lib/utils";
 
 /** Branded card used when a page or story has no picture of its own. */
@@ -256,8 +257,13 @@ type PageMeta = {
  * A page's own openGraph replaces the site default, so this rebuilds every field each time.
  */
 export function pageMeta({ title, absoluteTitle, description, path, image, noindex, openGraph }: PageMeta): Metadata {
-  // WhatsApp, Facebook and X can't show SVG pictures, so those fall back to the branded card too.
-  const images = image?.url && !/\.svg($|\?)/i.test(image.url) ? [{ url: image.url, alt: image.alt ?? title }] : [SHARE_IMAGE];
+  // Story photos are cropped to 1200×630. Anything we cannot crop, including SVGs, uses the branded card.
+  const social = image?.url ? socialImagePath(image.url) : null;
+  const images = social
+    ? [{ url: social, width: SOCIAL_WIDTH, height: SOCIAL_HEIGHT, alt: image?.alt ?? title }]
+    : image?.url && !/\.svg($|\?)/i.test(image.url)
+      ? [{ url: image.url, alt: image.alt ?? title }]
+      : [SHARE_IMAGE];
   // The homepage canonical is written in the page itself. Next drops the trailing slash on "/".
   const home = path === "/";
   return {
@@ -266,7 +272,7 @@ export function pageMeta({ title, absoluteTitle, description, path, image, noind
     // A page's alternates replace the site's, so the RSS feed link is repeated here.
     alternates: { ...(home ? {} : { canonical: path }), types: RSS_ALTERNATE },
     robots: noindex ? { index: false, follow: true } : ROBOTS,
-    openGraph: { siteName: SITE_NAME, locale: OG_LOCALE, type: "website", title, description, ...(home ? {} : { url: path }), images, ...openGraph },
+    openGraph: { siteName: SITE_NAME, locale: OG_LOCALE, type: "website", title, description, ...(home ? {} : { url: path }), ...openGraph, images },
     twitter: { card: "summary_large_image", site: TWITTER_HANDLE, title, description, images },
   };
 }

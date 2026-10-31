@@ -35,6 +35,15 @@ export const metadata: Metadata = {
   alternates: { types: RSS_ALTERNATE },
   // Proves to Google Search Console that this site belongs to the newsroom's account.
   verification: { google: "Ht1qagqS6RXNU4R7Z9y4Q0IGeht5_Nj0VlQY1g73pfE" },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/favicon-96x96.png", sizes: "96x96", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  manifest: "/site.webmanifest",
+  appleWebApp: { title: "Report Focus" },
 };
 
 export const viewport: Viewport = { themeColor: "#004666" };

@@ -182,7 +182,7 @@ export async function homePinned() {
  * The lead and the headline list beside it on the home page. Pinned slots come first; an empty lead slot goes to the
  * newest top story (or the newest story), and the other slots fill with the newest stories that aren't already shown.
  */
-export async function homeTop(stackSize = 5) {
+export const homeTop = cache(async (stackSize = 5) => {
   const [pinned, featured, latest] = await Promise.all([homePinned(), featuredStories(5), latestStories(30)]);
   const pinnedIds = new Set([...pinned.values()].map((p) => p.story.id));
   const unpinned = (s: StoryCard) => !pinnedIds.has(s.id);
@@ -196,7 +196,7 @@ export async function homeTop(stackSize = 5) {
     stack.push(pin && pin.id !== lead?.id ? pin : auto.shift());
   }
   return { lead, stack, pinned };
-}
+});
 
 export async function breakingStory() {
   const since = new Date(Date.now() - 24 * 3600e3);

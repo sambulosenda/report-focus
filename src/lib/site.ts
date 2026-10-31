@@ -470,7 +470,7 @@ export function helpLinks(channelUrl: string | null) {
 /** Top-level URLs that belong to pages, so no section may use them as its slug. */
 export const RESERVED_SLUGS = new Set([
   "saved", "elections",
-  "newsroom", "login", "search", "latest", "author", "tag", "media", "live", "video", "demo", "feed.xml", "sitemap.xml", "robots.txt", "api", "newsletters", "whatsapp", "support", "ads.txt", "news-sitemap.xml",
+  "newsroom", "login", "search", "latest", "author", "tag", "media", "live", "video", "demo", "feed.xml", "sitemap.xml", "robots.txt", "api", "newsletters", "whatsapp", "support", "ads.txt", "news-sitemap.xml", "social-image",
   // Old WordPress addresses are looked up here.
   "wp-redirect", "wp-gone", "llms.txt", "llms-full.txt",
   // Standing pages share the top-level URL space with sections.

@@ -19,6 +19,7 @@
     "test:following": "node --import tsx --test tests/following.test.ts",
     "test:tips": "node --import tsx --test tests/tips.test.ts",
     "test:whatsapp": "node --import tsx --test tests/whatsapp.test.ts",
+    "test:social": "node --import tsx --test tests/social-image.test.ts",
     "db:backup": "tsx --env-file-if-exists=.env scripts/backup.ts",
     "uploads:move": "tsx --env-file-if-exists=.env scripts/move-uploads.ts",
     "sections:review": "tsx --env-file-if-exists=.env scripts/section-review.ts"
@@ -36,6 +37,7 @@
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "server-only": "^0.0.1",
+    "sharp": "^0.35.5",
     "slugify": "^1.6.9",
     "turndown": "^7.2.4",
     "zod": "^4.6.7"
