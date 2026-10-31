@@ -1,13 +1,17 @@
+import { CorrectionHistory } from "@/components/CorrectionHistory";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { permanentRedirect } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
 import { Avatar } from "@/components/Avatar";
+import { FollowCard } from "@/components/FollowCard";
+import { storyFollowList } from "@/lib/following";
 import { LiveBadge } from "@/components/LiveBadge";
 import { NewsletterCard } from "@/components/NewsletterForm";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { ShareButtons } from "@/components/ShareButtons";
+import { SaveArticleButton } from "@/components/SavedArticles";
 import { SupportCard } from "@/components/SupportCard";
 import { CardStory, NumberedList, SectionTitle } from "@/components/Story";
 import { VideoWatch } from "@/components/VideoWatch";
@@ -90,12 +94,15 @@ export default async function ArticlePage({ params }: Props) {
       <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: ldJson(videoLd) }} />
       <ViewBeacon articleId={article.id} />
+      <div className="mx-auto max-w-[1280px] px-4"><SaveArticleButton id={article.id} title={article.title} href={`/${canonicalSection}/${article.slug}`} /></div>
       <VideoWatch
         video={{ ...article, categoryName: category?.name }}
         upNext={videos.slice(0, 5)}
         more={moreVideos.length ? moreVideos : await relatedStories(article.id, article.categoryId, 4)}
         moreTitle={moreVideos.length ? "More videos" : `More from ${category?.name ?? SITE_NAME}`}
       />
+      <div className="mx-auto max-w-[820px] px-4"><CorrectionHistory articleId={article.id} /></div>
+      <div className="mx-auto max-w-[820px] px-4"><FollowCard list={storyFollowList(article.id)} title="Follow this story" description="Get a weekday email when this story changes or new live updates are posted. Confirm your email to start; unsubscribe at any time." /></div>
       </>
     );
   }
@@ -212,6 +219,7 @@ export default async function ArticlePage({ params }: Props) {
               </div>
             </div>
             <ShareButtons url={url} title={article.title} className="mt-3 justify-between border-y border-line py-2 md:mt-0 md:justify-start md:border-0 md:py-0" />
+            <SaveArticleButton id={article.id} title={article.title} href={`/${canonicalSection}/${article.slug}`} />
           </div>
         </header>
 
@@ -269,6 +277,9 @@ export default async function ArticlePage({ params }: Props) {
             )}
 
             <div className="article-body" dangerouslySetInnerHTML={{ __html: renderMarkdownWithBreaks(article.body, inlineAdHtml()) }} />
+
+            <CorrectionHistory articleId={article.id} />
+            <FollowCard list={storyFollowList(article.id)} title="Follow this story" description="Get a weekday email when this story changes or new live updates are posted. Confirm your email to start; unsubscribe at any time." />
 
             {tags.length > 0 && (
               <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-1" aria-label="Topics">

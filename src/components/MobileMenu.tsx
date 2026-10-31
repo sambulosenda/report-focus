@@ -89,6 +89,7 @@ export function MobileMenu({ sections, live }: Props) {
             </div>
           </form>
           <nav aria-label="Sections" className="flex-1 overflow-y-auto px-4">
+            <Link href="/saved" onClick={() => setOpen(false)} className={`${row} font-bold text-teal`}>Saved articles</Link>
             <Link href={live?.href ?? "/live"} onClick={() => setOpen(false)} className={`${row} gap-2.5 font-extrabold text-brand`}>
               <span className="h-2 w-2 rounded-full bg-brand" aria-hidden />
               Follow live

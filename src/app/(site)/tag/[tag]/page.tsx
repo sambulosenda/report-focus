@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 import { cache } from "react";
 import { CardStory, RiverStory } from "@/components/Story";
+import { FollowCard } from "@/components/FollowCard";
+import { topicFollowList } from "@/lib/following";
 import { storiesByTag } from "@/lib/queries";
 import { collectionLd, ldJson, NOT_FOUND_METADATA, pageMeta, topicMetaDescription } from "@/lib/seo";
 import { TAG_INDEX_MIN, tagName, tagSlug } from "@/lib/tags";
@@ -57,6 +59,7 @@ export default async function TagPage({ params }: Props) {
         <p className="kicker">Full coverage</p>
         <h1 className="mt-2 text-[32px] font-extrabold leading-none tracking-[-0.02em] md:text-[44px]">{name}</h1>
       </header>
+      <div className="max-w-[820px]"><FollowCard list={topicFollowList(slug)} title={`Follow ${name}`} /></div>
       {first && (
         <div className="mt-7 grid gap-8 md:grid-cols-2">
           <CardStory story={first} ratio="16/9" showKicker />

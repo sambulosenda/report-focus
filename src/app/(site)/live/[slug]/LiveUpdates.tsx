@@ -1,10 +1,14 @@
+import { CorrectionHistory } from "@/components/CorrectionHistory";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
 import { LiveBadge } from "@/components/LiveBadge";
+import { FollowCard } from "@/components/FollowCard";
+import { storyFollowList } from "@/lib/following";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { CopyLinkButton } from "@/components/ShareButtons";
+import { SaveArticleButton } from "@/components/SavedArticles";
 import { Duration, SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { renderMarkdown } from "@/lib/markdown";
 import { NOT_FOUND_METADATA, pageMeta, storyDescription } from "@/lib/seo";
@@ -73,6 +77,10 @@ export async function LiveUpdates({ slug, showAll }: { slug: string; showAll: bo
           </Link>
         </p>
       </header>
+      <div className="max-w-[820px]"><CorrectionHistory articleId={article.id} /></div>
+      <SaveArticleButton id={article.id} title={article.title} href={storyUrl} />
+
+      <div className="max-w-[820px]"><FollowCard list={storyFollowList(article.id)} title="Follow this live story" description="Get a weekday email when new updates are posted. Confirm your email to start; unsubscribe at any time." /></div>
 
       <div className="mt-8 flex flex-col gap-12 lg:flex-row lg:items-start">
         <section id="updates" aria-label="Updates" className="min-w-0 max-w-[760px] scroll-mt-4 lg:flex-[999_1_560px]">

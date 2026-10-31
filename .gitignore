@@ -50,3 +50,11 @@ next-env.d.ts
 
 # Editor reports from npm run sections:review
 /reports
+
+# Local decision trail for a review, not part of the site
+/.audit/
+
+# Local verification runs and captured pages
+/.cursor/skills/verify-report-focus/runs/
+/.cursor/skills/verify-report-focus/evidence/
+/.cursor/skills/verify-newsletter-send/runs/

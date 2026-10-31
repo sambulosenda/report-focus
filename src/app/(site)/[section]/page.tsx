@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AdSlot } from "@/components/AdSlot";
-import { NewsletterCard } from "@/components/NewsletterForm";
+import { FollowCard } from "@/components/FollowCard";
 import { Kicker, NumberedList, RiverStory, SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
 import { redirectLegacyOrNotFound } from "@/lib/legacy-redirect";
@@ -141,13 +141,11 @@ export default async function SectionPage({ params, searchParams }: Props) {
             </div>
           )}
           <AdSlot />
-          <NewsletterCard
-            id="section-newsletter"
-            label="Newsletter"
-            title={`${cat.name} Focus`}
-            text={`The day’s most important ${cat.name.toLowerCase()} stories, in five minutes. Weekdays.`}
+          <div id="section-newsletter"><FollowCard
+            title={`Follow ${cat.name}`}
+            description={`Get the day’s top ${cat.name} stories by email each weekday. Confirm your email to start; unsubscribe at any time.`}
             list={`section-${cat.slug}`}
-          />
+          /></div>
         </aside>
       </div>
     </div>

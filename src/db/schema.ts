@@ -1,3 +1,4 @@
+import type { ElectionResultData } from "@/lib/elections";
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
 
@@ -135,6 +136,15 @@ export const liveUpdates = sqliteTable(
   (t) => [index("live_updates_article_idx").on(t.articleId, t.createdAt)],
 );
 
+/** Append-only correction notes; later notes clarify earlier ones. */
+export const articleCorrections = sqliteTable("article_corrections", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  articleId: integer("article_id").notNull().references(() => articles.id, { onDelete: "cascade" }),
+  editorId: integer("editor_id").references(() => users.id, { onDelete: "set null" }),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at"),
+}, (t) => [index("article_corrections_article_idx").on(t.articleId, t.createdAt)]);
+
 export const media = sqliteTable("media", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   url: text("url").notNull(),
@@ -206,3 +216,23 @@ export type Media = typeof media.$inferSelect;
 export type LiveUpdate = typeof liveUpdates.$inferSelect;
 export type NewsletterSignup = typeof newsletterSignups.$inferSelect;
 export type HomePin = typeof homePins.$inferSelect;
+
+/** One municipal PR ballot result per council for South Africa's 2026 local elections. */
+export const electionResults = sqliteTable("election_results", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  municipalityCode: text("municipality_code").notNull().unique(),
+  data: text("data", { mode: "json" }).$type<ElectionResultData>().notNull(),
+  published: integer("published", { mode: "boolean" }).notNull().default(false),
+  revision: integer("revision").notNull().default(1),
+  updatedBy: integer("updated_by").references(() => users.id, { onDelete: "set null" }),
+  updatedAt: timestamp("updated_at"),
+});
+export const electionResultHistory = sqliteTable("election_result_history", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  resultId: integer("result_id").notNull().references(() => electionResults.id),
+  data: text("data", { mode: "json" }).$type<ElectionResultData>().notNull(),
+  published: integer("published", { mode: "boolean" }).notNull(),
+  revision: integer("revision").notNull(),
+  editorId: integer("editor_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at"),
+}, (t) => [index("election_history_result_idx").on(t.resultId, t.revision)]);

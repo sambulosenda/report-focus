@@ -43,6 +43,20 @@ export async function latestStories(limit = 20, offset = 0) {
   return storyQuery().where(isLive()).orderBy(...newestFirst).limit(limit).offset(offset);
 }
 
+/** Follow digests include public edits and live posts, but never drafts or future stories. */
+export async function followedStories(target: { storyId: number } | { topic: string }, since: Date, until: Date) {
+  const changed = sql<number>`max(${articles.updatedAt}, ${articles.publishedAt}, coalesce((select max(${liveUpdates.createdAt}) from ${liveUpdates} where ${liveUpdates.articleId} = ${articles.id}), 0))`;
+  const topicMatch = (tag: string) => sql`instr(',' || replace(lower(${articles.tags}), ', ', ',') || ',', ${`,` + tag + `,`}) > 0`;
+  const match = "storyId" in target
+    ? eq(articles.id, target.storyId)
+    : or(topicMatch(target.topic), topicMatch(target.topic.replace(/-+/g, " ")));
+  return db.select({ ...storySelect, changedAt: changed }).from(articles)
+    .leftJoin(categories, eq(categories.id, articles.categoryId))
+    .innerJoin(users, eq(users.id, articles.authorId))
+    .where(and(isLive(), match, sql`${changed} > ${Math.floor(since.getTime() / 1000)}`, sql`${changed} <= ${Math.floor(until.getTime() / 1000)}`))
+    .orderBy(desc(changed), ...newestFirst);
+}
+
 export async function storiesOfKind(kinds: Kind[], limit = 10, offset = 0) {
   return storyQuery()
     .where(and(isLive(), inArray(articles.kind, kinds)))

@@ -92,6 +92,16 @@ npm run admin:create -- --name "Your Name" --email you@example.com --replace-dem
 
 ## Email
 
+### Following stories and topics
+
+Readers can follow an individual article (including its live timeline), a topic from `/tag/<topic>`, or a section. No reader account is needed: each follow requires email confirmation and has its own unsubscribe link.
+
+Story and topic follows send a weekday digest only when public coverage has changed since the reader confirmed or the previous digest was sent. Live timeline posts count as changes. Drafts and future stories are excluded, and gaps between scheduled runs (including weekends) are carried forward. Following a section uses its existing daily section newsletter.
+
+The existing `POST /api/newsletter/send` scheduler also sends follow digests. Editors can see their reader counts and send them from **Newsroom → Newsletters**. Production delivery requires the email provider and scheduler described below; the default console provider logs messages locally. At most one digest per list is sent each day. Delivery uses the existing newsletter batch sender; a provider failure after a partially completed batch can cause duplicates on retry.
+
+Run `npm run test:following` for the isolated in-memory database integration check. It uses console email, never the configured production database or email provider.
+
 Newsletters and breaking-news alerts go through the provider named in `EMAIL_PROVIDER`:
 
 - `console` (the default) writes each email to the server log. Use it locally, or until you pick a service. Confirmation links show up in the log.
@@ -164,9 +174,10 @@ First deploy:
 3. Set the secrets (each one is typed into your terminal, never into a file):
    `fly secrets set DATABASE_AUTH_TOKEN=... CRON_SECRET=... S3_BUCKET=... S3_ENDPOINT=... S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=...`
    Add `RESEND_API_KEY` (and `EMAIL_PROVIDER = "resend"` in `fly.toml`), `BACKUP_S3_BUCKET` and `SENTRY_DSN` when you have them.
-4. Deploy. The build runs the migrations and reads the database, so it needs the Turso token too:
+4. Create the volume that keeps resized pictures across deploys: `fly volumes create image_cache -r lhr -s 1`.
+5. Deploy. The build runs the migrations and reads the database, so it needs the Turso token too:
    `fly deploy --ha=false --build-secret DATABASE_AUTH_TOKEN="$(turso db tokens create <db name>)"`
-5. Check `https://<app>.fly.dev`, then point the domain at it: `fly certs add reportfocusnews.com` and follow what it prints.
+6. Check `https://<app>.fly.dev`, then point the domain at it: `fly certs add reportfocusnews.com` and follow what it prints.
 
 ### Caching and traffic spikes
 

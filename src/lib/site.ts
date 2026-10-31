@@ -277,6 +277,8 @@ This policy explains what information Report Focus News collects when you use th
 
 You can read Report Focus News without an account. Our own pages do not set tracking cookies. Our advertising partner does, as explained under Advertising below.
 
+If you save an article, its title and link are kept in your browser on this device. Your saved list is not sent to us or synced to other devices. You can remove stories on the Saved articles page; clearing this site's browser data also removes the list.
+
 We count visits with Umami, a privacy-friendly stats service. It records which pages are read, which site sent you here, and your browser, device type and country. It does not use cookies, does not store your IP address and cannot identify you. We use these numbers only to understand what readers find useful.
 
 Our servers keep short-lived technical logs, including IP addresses, to keep the site secure and fix problems. We also use an error-reporting service, Sentry, which receives technical details when a page breaks.
@@ -444,6 +446,7 @@ export const FOOTER_LINKS = {
 
 /** Top-level URLs that belong to pages, so no section may use them as its slug. */
 export const RESERVED_SLUGS = new Set([
+  "saved", "elections",
   "newsroom", "login", "search", "latest", "author", "tag", "media", "live", "video", "demo", "feed.xml", "sitemap.xml", "robots.txt", "api", "newsletters", "support", "ads.txt", "news-sitemap.xml",
   // Old WordPress addresses are looked up here.
   "wp-redirect", "wp-gone", "llms.txt", "llms-full.txt",

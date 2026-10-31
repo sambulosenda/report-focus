@@ -83,5 +83,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter(([slug, page]) => !page.noindex && !sectionSlugs.has(slug))
       .map(([slug]) => ({ url: siteUrl(`/${slug}`) })),
     { url: siteUrl("/newsletters") },
+    { url: siteUrl("/elections/south-africa-2026") },
   ];
 }

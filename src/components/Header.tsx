@@ -18,7 +18,7 @@ export async function Header() {
   ]);
   const sections = cats.map((c) => ({ label: c.name, href: `/${c.slug}` }));
   // The Video link appears once there is a video to watch.
-  const nav = videos === null || videos.length ? [{ label: "Video", href: "/video" }, ...sections] : sections;
+  const nav = [{ label: "SA Elections", href: "/elections/south-africa-2026" }, ...(videos === null || videos.length ? [{ label: "Video", href: "/video" }, ...sections] : sections)];
 
   return (
     <header className="border-b border-line bg-white">
@@ -33,6 +33,7 @@ export async function Header() {
           <Logo className="text-[22px] md:text-[clamp(30px,2.8vw,40px)]" />
         </Link>
         <div className="flex items-center justify-end gap-2.5 md:flex-[1_1_180px]">
+          <Link href="/saved" className="hidden min-h-11 items-center text-sm font-bold text-teal hover:underline md:inline-flex">Saved articles</Link>
           <Link href="/search" aria-label="Search" className="inline-flex h-11 w-11 items-center justify-center text-ink hover:text-teal">
             <SearchIcon />
           </Link>
