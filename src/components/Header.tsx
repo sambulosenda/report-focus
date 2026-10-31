@@ -18,7 +18,7 @@ export async function Header() {
   ]);
   const sections = cats.map((c) => ({ label: c.name, href: `/${c.slug}` }));
   // The Video link appears once there is a video to watch.
-  const nav = videos === null || videos.length ? [{ label: "Video", href: "/video" }, ...sections] : sections;
+  const nav = [{ label: "SA Elections", href: "/elections/south-africa-2026" }, ...(videos === null || videos.length ? [{ label: "Video", href: "/video" }, ...sections] : sections)];
 
   return (
     <header className="border-b border-line bg-white">

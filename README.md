@@ -174,9 +174,10 @@ First deploy:
 3. Set the secrets (each one is typed into your terminal, never into a file):
    `fly secrets set DATABASE_AUTH_TOKEN=... CRON_SECRET=... S3_BUCKET=... S3_ENDPOINT=... S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=...`
    Add `RESEND_API_KEY` (and `EMAIL_PROVIDER = "resend"` in `fly.toml`), `BACKUP_S3_BUCKET` and `SENTRY_DSN` when you have them.
-4. Deploy. The build runs the migrations and reads the database, so it needs the Turso token too:
+4. Create the volume that keeps resized pictures across deploys: `fly volumes create image_cache -r lhr -s 1`.
+5. Deploy. The build runs the migrations and reads the database, so it needs the Turso token too:
    `fly deploy --ha=false --build-secret DATABASE_AUTH_TOKEN="$(turso db tokens create <db name>)"`
-5. Check `https://<app>.fly.dev`, then point the domain at it: `fly certs add reportfocusnews.com` and follow what it prints.
+6. Check `https://<app>.fly.dev`, then point the domain at it: `fly certs add reportfocusnews.com` and follow what it prints.
 
 ### Caching and traffic spikes
 

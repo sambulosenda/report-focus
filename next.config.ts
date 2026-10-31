@@ -70,8 +70,9 @@ const nextConfig: NextConfig = {
     };
   },
   images: {
-    // AVIF first, then WebP: both are far smaller than the JPEGs the newsroom uploads.
-    formats: ["image/avif", "image/webp"],
+    // WebP only: far smaller than the JPEGs the newsroom uploads. AVIF is smaller still but takes several times
+    // the CPU to encode, and re-encoding the archive after a deploy starved the one shared vCPU (Oct 2026 outage).
+    formats: ["image/webp"],
     deviceSizes: [384, 640, 828, 1080, 1280, 1920],
     imageSizes: [104, 140, 180, 256],
     // Resized copies are cached for 30 days. Uploads never change once saved.
