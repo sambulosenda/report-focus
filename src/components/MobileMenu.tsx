@@ -9,10 +9,11 @@ import { ChevronRightIcon, CloseIcon, MenuIcon, SearchIcon } from "./icons";
 type Props = {
   sections: { label: string; href: string }[];
   live?: { title: string; href: string } | null;
+  channelUrl?: string | null;
 };
 
 /** Full-screen section menu for phones. */
-export function MobileMenu({ sections, live }: Props) {
+export function MobileMenu({ sections, live, channelUrl }: Props) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -109,6 +110,11 @@ export function MobileMenu({ sections, live }: Props) {
             <Link href="/newsletters" className="flex h-[46px] items-center justify-center border border-[#9ca3af] text-[15px] font-bold text-ink">
               Get The Morning Focus newsletter
             </Link>
+            {channelUrl && (
+              <a href={channelUrl} target="_blank" rel="noopener noreferrer" className="flex h-[46px] items-center justify-center border border-[#9ca3af] text-[15px] font-bold text-ink">
+                Get the briefing on WhatsApp
+              </a>
+            )}
           </div>
         </div>
       )}

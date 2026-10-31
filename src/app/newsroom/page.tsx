@@ -3,7 +3,7 @@ import { and, desc, eq, gt, gte, lte, sql, type SQL } from "drizzle-orm";
 import { clearBreakingBanner, pinStory, setBreaking, unpinSlot } from "@/actions/articles";
 import { emailBreakingAlert } from "@/actions/newsletter";
 import { db } from "@/db";
-import { HOME_PIN_HOURS, HOME_SLOTS, HOME_SLOT_LABEL, articles, categories, emailSends, users } from "@/db/schema";
+import { HOME_PIN_HOURS, HOME_SLOTS, HOME_SLOT_LABEL, articles, categories, emailSends, users, whatsappPosts } from "@/db/schema";
 import { ActionForm } from "@/components/newsroom/ActionForm";
 import { ConfirmButton } from "@/components/newsroom/ConfirmButton";
 import { Card, StatusBadge, SwitchButton, btnBrand, displayStatus } from "@/components/newsroom/ui";
@@ -133,12 +133,17 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       : Promise.resolve([]),
   ]);
 
-  const [alertSent, alertReaders] = breaking
+  const [alertSent, alertReaders, whatsappPosted] = breaking
     ? await Promise.all([
         db.select().from(emailSends).where(and(eq(emailSends.list, BREAKING), eq(emailSends.articleId, breaking.id))).get(),
         subscriberCount(BREAKING),
+        db
+          .select({ id: whatsappPosts.id })
+          .from(whatsappPosts)
+          .where(and(eq(whatsappPosts.kind, "breaking"), eq(whatsappPosts.articleId, breaking.id)))
+          .get(),
       ])
-    : [undefined, 0];
+    : [undefined, 0, undefined];
 
   const n = (v: number | null | undefined) => Number(v ?? 0);
   const reviewCount = n(counts.review);
@@ -218,6 +223,11 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             ) : (
               <p className="text-sm text-muted">No one has signed up for breaking-news emails yet.</p>
             ))}
+          {breaking && !whatsappPosted && (
+            <Link href="/newsroom/whatsapp" className="text-sm font-bold text-teal hover:underline">
+              WhatsApp alert is ready
+            </Link>
+          )}
           {breaking && (
             <form action={clearBreakingBanner}>
               <SwitchButton on label="Show breaking banner on the site" />

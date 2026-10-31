@@ -190,6 +190,34 @@ export const emailSends = sqliteTable(
   (t) => [index("email_sends_list_idx").on(t.list, t.createdAt), uniqueIndex("email_sends_alert_idx").on(t.list, t.articleId), uniqueIndex("email_sends_edition_idx").on(t.list, t.edition)],
 );
 
+/**
+ * A morning briefing or breaking post an editor has put on the WhatsApp channel.
+ * Partial unique indexes, because SQLite treats NULL as a different value each time:
+ * one briefing per edition date, and one breaking post per story.
+ */
+export const WHATSAPP_KINDS = ["briefing", "breaking"] as const;
+export type WhatsAppKind = (typeof WHATSAPP_KINDS)[number];
+
+export const whatsappPosts = sqliteTable(
+  "whatsapp_posts",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    kind: text("kind", { enum: WHATSAPP_KINDS }).notNull(),
+    /** YYYY-MM-DD in the site time zone. Set for a morning briefing. */
+    edition: text("edition"),
+    /** The breaking story. Set for a breaking post. */
+    articleId: integer("article_id").references(() => articles.id, { onDelete: "set null" }),
+    body: text("body").notNull(),
+    postedBy: integer("posted_by").references(() => users.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at"),
+  },
+  (t) => [
+    uniqueIndex("whatsapp_posts_briefing_idx").on(t.edition).where(sql`${t.kind} = 'briefing'`),
+    uniqueIndex("whatsapp_posts_breaking_idx").on(t.articleId).where(sql`${t.kind} = 'breaking'`),
+    index("whatsapp_posts_created_idx").on(t.createdAt),
+  ],
+);
+
 /** Failed sign-ins per email and per IP address, kept in the database so the limit holds across restarts and servers. */
 export const loginAttempts = sqliteTable("login_attempts", {
   /** "email:<address>" or "ip:<address>". */
@@ -216,6 +244,7 @@ export type Media = typeof media.$inferSelect;
 export type LiveUpdate = typeof liveUpdates.$inferSelect;
 export type NewsletterSignup = typeof newsletterSignups.$inferSelect;
 export type HomePin = typeof homePins.$inferSelect;
+export type WhatsAppPost = typeof whatsappPosts.$inferSelect;
 
 /** One municipal PR ballot result per council for South Africa's 2026 local elections. */
 export const electionResults = sqliteTable("election_results", {

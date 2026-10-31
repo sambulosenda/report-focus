@@ -291,6 +291,10 @@ Our servers keep short-lived technical logs, including IP addresses, to keep the
 
 If you sign up for a newsletter or breaking-news alerts, we keep your email address and what you chose, and we send you an email to confirm. We use your address only to send what you asked for. Our emails are sent through Resend. Every email has a link to unsubscribe, and you can ask us to delete your address at any time.
 
+## WhatsApp briefing
+
+The morning briefing and breaking alerts are also posted on our WhatsApp channel. You join with one tap in WhatsApp. We do not ask for or store your phone number. Following the channel is covered by WhatsApp’s own terms and privacy policy. You leave the channel in WhatsApp.
+
 ## Contacting us
 
 If you email us or report an error, we keep your message and contact details so we can reply and follow up.
@@ -342,7 +346,7 @@ If we change this policy, we will update the date at the top of this page.`,
   terms: {
     title: "Terms of use",
     description: "The terms that apply when you read, share or use Report Focus News.",
-    body: `_Last updated: 30 October 2026_
+    body: `_Last updated: 31 October 2026_
 
 These terms apply when you use reportfocusnews.com. By using the site, you agree to them. If you do not agree, please do not use the site.
 
@@ -380,6 +384,10 @@ When you send us a tip, picture, video or other material, you confirm that you h
 ## Newsletters and alerts
 
 If you sign up for a newsletter or alerts, you can unsubscribe at any time using the link in every email.
+
+## WhatsApp briefing
+
+The morning briefing and breaking alerts are also on our WhatsApp channel. You join and leave in WhatsApp. We do not collect your phone number.
 
 ## Advertising and other websites
 
@@ -450,10 +458,19 @@ export const FOOTER_LINKS = {
   ],
 };
 
+/** Help links, with the channel invite beside Newsletters once readers can join. */
+export function helpLinks(channelUrl: string | null) {
+  if (!channelUrl) return FOOTER_LINKS.help;
+  const item = { label: "WhatsApp briefing", href: channelUrl };
+  const at = FOOTER_LINKS.help.findIndex((l) => l.href === "/newsletters");
+  if (at < 0) return [...FOOTER_LINKS.help, item];
+  return [...FOOTER_LINKS.help.slice(0, at + 1), item, ...FOOTER_LINKS.help.slice(at + 1)];
+}
+
 /** Top-level URLs that belong to pages, so no section may use them as its slug. */
 export const RESERVED_SLUGS = new Set([
   "saved", "elections",
-  "newsroom", "login", "search", "latest", "author", "tag", "media", "live", "video", "demo", "feed.xml", "sitemap.xml", "robots.txt", "api", "newsletters", "support", "ads.txt", "news-sitemap.xml",
+  "newsroom", "login", "search", "latest", "author", "tag", "media", "live", "video", "demo", "feed.xml", "sitemap.xml", "robots.txt", "api", "newsletters", "whatsapp", "support", "ads.txt", "news-sitemap.xml",
   // Old WordPress addresses are looked up here.
   "wp-redirect", "wp-gone", "llms.txt", "llms-full.txt",
   // Standing pages share the top-level URL space with sections.

@@ -136,16 +136,25 @@ export function ArticleEditor({ article, categories, library, knownTags = [], ro
   }
 
   async function onUpload(file: File, target: "hero" | "body") {
+    if (file.size > 8 * 1024 * 1024) {
+      setUploadError("Images must be 8 MB or smaller.");
+      return;
+    }
     setUploading(true);
     setUploadError(undefined);
     const fd = new FormData();
     fd.set("file", file);
-    const res = await uploadImage(fd);
-    setUploading(false);
-    if (res.error || !res.url) return setUploadError(res.error ?? "Upload failed.");
-    if (target === "hero") setHero(res.url);
-    else insertBlock(`![Describe the image](${res.url} "Caption. Photo: Name/Agency")`);
-    touch();
+    try {
+      const res = await uploadImage(fd);
+      if (res.error || !res.url) return setUploadError(res.error ?? "Upload failed.");
+      if (target === "hero") setHero(res.url);
+      else insertBlock(`![Describe the image](${res.url} "Caption. Photo: Name/Agency")`);
+      touch();
+    } catch {
+      setUploadError("The upload didn’t finish. Try again.");
+    } finally {
+      setUploading(false);
+    }
   }
 
   // "Load-shedding", "loadshedding" and "Load shedding" are one topic: use the spelling already on the site.
@@ -393,7 +402,7 @@ export function ArticleEditor({ article, categories, library, knownTags = [], ro
                 <div className="absolute right-2.5 top-2.5 flex gap-2">
                   <label className="inline-flex h-9 cursor-pointer items-center rounded-lg bg-white/95 px-3 text-[13px] font-bold shadow">
                     {uploading ? "Uploading…" : "Replace"}
-                    <input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0], "hero")} />
+                    <input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) onUpload(file, "hero"); }} />
                   </label>
                   <button
                     type="button"
@@ -413,7 +422,7 @@ export function ArticleEditor({ article, categories, library, knownTags = [], ro
                 <div className="flex gap-2">
                   <label className={cn(btnGhost, "cursor-pointer")}>
                     {uploading ? "Uploading…" : "Upload"}
-                    <input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0], "hero")} />
+                    <input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) onUpload(file, "hero"); }} />
                   </label>
                   <button type="button" onClick={() => setShowLibrary((s) => !s)} aria-expanded={showLibrary} className={btnGhost}>
                     Choose from library
@@ -486,7 +495,7 @@ export function ArticleEditor({ article, categories, library, knownTags = [], ro
               {tab === "write" && (
                 <label className="inline-flex h-9 cursor-pointer items-center rounded-md px-2 text-sm font-extrabold hover:bg-mist" title="Insert photo">
                   Photo
-                  <input type="file" accept="image/*" className="sr-only" onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0], "body")} />
+                  <input type="file" accept="image/*" className="sr-only" disabled={uploading} onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ""; if (file) onUpload(file, "body"); }} />
                 </label>
               )}
               <span className="ml-auto text-xs text-muted tabular">

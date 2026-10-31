@@ -9,6 +9,7 @@ primary_region = "lhr"
   SITE_TIMEZONE = "Africa/Harare"
   NEXT_PUBLIC_SITE_TIMEZONE = "Africa/Harare"
   UMAMI_WEBSITE_ID = "7cb6e107-aea7-414c-8061-39795bbf480c"
+  WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VaAG1nY9WtC0hdfiVb1V"
 
 [env]
   DATABASE_URL = "libsql://report-focus-sambulosenda.aws-eu-west-1.turso.io"
@@ -21,6 +22,8 @@ primary_region = "lhr"
   SENTRY_ENVIRONMENT = "production"
   # Umami visitor stats (cloud.umami.is). The ID is public: it is in every page's script tag.
   UMAMI_WEBSITE_ID = "7cb6e107-aea7-414c-8061-39795bbf480c"
+  # Public channel invite. Readers join with one tap.
+  WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VaAG1nY9WtC0hdfiVb1V"
 
 [processes]
   app = "npx next start -H 0.0.0.0 -p 3000"

@@ -7,6 +7,7 @@ import { absoluteUrl, isDeskByline, isUnconfirmedAuthor, isWireByline } from "@/
 import { INFO_PAGES } from "@/lib/site";
 import { TAG_INDEX_MIN, tagSlug } from "@/lib/tags";
 import { siteUrl } from "@/lib/utils";
+import { whatsappChannelUrl } from "@/lib/whatsapp";
 
 export const dynamic = "force-dynamic";
 
@@ -83,6 +84,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       .filter(([slug, page]) => !page.noindex && !sectionSlugs.has(slug))
       .map(([slug]) => ({ url: siteUrl(`/${slug}`) })),
     { url: siteUrl("/newsletters") },
+    ...(whatsappChannelUrl() ? [{ url: siteUrl("/whatsapp") }] : []),
     { url: siteUrl("/elections/south-africa-2026") },
   ];
 }

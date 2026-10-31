@@ -118,6 +118,14 @@ curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://your-site/api/newsl
 
 An edition goes out at most once a day, and an alert at most once per story, so retries are safe.
 
+## WhatsApp briefing
+
+The morning briefing and breaking alerts are also prepared for a WhatsApp channel. Each item is a headline, one sentence, and a link to the story. Readers join with one tap. The site does not collect phone numbers.
+
+Set `WHATSAPP_CHANNEL_URL` to the channel invite (`https://whatsapp.com/channel/…`). Editors copy today’s post from **Newsroom → WhatsApp**, paste it into the channel, and mark it posted. The same morning edition, and the same breaking story, can be marked once. The weekday email schedule does not post to WhatsApp.
+
+Run `npm run test:whatsapp` for the in-memory check of the post text and the once-only mark.
+
 ## Moving posts over from WordPress
 
 `npm run import:wordpress` copies an old WordPress site's posts into the newsroom. It brings over headlines, text, the excerpt as the summary, categories (as sections), tags, authors, featured and inline images, publish dates and slugs. Old WordPress addresses such as `/2024/03/14/my-story/` and `/?p=123` keep working: they redirect to the new story page. Category pages such as `/category/politics/` redirect to the matching section. A category that was only ever a post's second or third category becomes a tag, not a section, so its old category page isn't redirected.

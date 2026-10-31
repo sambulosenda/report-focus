@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { currentLiveStory, navCategories, storiesOfKind } from "@/lib/queries";
+import { whatsappChannelUrl } from "@/lib/whatsapp";
 import { formatLongDate } from "@/lib/utils";
 import { Logo } from "./Logo";
 import { MobileMenu } from "./MobileMenu";
@@ -24,7 +25,7 @@ export async function Header() {
     <header className="border-b border-line bg-white">
       <div className="mx-auto flex h-14 max-w-[1280px] items-center justify-between px-1.5 md:h-auto md:flex-wrap md:gap-x-5 md:gap-y-2 md:px-6 md:pb-2 md:pt-3">
         <div className="md:flex-[1_1_180px]">
-          <MobileMenu sections={nav} live={live ? { title: live.title, href: storyHref(live) } : null} />
+          <MobileMenu sections={nav} live={live ? { title: live.title, href: storyHref(live) } : null} channelUrl={whatsappChannelUrl()} />
           <div className="hidden text-[13px] leading-snug text-muted md:block">
             <p className="font-bold text-ink">{formatLongDate(new Date())}</p>
           </div>

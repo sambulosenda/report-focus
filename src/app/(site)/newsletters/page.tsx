@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { NewsletterCard } from "@/components/NewsletterForm";
+import { WhatsAppJoin } from "@/components/WhatsAppJoin";
 import { STANDING_LISTS, sectionDescription } from "@/lib/newsletters";
 import { navCategories } from "@/lib/queries";
 import { SITE_NAME } from "@/lib/site";
@@ -18,6 +19,7 @@ export default async function NewslettersPage() {
       <p className="mt-4 max-w-[640px] text-[17px] leading-normal text-ink-2">
         Our journalism in your inbox. You can unsubscribe from any email with one tap.
       </p>
+      <WhatsAppJoin placement="newsletters" />
       <div className="mt-8 grid gap-x-10 gap-y-9 md:grid-cols-2">
         {STANDING_LISTS.map((l) => (
           <NewsletterCard key={l.list} id={l.list} label={l.name} text={l.description} list={l.list} />

@@ -35,6 +35,13 @@ const mediaHost = (() => {
 const nextConfig: NextConfig = {
   env: { MEDIA_HOST: mediaHost },
   poweredByHeader: false,
+  // Newsroom photo uploads are server actions, and the newsroom sits behind middleware.
+  // The framework default stops reading at 1 MB and then never answers, so the button stays on "Uploading…".
+  // 10 MB covers an 8 MB image plus the form around it.
+  experimental: {
+    serverActions: { bodySizeLimit: "10mb" },
+    middlewareClientMaxBodySize: "10mb",
+  },
   // A CDN may keep showing a cached page while it fetches a fresh one, but never one older than an hour.
   expireTime: 3600,
   async headers() {

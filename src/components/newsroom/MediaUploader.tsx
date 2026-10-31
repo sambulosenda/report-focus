@@ -14,13 +14,23 @@ export function MediaUploader() {
     e.preventDefault();
     const form = e.currentTarget;
     const fd = new FormData(form);
+    const file = fd.get("file");
+    if (file instanceof File && file.size > 8 * 1024 * 1024) {
+      setMsg({ error: "Images must be 8 MB or smaller." });
+      return;
+    }
     setBusy(true);
-    const res = await uploadImage(fd);
-    setBusy(false);
-    if (res.error) return setMsg({ error: res.error });
-    form.reset();
-    setMsg({ ok: "Uploaded." });
-    router.refresh();
+    try {
+      const res = await uploadImage(fd);
+      if (res.error) return setMsg({ error: res.error });
+      form.reset();
+      setMsg({ ok: "Uploaded." });
+      router.refresh();
+    } catch {
+      setMsg({ error: "The upload didn’t finish. Try again." });
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (

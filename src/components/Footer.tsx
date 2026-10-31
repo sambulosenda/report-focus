@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { donateUrl } from "@/lib/ads";
 import { navCategories } from "@/lib/queries";
-import { FOOTER_LINKS, SOCIAL } from "@/lib/site";
+import { FOOTER_LINKS, SOCIAL, helpLinks } from "@/lib/site";
+import { whatsappChannelUrl } from "@/lib/whatsapp";
 import { Logo } from "./Logo";
 import { SOCIAL_ICONS } from "./icons";
 
@@ -15,7 +16,11 @@ function LinkColumn({ title, links }: { title: string; links: { label: string; h
       <ul className="flex flex-col md:gap-2.5">
         {links.map((l) => (
           <li key={l.label}>
-            <Link href={l.href} className={link}>{l.label}</Link>
+            {l.href.startsWith("http") ? (
+              <a href={l.href} target="_blank" rel="noopener noreferrer" className={link}>{l.label}</a>
+            ) : (
+              <Link href={l.href} className={link}>{l.label}</Link>
+            )}
           </li>
         ))}
       </ul>
@@ -67,7 +72,7 @@ export async function Footer() {
           </div>
           <LinkColumn title="Latest" links={FOOTER_LINKS.watch} />
           <LinkColumn title="Company" links={donateUrl() ? [...FOOTER_LINKS.company, { label: "Support us", href: "/support" }] : FOOTER_LINKS.company} />
-          <LinkColumn title="Standards & help" links={FOOTER_LINKS.help} />
+          <LinkColumn title="Standards & help" links={helpLinks(whatsappChannelUrl())} />
         </nav>
       </div>
       <div className="border-t border-teal-line">

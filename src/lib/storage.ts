@@ -45,16 +45,24 @@ function s3() {
 export async function putFile(key: string, data: Buffer, contentType: string) {
   const bucket = bucketConfig();
   if (bucket) {
-    await s3().send(
-      new PutObjectCommand({
-        Bucket: bucket.bucket,
-        Key: key,
-        Body: data,
-        ContentType: contentType,
-        // File names are random and never reused, so browsers and CDNs can keep them for a year.
-        CacheControl: "public, max-age=31536000, immutable",
-      }),
-    );
+    try {
+      await s3().send(
+        new PutObjectCommand({
+          Bucket: bucket.bucket,
+          Key: key,
+          Body: data,
+          ContentType: contentType,
+          // File names are random and never reused, so browsers and CDNs can keep them for a year.
+          CacheControl: "public, max-age=31536000, immutable",
+        }),
+        { abortSignal: AbortSignal.timeout(60_000) },
+      );
+    } catch (e) {
+      if (e instanceof Error && (e.name === "AbortError" || e.name === "TimeoutError")) {
+        throw new Error("The image store took too long to respond. Try again.");
+      }
+      throw e;
+    }
     return `${bucket.publicUrl}/${key}`;
   }
   const file = path.join(UPLOAD_DIR, key);

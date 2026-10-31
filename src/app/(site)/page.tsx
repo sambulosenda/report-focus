@@ -6,6 +6,7 @@ import { tagHref } from "@/lib/tags";
 import { HOME_DESCRIPTION, HOME_TITLE, SITE_NAME } from "@/lib/site";
 import { AdSlot } from "@/components/AdSlot";
 import { NewsletterBand } from "@/components/NewsletterForm";
+import { WhatsAppJoin } from "@/components/WhatsAppJoin";
 import {
   Kicker,
   NumberedList,
@@ -216,6 +217,7 @@ export default async function HomePage() {
 
       <div className="mb-7 md:mb-0">
         <NewsletterBand />
+        <WhatsAppJoin placement="home" />
       </div>
     </>
   );
