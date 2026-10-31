@@ -34,6 +34,7 @@ A fast, modern news site with a built-in newsroom. Readers get an ABC News–sty
 - Workflow: Draft → In review → Published (or Scheduled, if the publish time is in the future) → Archived
 - Staff sign-in links: an admin adds someone on the Staff page and gets a link to send them. They choose their own password with it, so nobody else ever knows it. The same page makes a reset link for anyone who forgets their password. Links work once and last 7 days
 - Image library with uploads (JPEG, PNG, WebP, GIF, AVIF up to 8 MB)
+- Confidential tips from `/tips`. The message is encrypted with `TIPS_ENCRYPTION_KEY` before it is stored. Editors and admins read it under **Newsroom → Tips**. Writers cannot. The alert email says a tip is waiting and does not include the message. Generate a key with `openssl rand -base64 32`. Without a valid key, the form refuses the tip instead of storing it in plain text
 - Newsletters page for editors: readers per newsletter, a "send today's edition" button and a log of every send. Admins can download the reader list as CSV
 - Dashboard with the breaking banner switch, an "email this alert" button for breaking-news subscribers, stats, a story table with status tabs and a breaking switch on each published story, what's scheduled next and recent activity
 

@@ -236,3 +236,24 @@ export const electionResultHistory = sqliteTable("election_result_history", {
   editorId: integer("editor_id").references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at"),
 }, (t) => [index("election_history_result_idx").on(t.resultId, t.revision)]);
+
+/** Confidential tips from /tips. The message, name and contact details live only inside `payload`. */
+export const TIP_STATUSES = ["new", "read", "closed"] as const;
+export type TipStatus = (typeof TIP_STATUSES)[number];
+
+export const tips = sqliteTable(
+  "tips",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    /** AES-256-GCM ciphertext of { body, name, contact }. Never store those in the clear. */
+    payload: text("payload").notNull(),
+    anonymous: integer("anonymous", { mode: "boolean" }).notNull().default(false),
+    status: text("status", { enum: TIP_STATUSES }).notNull().default("new"),
+    createdAt: timestamp("created_at"),
+    readAt: integer("read_at", { mode: "timestamp" }),
+    readBy: integer("read_by").references(() => users.id, { onDelete: "set null" }),
+  },
+  (t) => [index("tips_status_created_idx").on(t.status, t.createdAt)],
+);
+
+export type Tip = typeof tips.$inferSelect;

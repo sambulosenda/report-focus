@@ -57,6 +57,13 @@
       "when": 1793450817176,
       "tag": "0007_election_results",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1793455264191,
+      "tag": "0008_tips",
+      "breakpoints": true
     }
   ]
 }

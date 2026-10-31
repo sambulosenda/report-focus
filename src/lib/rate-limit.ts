@@ -1,5 +1,5 @@
 import "server-only";
-import { and, gt, inArray, lt, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { loginAttempts } from "@/db/schema";
@@ -51,4 +51,29 @@ export async function recordLoginFailure(keys: { email: string; ip: string }) {
 /** A good sign-in clears the account's count. The address keeps its count, so one known password can't reset the limit for others. */
 export async function clearLoginFailures(keys: { email: string }) {
   await db.delete(loginAttempts).where(inArray(loginAttempts.key, [keys.email]));
+}
+
+const TIP_WINDOW_MS = 60 * 60e3;
+const TIP_LIMIT = 5;
+
+/** Counts a tip attempt for this address. False once the address has used its five tries for the hour. */
+export async function consumeTipAttempt(ip: string) {
+  const key = `tip:${ip}`;
+  const now = new Date();
+  const row = await db.select().from(loginAttempts).where(eq(loginAttempts.key, key)).get();
+  if (row && row.resetAt > now && row.count >= TIP_LIMIT) return false;
+  const resetAt = new Date(now.getTime() + TIP_WINDOW_MS);
+  const nowSec = Math.floor(now.getTime() / 1000);
+  await db
+    .insert(loginAttempts)
+    .values({ key, count: 1, resetAt })
+    .onConflictDoUpdate({
+      target: loginAttempts.key,
+      set: {
+        count: sql`case when ${loginAttempts.resetAt} <= ${nowSec} then 1 else ${loginAttempts.count} + 1 end`,
+        resetAt: sql`case when ${loginAttempts.resetAt} <= ${nowSec} then ${Math.floor(resetAt.getTime() / 1000)} else ${loginAttempts.resetAt} end`,
+      },
+    });
+  if (Math.random() < 0.02) await db.delete(loginAttempts).where(lt(loginAttempts.resetAt, new Date(now.getTime() - 864e5)));
+  return true;
 }

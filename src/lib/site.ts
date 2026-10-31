@@ -126,14 +126,16 @@ To reach the newsroom, see our [contact page](/contact).`,
   },
   contact: {
     title: "Contact",
-    description: "Email the Report Focus News newsroom for story ideas, confidential tips, corrections, advertising and questions about your information.",
+    description: "Email the Report Focus News newsroom for story ideas, corrections, advertising and questions about your information. Confidential tips go through a secure form.",
     body: `## Newsroom
 
 For news, story ideas and press releases, email ${mail(CONTACT.editor)}. We read every message, but we cannot reply to them all or promise to publish a press release.
 
 ## Tips
 
-If you have information you think we should look into, email ${mail(CONTACT.tips)} or read how to [send a tip](/tips). Tell us if you need to stay anonymous and we will protect your identity.
+For a confidential tip, use the [secure form](/tips). The message is stored encrypted and only editors can read it. It does not go through your email account. Tell us if you need to stay anonymous.
+
+You can still email ${mail(CONTACT.tips)} for an ordinary message. That is less private.
 
 ## Corrections
 
@@ -163,12 +165,14 @@ We are run from ${CONTACT.city}. We do not have a public office, so please get i
   },
   tips: {
     title: "Send a tip",
-    description: "Share a story idea or information with our reporters.",
-    body: `Know something we should look into? Our reporters read every tip.
+    description: "Send a confidential tip to Report Focus News. The form is encrypted and only editors can read it.",
+    body: `Know something we should look into? Use the form below. Our editors read every tip. The message does not go through your email account, and it is stored encrypted.
 
-Email ${mail(CONTACT.tips)}. Tell us what happened, when and where, and how we can reach you. Send documents or photos if you have them.
+Tell us what happened, when and where. Add your name and a way to reach you if you want a reply. If you need to stay anonymous, tick that box and we will not keep your name or contact details.
 
-If you need to stay anonymous, say so and we will protect your identity. For extra safety, write from an email address that is not linked to your name or your work.`,
+Do not send documents or photos in this form. If we need them, we will arrange a way for you to send them.
+
+Email is less private, because the message stays in your mail account. If you still prefer it, write to ${mail(CONTACT.tips)} from an address that is not linked to your name or your work.`,
   },
   standards: {
     title: "Editorial standards",
@@ -269,7 +273,7 @@ If you are not happy with how we handled your correction, write to the Editor-in
   privacy: {
     title: "Privacy policy",
     description: "How Report Focus News collects and uses information.",
-    body: `_Last updated: 30 October 2026_
+    body: `_Last updated: 31 October 2026_
 
 This policy explains what information Report Focus News collects when you use this website, why we collect it and what we do with it. The site is owned and run by ${CONTACT.owner}, in ${CONTACT.city}, who is responsible for your information.
 
@@ -289,7 +293,9 @@ If you sign up for a newsletter or breaking-news alerts, we keep your email addr
 
 ## Contacting us
 
-If you email us, send a tip or report an error, we keep your message and contact details so we can reply and follow up. We will not publish your name or details without your permission, and we protect the identity of anyone who asks to stay anonymous.
+If you email us or report an error, we keep your message and contact details so we can reply and follow up.
+
+If you send a tip through the form on our [tips page](/tips), we store the message encrypted. Only editors can read it. We do not save your IP address with the tip. We will not publish your name or details without your permission, and we protect the identity of anyone who asks to stay anonymous. We delete a tip when we no longer need it. To limit spam, we may keep a short-lived record of the address a tip was sent from, in the same way our servers keep short-lived security logs.
 
 ## Supporting us
 

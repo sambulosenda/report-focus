@@ -17,6 +17,7 @@
     "test:elections": "node --import tsx --test tests/elections.test.ts",
     "test:corrections": "node --import tsx --test tests/corrections.test.ts",
     "test:following": "node --import tsx --test tests/following.test.ts",
+    "test:tips": "node --import tsx --test tests/tips.test.ts",
     "db:backup": "tsx --env-file-if-exists=.env scripts/backup.ts",
     "uploads:move": "tsx --env-file-if-exists=.env scripts/move-uploads.ts",
     "sections:review": "tsx --env-file-if-exists=.env scripts/section-review.ts"

@@ -7,6 +7,7 @@ import { Logo } from "@/components/Logo";
 import { db } from "@/db";
 import { articles, ROLE_LABEL } from "@/db/schema";
 import { hasRole, requireUser } from "@/lib/auth";
+import { newTipCount } from "@/lib/tips";
 import { NavLink } from "./NavLink";
 
 export const dynamic = "force-dynamic";
@@ -25,11 +26,17 @@ export default async function NewsroomLayout({ children }: { children: React.Rea
     .select({ scheduled: sql<number>`count(*)` })
     .from(articles)
     .where(and(eq(articles.status, "published"), gt(articles.publishedAt, new Date())));
+  const tipCount = editor ? await newTipCount() : 0;
 
   const links = [
     { href: "/newsroom", label: "Dashboard", exact: true },
     { href: "/newsroom/articles?mine=1", label: "My stories", count: Number(counts.mine ?? 0) },
-    ...(editor ? [{ href: "/newsroom/articles?status=review", label: "Review queue", count: Number(counts.review ?? 0) }] : []),
+    ...(editor
+      ? [
+          { href: "/newsroom/articles?status=review", label: "Review queue", count: Number(counts.review ?? 0) },
+          { href: "/newsroom/tips", label: "Tips", count: tipCount },
+        ]
+      : []),
     { href: "/newsroom/articles?status=scheduled", label: "Schedule", count: Number(scheduled ?? 0) },
     { href: "/newsroom/articles", label: "All stories" },
     { href: "/newsroom/media", label: "Media library" },

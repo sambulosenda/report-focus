@@ -4,6 +4,7 @@ import { AdSlot } from "@/components/AdSlot";
 import { FollowCard } from "@/components/FollowCard";
 import { Kicker, NumberedList, RiverStory, SectionTitle, StoryImage, storyHref } from "@/components/Story";
 import { LoadMore } from "@/components/StoryGrid";
+import { TipForm } from "@/components/TipForm";
 import { redirectLegacyOrNotFound } from "@/lib/legacy-redirect";
 import { renderMarkdown } from "@/lib/markdown";
 import { collectionLd, ldJson, metaDescription, NOT_FOUND_METADATA, pagedPath, pageMeta, sectionMetaDescription } from "@/lib/seo";
@@ -42,7 +43,7 @@ export default async function SectionPage({ params, searchParams }: Props) {
   if (!cat) {
     const info = INFO_PAGES[slug];
     if (!info) return redirectLegacyOrNotFound(`/${slug}`);
-    return <InfoPage {...info} />;
+    return <InfoPage title={info.title} body={info.body} form={slug === "tips" ? <TipForm /> : undefined} />;
   }
 
   const page = pageParam((await searchParams).page);
@@ -152,11 +153,12 @@ export default async function SectionPage({ params, searchParams }: Props) {
   );
 }
 
-function InfoPage({ title, body }: { title: string; body: string }) {
+function InfoPage({ title, body, form }: { title: string; body: string; form?: React.ReactNode }) {
   return (
     <div className="mx-auto max-w-[780px] px-4 pb-16 pt-8 md:px-6 md:pt-12">
       <h1 className="headline border-b-[3px] border-ink pb-[18px] text-[32px] leading-[1.1] md:text-[44px]">{title}</h1>
       <div className="article-body mt-8" dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }} />
+      {form}
     </div>
   );
 }
