@@ -2,7 +2,7 @@
 
 export const SITE_NAME = "Report Focus News";
 /** Homepage title and description, which also stand in for any page without its own. */
-export const HOME_TITLE = "Report Focus News | Zimbabwe, South Africa and Africa News";
+export const HOME_TITLE = "Report Focus News | Zimbabwe and South Africa News";
 /** Share-card language. The newsroom is in the UK, and Facebook has no Zimbabwe locale. */
 export const OG_LOCALE = "en_GB";
 
@@ -82,7 +82,7 @@ export const CONTACT = {
 };
 
 /** Homepage description. Written after CONTACT so the founding year and country stay in one place. */
-export const HOME_DESCRIPTION = `Founded in ${CONTACT.city} in ${CONTACT.founded}, Report Focus News covers Zimbabwe news, plus South Africa and the rest of Africa.`;
+export const HOME_DESCRIPTION = `Politics, crime and business news from Zimbabwe and South Africa, plus the rest of Africa. Independent reporting from ${CONTACT.city} since ${CONTACT.founded}.`;
 const mail = (address: string) => `[${address}](mailto:${address})`;
 /** "[X](…), [Facebook](…) and [LinkedIn](…)", from the same accounts as the footer. */
 const socialLinks = () => {
