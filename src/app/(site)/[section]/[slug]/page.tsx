@@ -1,3 +1,4 @@
+import { CorrectionHistory } from "@/components/CorrectionHistory";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
@@ -100,6 +101,7 @@ export default async function ArticlePage({ params }: Props) {
         more={moreVideos.length ? moreVideos : await relatedStories(article.id, article.categoryId, 4)}
         moreTitle={moreVideos.length ? "More videos" : `More from ${category?.name ?? SITE_NAME}`}
       />
+      <div className="mx-auto max-w-[820px] px-4"><CorrectionHistory articleId={article.id} /></div>
       <div className="mx-auto max-w-[820px] px-4"><FollowCard list={storyFollowList(article.id)} title="Follow this story" description="Get a weekday email when this story changes or new live updates are posted. Confirm your email to start; unsubscribe at any time." /></div>
       </>
     );
@@ -276,6 +278,7 @@ export default async function ArticlePage({ params }: Props) {
 
             <div className="article-body" dangerouslySetInnerHTML={{ __html: renderMarkdownWithBreaks(article.body, inlineAdHtml()) }} />
 
+            <CorrectionHistory articleId={article.id} />
             <FollowCard list={storyFollowList(article.id)} title="Follow this story" description="Get a weekday email when this story changes or new live updates are posted. Confirm your email to start; unsubscribe at any time." />
 
             {tags.length > 0 && (

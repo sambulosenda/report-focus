@@ -1,3 +1,4 @@
+import { CorrectionsPanel } from "@/components/newsroom/CorrectionsPanel";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { and, desc, eq, gt, isNull, or } from "drizzle-orm";
@@ -61,6 +62,7 @@ export default async function EditArticlePage({ params }: { params: Promise<{ id
   return (
     <>
       <ArticleEditor article={article} categories={cats} library={library} knownTags={tags} role={user.role} authorName={row.author} publicUrl={publicUrl} homePin={homePin} />
+      {hasRole(user, "editor") && <CorrectionsPanel articleId={article.id} live={!!live} />}
       {canPostUpdates && <LiveUpdatesPanel articleId={article.id} publicUrl={live ? `/live/${article.slug}` : undefined} />}
     </>
   );

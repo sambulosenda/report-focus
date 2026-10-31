@@ -1,3 +1,4 @@
+import { CorrectionHistory } from "@/components/CorrectionHistory";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -76,6 +77,7 @@ export async function LiveUpdates({ slug, showAll }: { slug: string; showAll: bo
           </Link>
         </p>
       </header>
+      <div className="max-w-[820px]"><CorrectionHistory articleId={article.id} /></div>
       <SaveArticleButton id={article.id} title={article.title} href={storyUrl} />
 
       <div className="max-w-[820px]"><FollowCard list={storyFollowList(article.id)} title="Follow this live story" description="Get a weekday email when new updates are posted. Confirm your email to start; unsubscribe at any time." /></div>

@@ -135,6 +135,15 @@ export const liveUpdates = sqliteTable(
   (t) => [index("live_updates_article_idx").on(t.articleId, t.createdAt)],
 );
 
+/** Append-only correction notes; later notes clarify earlier ones. */
+export const articleCorrections = sqliteTable("article_corrections", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  articleId: integer("article_id").notNull().references(() => articles.id, { onDelete: "cascade" }),
+  editorId: integer("editor_id").references(() => users.id, { onDelete: "set null" }),
+  body: text("body").notNull(),
+  createdAt: timestamp("created_at"),
+}, (t) => [index("article_corrections_article_idx").on(t.articleId, t.createdAt)]);
+
 export const media = sqliteTable("media", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   url: text("url").notNull(),
