@@ -242,30 +242,6 @@ export const ROBOTS: Metadata["robots"] = {
   googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
 };
 
-/**
- * Like ROBOTS but also tells Googlebot-News not to index this page.
- * Section hubs, tag pages, author pages and utility pages are valuable for web search
- * but should not appear in Google News, which is only for article content.
- * We cast because Next.js's Metadata type doesn't expose the googlebot-news directive,
- * but Google respects it when rendered into the <head>.
- */
-export const ROBOTS_NO_NEWS = {
-  index: true,
-  follow: true,
-  "max-image-preview": "large",
-  "max-snippet": -1,
-  "max-video-preview": -1,
-  googleBot: {
-    index: true,
-    follow: true,
-    "max-image-preview": "large",
-    "max-snippet": -1,
-    "max-video-preview": -1,
-    // Keeps this page out of Google News while it stays in web search.
-    "googlebot-news": "noindex",
-  },
-} as Metadata["robots"];
-
 type PageMeta = {
   title: string;
   /** Use the title as it is, without " | Report Focus News" after it. */
@@ -303,7 +279,9 @@ export function pageMeta({ title, absoluteTitle, description, path, image, noind
     description,
     // A page's alternates replace the site's, so the RSS feed link is repeated here.
     alternates: { ...(home ? {} : { canonical: path }), types: RSS_ALTERNATE },
-    robots: noindex ? { index: false, follow: true } : noNewsIndex ? ROBOTS_NO_NEWS : ROBOTS,
+    robots: noindex ? { index: false, follow: true } : ROBOTS,
+    // Custom crawler directives must be separate meta tags, not nested in googleBot.
+    ...(noNewsIndex ? { other: { "googlebot-news": "noindex" } } : {}),
     openGraph: { siteName: SITE_NAME, locale: OG_LOCALE, type: "website", title, description, ...(home ? {} : { url: path }), ...openGraph, images },
     twitter: { card: "summary_large_image", site: TWITTER_HANDLE, title, description, images },
   };

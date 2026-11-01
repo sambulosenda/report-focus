@@ -51,6 +51,7 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     return [
+      { source: "/author/sambulo-senda", destination: "/author/mickal-dube", statusCode: 301 },
       // Old WordPress addresses that news apps, feed readers and Google still have on file.
       { source: "/feed/:rest*", destination: "/feed.xml", permanent: true },
       { source: "/page/:n(\\d+)", destination: "/latest?page=:n", permanent: true },

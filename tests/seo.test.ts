@@ -64,3 +64,13 @@ test("training opt-outs leave search bots under the public allow rule", async ()
   assert.ok(Array.isArray(rules[1].userAgent) && rules[1].userAgent.includes("GPTBot"));
   assert.ok(!JSON.stringify(rules[1]).includes("OAI-SearchBot"));
 });
+
+test("Google News exclusions use a separate meta tag and leave articles eligible", async () => {
+  const { pageMeta } = await import("../src/lib/seo");
+  const hub = pageMeta({ title: "US News", path: "/us", noNewsIndex: true });
+  assert.deepEqual(hub.other, { "googlebot-news": "noindex" });
+  assert.equal((hub.robots as { index: boolean }).index, true);
+  const article = pageMeta({ title: "A story", path: "/us/a-story" });
+  assert.equal(article.other, undefined);
+  assert.equal((article.robots as { index: boolean }).index, true);
+});
