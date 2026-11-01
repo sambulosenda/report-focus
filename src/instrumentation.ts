@@ -1,3 +1,5 @@
+import { scrubErrorEvent } from "@/lib/error-tracking";
+
 // Server error tracking. Sentry is only loaded when SENTRY_DSN is set, so local development needs no account.
 export async function register() {
   if (!process.env.SENTRY_DSN) return;
@@ -5,9 +7,10 @@ export async function register() {
   Sentry.init({
     dsn: process.env.SENTRY_DSN,
     environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV,
-    // Errors are always sent; only a sample of normal requests is timed, to stay inside the free plan.
-    tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? 0.05),
+    // Capture errors without collecting routine request traces.
+    tracesSampleRate: 0,
     sendDefaultPii: false,
+      beforeSend: scrubErrorEvent,
   });
 }
 

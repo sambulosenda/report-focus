@@ -22,7 +22,8 @@
     "test:social": "node --import tsx --test tests/social-image.test.ts",
     "db:backup": "tsx --env-file-if-exists=.env scripts/backup.ts",
     "uploads:move": "tsx --env-file-if-exists=.env scripts/move-uploads.ts",
-    "sections:review": "tsx --env-file-if-exists=.env scripts/section-review.ts"
+    "sections:review": "tsx --env-file-if-exists=.env scripts/section-review.ts",
+    "db:verify-backup": "node --env-file-if-exists=.env scripts/verify-backup.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1160.0",
