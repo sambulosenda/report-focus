@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
-import { deleteArticle, saveArticle, uploadImage } from "@/actions/articles";
+import { deleteArticle, saveArticle } from "@/actions/articles";
+import { uploadImage } from "@/lib/upload-client";
 import { CheckIcon, ChevronLeftIcon, EyeIcon } from "@/components/icons";
 import { HOME_SLOT_LABEL, KIND_LABEL, KINDS, type Article, type Category, type Kind, type Media, type Role } from "@/db/schema";
 import { renderMarkdown } from "@/lib/markdown";

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { uploadImage } from "@/actions/articles";
+import { uploadImage } from "@/lib/upload-client";
 import { btnBrand, inputClass } from "./ui";
 
 export function MediaUploader() {
