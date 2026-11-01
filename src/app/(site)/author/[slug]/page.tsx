@@ -28,6 +28,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     path: pagedPath(`/author/${a.slug}`, pageParam((await searchParams).page)),
     // A desk byline is not a person. Username sign-ups stay out of search until the owner confirms them.
     noindex: isDeskByline(a.name) || isUnconfirmedAuthor(a.slug),
+    noNewsIndex: true,
     openGraph: { type: "profile" },
   });
 }

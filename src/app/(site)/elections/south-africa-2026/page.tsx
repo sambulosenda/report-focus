@@ -8,7 +8,7 @@ import { pageMeta } from "@/lib/seo";
 type Props = { searchParams: Promise<{ demo?: string }> };
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const demo = (await searchParams).demo === "1";
-  return pageMeta({ title: demo ? "Demo: South Africa election results" : "South Africa local election results 2026", description: "Explore verified municipal PR results by province and municipality, with vote shares, source links and count status.", path: ELECTION_PATH, noindex: demo });
+  return pageMeta({ title: demo ? "Demo: South Africa election results" : "South Africa local election results 2026", description: "Explore verified municipal PR results by province and municipality, with vote shares, source links and count status.", path: ELECTION_PATH, noindex: demo, noNewsIndex: true });
 }
 export default async function ElectionsPage({ searchParams }: Props) {
   const demo = (await searchParams).demo === "1";

@@ -238,6 +238,30 @@ export const ROBOTS: Metadata["robots"] = {
   googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
 };
 
+/**
+ * Like ROBOTS but also tells Googlebot-News not to index this page.
+ * Section hubs, tag pages, author pages and utility pages are valuable for web search
+ * but should not appear in Google News, which is only for article content.
+ * We cast because Next.js's Metadata type doesn't expose the googlebot-news directive,
+ * but Google respects it when rendered into the <head>.
+ */
+export const ROBOTS_NO_NEWS = {
+  index: true,
+  follow: true,
+  "max-image-preview": "large",
+  "max-snippet": -1,
+  "max-video-preview": -1,
+  googleBot: {
+    index: true,
+    follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
+    "max-video-preview": -1,
+    // Keeps this page out of Google News while it stays in web search.
+    "googlebot-news": "noindex",
+  },
+} as Metadata["robots"];
+
 type PageMeta = {
   title: string;
   /** Use the title as it is, without " | Report Focus News" after it. */
@@ -247,6 +271,12 @@ type PageMeta = {
   path: string;
   image?: { url: string; alt?: string | null } | null;
   noindex?: boolean;
+  /**
+   * Tell Googlebot-News not to include this page in Google News.
+   * Set on section hubs, tag pages, author pages and utility pages — anywhere that
+   * is not itself an article. Google News should only surface article content.
+   */
+  noNewsIndex?: boolean;
   openGraph?: NonNullable<Metadata["openGraph"]>;
 };
 
@@ -254,7 +284,7 @@ type PageMeta = {
  * Title, description, canonical link and share previews (WhatsApp, Facebook, X) for a page.
  * A page's own openGraph replaces the site default, so this rebuilds every field each time.
  */
-export function pageMeta({ title, absoluteTitle, description, path, image, noindex, openGraph }: PageMeta): Metadata {
+export function pageMeta({ title, absoluteTitle, description, path, image, noindex, noNewsIndex, openGraph }: PageMeta): Metadata {
   // Story photos are cropped to 1200×630. Anything we cannot crop, including SVGs, uses the branded card.
   const social = image?.url ? socialImagePath(image.url) : null;
   const images = social
@@ -269,7 +299,7 @@ export function pageMeta({ title, absoluteTitle, description, path, image, noind
     description,
     // A page's alternates replace the site's, so the RSS feed link is repeated here.
     alternates: { ...(home ? {} : { canonical: path }), types: RSS_ALTERNATE },
-    robots: noindex ? { index: false, follow: true } : ROBOTS,
+    robots: noindex ? { index: false, follow: true } : noNewsIndex ? ROBOTS_NO_NEWS : ROBOTS,
     openGraph: { siteName: SITE_NAME, locale: OG_LOCALE, type: "website", title, description, ...(home ? {} : { url: path }), ...openGraph, images },
     twitter: { card: "summary_large_image", site: TWITTER_HANDLE, title, description, images },
   };
