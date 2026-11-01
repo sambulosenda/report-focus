@@ -1,8 +1,8 @@
 export const MAX_UPLOAD_REQUEST_BYTES = 9 * 1024 * 1024;
 
 /** Bound multipart buffering even when a client omits Content-Length. */
-export async function readUploadBody(request: Request): Promise<Uint8Array | null> {
-  if (Number(request.headers.get("content-length")) > MAX_UPLOAD_REQUEST_BYTES) return null;
+export async function readUploadBody(request: Request, maxBytes = MAX_UPLOAD_REQUEST_BYTES): Promise<Uint8Array | null> {
+  if (Number(request.headers.get("content-length")) > maxBytes) return null;
   const reader = request.body?.getReader();
   if (!reader) return new Uint8Array();
   const chunks: Uint8Array[] = [];
@@ -12,7 +12,7 @@ export async function readUploadBody(request: Request): Promise<Uint8Array | nul
       const { value, done } = await reader.read();
       if (done) break;
       length += value.byteLength;
-      if (length > MAX_UPLOAD_REQUEST_BYTES) {
+      if (length > maxBytes) {
         await reader.cancel();
         return null;
       }

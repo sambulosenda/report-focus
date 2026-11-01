@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
-import { deleteArticle, saveArticle } from "@/actions/articles";
+import { deleteArticle } from "@/actions/articles";
+import { saveArticle } from "@/lib/article-client";
+import { useRouter } from "next/navigation";
 import { uploadImage } from "@/lib/upload-client";
 import { CheckIcon, ChevronLeftIcon, EyeIcon } from "@/components/icons";
 import { HOME_SLOT_LABEL, KIND_LABEL, KINDS, type Article, type Category, type Kind, type Media, type Role } from "@/db/schema";
@@ -35,6 +37,7 @@ function toLocalInput(d: Date | null | undefined) {
 const clock = (d: Date) => d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TZ });
 
 export function ArticleEditor({ article, categories, library, knownTags = [], role, authorName, publicUrl, homePin }: Props) {
+  const router = useRouter();
   const [state, action, pending] = useActionState(saveArticle, undefined);
   const editor = role !== "journalist";
   const [title, setTitle] = useState(article?.title ?? "");
@@ -77,8 +80,10 @@ export function ArticleEditor({ article, categories, library, knownTags = [], ro
     if (state?.savedAt) {
       if (editVersion.current === submittedVersion.current) setDirty(false);
       setSavedAt(new Date(state.savedAt));
+      if (state.redirectTo) router.replace(state.redirectTo);
+      else router.refresh();
     }
-  }, [state?.savedAt]);
+  }, [state?.savedAt, state?.redirectTo, router]);
 
   useEffect(() => {
     const warn = (e: BeforeUnloadEvent) => {

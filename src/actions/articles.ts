@@ -12,7 +12,7 @@ import { canDeleteArticle, canEditArticle, canPublish } from "@/lib/permissions"
 import { saveImage } from "@/lib/storage";
 import { formatDateTime, slugify } from "@/lib/utils";
 
-export type ArticleFormState = { error?: string; ok?: string; savedAt?: number } | undefined;
+export type ArticleFormState = { error?: string; ok?: string; savedAt?: number; redirectTo?: string } | undefined;
 
 const INTENTS = ["save", "submit", "publish", "return", "unpublish", "archive"] as const;
 
@@ -53,7 +53,7 @@ async function uniqueSlug(base: string, excludeId?: number) {
   }
 }
 
-export async function saveArticle(_prev: ArticleFormState, formData: FormData): Promise<ArticleFormState> {
+export async function saveArticle(_prev: ArticleFormState, formData: FormData, returnNavigation = false): Promise<ArticleFormState> {
   const user = await requireUser();
   const parsed = ArticleInput.safeParse({
     id: blankToUndefined(formData.get("id")),
@@ -165,7 +165,7 @@ export async function saveArticle(_prev: ArticleFormState, formData: FormData): 
   if (existing && (status !== "published" || (publishedAt && publishedAt > new Date()))) await db.delete(homePins).where(eq(homePins.articleId, existing.id));
 
   revalidatePath("/", "layout");
-  if (!existing) redirect(`/newsroom/articles/${id}?created=1`);
+  if (!existing && !returnNavigation) redirect(`/newsroom/articles/${id}?created=1`);
 
   const messages: Record<(typeof INTENTS)[number], string> = {
     save: "Saved.",
@@ -175,7 +175,7 @@ export async function saveArticle(_prev: ArticleFormState, formData: FormData): 
     unpublish: "Unpublished. The story is now a draft.",
     archive: "Archived.",
   };
-  return { ok: messages[input.intent], savedAt: Date.now() };
+  return { ok: messages[input.intent], savedAt: Date.now(), ...(!existing ? { redirectTo: `/newsroom/articles/${id}?created=1` } : {}) };
 }
 
 export async function deleteArticle(formData: FormData) {
