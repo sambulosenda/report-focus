@@ -20,6 +20,7 @@ const storySelect = {
   isFeatured: articles.isFeatured,
   publishedAt: articles.publishedAt,
   views: articles.views,
+  tags: articles.tags,
   categoryId: articles.categoryId,
   category: { name: categories.name, slug: categories.slug, color: categories.color },
   author: { name: users.name, slug: users.slug, title: users.title, avatarUrl: users.avatarUrl },
@@ -239,18 +240,54 @@ export async function storiesByAuthor(authorId: number, limit = 30, offset = 0) 
     .offset(offset);
 }
 
-export async function relatedStories(articleId: number, categoryId: number | null, limit = 4, excludeKind?: Kind) {
-  return storyQuery()
-    .where(
-      and(
-        isLive(),
-        ne(articles.id, articleId),
-        categoryId ? eq(articles.categoryId, categoryId) : undefined,
-        excludeKind ? ne(articles.kind, excludeKind) : undefined,
-      ),
-    )
-    .orderBy(...newestFirst)
+/**
+ * Stories related to the given article, ranked by tag overlap then recency.
+ * Scores each candidate by how many of its tags appear in the source story's
+ * tag list, then returns the top `limit`. Falls back to same-category recency
+ * when there are no tags to match on.
+ */
+export async function relatedStories(
+  articleId: number,
+  categoryId: number | null,
+  tags: string = "",
+  limit = 4,
+  excludeKind?: Kind,
+) {
+  const tagList = tags
+    .split(",")
+    .map((t) => t.trim().toLowerCase())
+    .filter((t) => t && t !== "sample");
+
+  const baseWhere = and(
+    isLive(),
+    ne(articles.id, articleId),
+    categoryId ? eq(articles.categoryId, categoryId) : undefined,
+    excludeKind ? ne(articles.kind, excludeKind) : undefined,
+  );
+
+  if (tagList.length === 0) {
+    return storyQuery().where(baseWhere).orderBy(...newestFirst).limit(limit);
+  }
+
+  // Score each row by how many tags it shares with the source article.
+  const tagScoreExpr = tagList.map((tag) =>
+    sql`(case when instr(',' || replace(lower(${articles.tags}), ', ', ',') || ',', ${`,${tag},`}) > 0 then 1 else 0 end)`,
+  );
+  const scoreCol = tagScoreExpr.reduce<ReturnType<typeof sql>>(
+    (acc, e) => sql`${acc} + ${e}`,
+    sql`0`,
+  );
+
+  const rows = await db
+    .select({ ...storySelect, _score: scoreCol })
+    .from(articles)
+    .leftJoin(categories, eq(categories.id, articles.categoryId))
+    .innerJoin(users, eq(users.id, articles.authorId))
+    .where(baseWhere)
+    .orderBy(sql`${scoreCol} desc`, ...newestFirst)
     .limit(limit);
+
+  return rows.map(({ _score, ...s }) => s);
 }
 
 /** The stories for a newsletter edition: the past day's top stories, editors' picks first, then the most read. */

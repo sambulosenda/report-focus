@@ -98,7 +98,7 @@ export default async function ArticlePage({ params }: Props) {
       <VideoWatch
         video={{ ...article, categoryName: category?.name }}
         upNext={videos.slice(0, 5)}
-        more={moreVideos.length ? moreVideos : await relatedStories(article.id, article.categoryId, 4)}
+        more={moreVideos.length ? moreVideos : await relatedStories(article.id, article.categoryId, article.tags, 4)}
         moreTitle={moreVideos.length ? "More videos" : `More from ${category?.name ?? SITE_NAME}`}
       />
       <div className="mx-auto max-w-[820px] px-4"><CorrectionHistory articleId={article.id} /></div>
@@ -108,7 +108,7 @@ export default async function ArticlePage({ params }: Props) {
   }
 
   const [related, popular, updates] = await Promise.all([
-    relatedStories(article.id, article.categoryId),
+    relatedStories(article.id, article.categoryId, article.tags),
     mostRead(5),
     article.kind === "live" ? liveUpdatesFor(article.id) : Promise.resolve([]),
   ]);

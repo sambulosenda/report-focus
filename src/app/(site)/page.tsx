@@ -74,7 +74,7 @@ export default async function HomePage() {
   }
 
   const shown = new Set(stack.map((s) => s.id));
-  const bullets = (await relatedStories(lead.id, lead.categoryId, 2 + stack.length, "video")).filter((s) => !shown.has(s.id)).slice(0, 2);
+  const bullets = (await relatedStories(lead.id, lead.categoryId, lead.tags, 2 + stack.length, "video")).filter((s) => !shown.has(s.id)).slice(0, 2);
   const top = popular.slice(0, 8);
   // When the live story is already the lead, point to its newest post instead of repeating the headline.
   const liveLatest = live && live.id === lead.id ? await newestLiveUpdate(live.id) : undefined;
