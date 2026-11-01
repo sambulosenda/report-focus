@@ -23,10 +23,10 @@ export async function generateMetadata({ params, pageNumber = 1 }: Props): Promi
   const cat = await categoryBySlug(slug);
   if (cat) {
     const path = sectionPath(cat.slug, pageNumber);
-    return pageMeta({ title: `${cat.name} News`, description: sectionMetaDescription(cat), path });
+    return pageMeta({ title: `${cat.name} News`, description: sectionMetaDescription(cat), path, noNewsIndex: true });
   }
   const info = INFO_PAGES[slug];
-  return info ? pageMeta({ title: info.title, description: metaDescription(info.description), path: `/${slug}`, noindex: info.noindex }) : NOT_FOUND_METADATA;
+  return info ? pageMeta({ title: info.title, description: metaDescription(info.description), path: `/${slug}`, noindex: info.noindex, noNewsIndex: true }) : NOT_FOUND_METADATA;
 }
 
 /** River time column: clock time today, "Yesterday", then the date, by the site's calendar. */

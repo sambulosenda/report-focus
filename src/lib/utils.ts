@@ -1,7 +1,8 @@
 import slugifyLib from "slugify";
 
 export function slugify(input: string) {
-  return slugifyLib(input, { lower: true, strict: true, trim: true }).slice(0, 90) || "story";
+  // slice(0, 90) can cut mid-word and leave a trailing hyphen; trim it.
+  return (slugifyLib(input, { lower: true, strict: true, trim: true }).slice(0, 90).replace(/-+$/, "") || "story");
 }
 
 export function readingTime(body: string) {

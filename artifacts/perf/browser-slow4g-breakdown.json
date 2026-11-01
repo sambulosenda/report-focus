@@ -1,0 +1,128 @@
+{
+  "claim": "Chrome loads the homepage the way a reader does, including the srcset image it actually picks. Run 1 is a cold browser. Later runs reuse that profile. A warm median loadEventEnd above 500ms, or a batch of image responses above half of that, is the fix. An image status other than 200 invalidates that run.",
+  "throttle": "slow-4g",
+  "measuredAt": "2026-10-30T21:04:12.147Z",
+  "base": "http://127.0.0.1:3107",
+  "loadAverage": [
+    6.61767578125,
+    4.84228515625,
+    4.6162109375
+  ],
+  "runs": 1,
+  "desktop": null,
+  "phone": {
+    "label": "phone-390-dpr3",
+    "samples": [
+      {
+        "requests": 61,
+        "slowest": [
+          {
+            "url": "/_next/static/media/8edf6d3506a17285-s.p.woff2",
+            "ms": 2967,
+            "bytes": 147732,
+            "status": 200,
+            "mime": "font/woff2"
+          },
+          {
+            "url": "/_next/static/media/84adbee2f2a7cb50-s.p.woff2",
+            "ms": 2862,
+            "bytes": 132520,
+            "status": 200,
+            "mime": "font/woff2"
+          },
+          {
+            "url": "/_next/static/chunks/3683-944e8012413615d3.js",
+            "ms": 2268,
+            "bytes": 10628,
+            "status": 200,
+            "mime": "application/javascript"
+          },
+          {
+            "url": "/_next/static/chunks/app/(site)/error-fc8fcdaa72906da9.js",
+            "ms": 2174,
+            "bytes": 1691,
+            "status": 200,
+            "mime": "application/javascript"
+          },
+          {
+            "url": "/_next/static/chunks/app/(site)/layout-b9c88f4314d4db01.js",
+            "ms": 2159,
+            "bytes": 2067,
+            "status": 200,
+            "mime": "application/javascript"
+          },
+          {
+            "url": "/_next/static/chunks/3578-6ca2d6ee2748c6a3.js",
+            "ms": 2103,
+            "bytes": 6288,
+            "status": 200,
+            "mime": "application/javascript"
+          },
+          {
+            "url": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F07%2FEkurhuleni-Metro-police-acting-Chief-Julius-Mkhwanazi-512aae7b.webp&w=384&q=75",
+            "ms": 2097,
+            "bytes": 8130,
+            "status": 200,
+            "mime": "image/webp"
+          },
+          {
+            "url": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F07%2FIMG_1913-a06c0bba.webp&w=384&q=75",
+            "ms": 2069,
+            "bytes": 16136,
+            "status": 200,
+            "mime": "image/webp"
+          },
+          {
+            "url": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F07%2FZimbabwe-President-Emmerson-Mnangagwa-5b7fffa1.webp&w=384&q=75",
+            "ms": 2055,
+            "bytes": 9610,
+            "status": 200,
+            "mime": "image/webp"
+          },
+          {
+            "url": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F07%2FKing-Misuzulu-f1fd62be.webp&w=384&q=75",
+            "ms": 1986,
+            "bytes": 8790,
+            "status": 200,
+            "mime": "image/webp"
+          },
+          {
+            "url": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F01%2FThe-AA-says-the-version-sold-here-shows-significant-safety-g-818300ac.webp&w=640&q=75",
+            "ms": 1977,
+            "bytes": 30636,
+            "status": 200,
+            "mime": "image/webp"
+          },
+          {
+            "url": "/_next/static/chunks/1930-e8049e2411ea3404.js",
+            "ms": 1952,
+            "bytes": 6234,
+            "status": 200,
+            "mime": "application/javascript"
+          }
+        ],
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 193779,
+        "slowestImageMs": 2097,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 95,
+          "domContentLoadedMs": 606.5,
+          "loadMs": 3186,
+          "transferSize": 21340,
+          "encodedBodySize": 21040
+        }
+      }
+    ],
+    "warmLoadMedianMs": null,
+    "warmLoadMinMs": null,
+    "warmLoadMaxMs": null,
+    "imageErrors": 0
+  }
+}

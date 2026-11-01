@@ -1,0 +1,229 @@
+{
+  "claim": "Chrome loads the homepage the way a reader does, including the srcset image it actually picks. Run 1 is a cold browser. Later runs reuse that profile. A warm median loadEventEnd above 500ms, or a batch of image responses above half of that, is the fix. An image status other than 200 invalidates that run.",
+  "measuredAt": "2026-10-30T21:00:16.402Z",
+  "base": "http://127.0.0.1:3107",
+  "loadAverage": [
+    4.57666015625,
+    4.12451171875,
+    4.39599609375
+  ],
+  "runs": 5,
+  "desktop": {
+    "label": "desktop-1280-dpr2",
+    "samples": [
+      {
+        "requests": 102,
+        "imageCount": 10,
+        "imageErrors": 0,
+        "imageBytes": 238054,
+        "slowestImageMs": 270,
+        "widths": [
+          384,
+          828,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 94.39999999850988,
+          "domContentLoadedMs": 123.19999999925494,
+          "loadMs": 158.29999999701977,
+          "transferSize": 21340,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 147,
+        "imageCount": 10,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          828,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 2.100000001490116,
+          "domContentLoadedMs": 8.200000002980232,
+          "loadMs": 20.700000002980232,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 147,
+        "imageCount": 10,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          828,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 2.800000000745058,
+          "domContentLoadedMs": 15,
+          "loadMs": 29.199999999254942,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 147,
+        "imageCount": 10,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          828,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 2.399999998509884,
+          "domContentLoadedMs": 15,
+          "loadMs": 28,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 147,
+        "imageCount": 10,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          828,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 3.399999998509884,
+          "domContentLoadedMs": 16.699999999254942,
+          "loadMs": 29.199999999254942,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      }
+    ],
+    "warmLoadMedianMs": 28.59999999962747,
+    "warmLoadMinMs": 20.700000002980232,
+    "warmLoadMaxMs": 29.199999999254942,
+    "imageErrors": 0
+  },
+  "phone": {
+    "label": "phone-390-dpr3",
+    "samples": [
+      {
+        "requests": 144,
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 321599,
+        "slowestImageMs": 71,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 2.599999997764826,
+          "domContentLoadedMs": 17.199999999254942,
+          "loadMs": 42.899999998509884,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 144,
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 2.699999999254942,
+          "domContentLoadedMs": 9.299999997019768,
+          "loadMs": 19.399999998509884,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 144,
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 2.199999999254942,
+          "domContentLoadedMs": 11.399999998509884,
+          "loadMs": 21.600000001490116,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 144,
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 2,
+          "domContentLoadedMs": 9.399999998509884,
+          "loadMs": 21.300000000745058,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      },
+      {
+        "requests": 144,
+        "imageCount": 13,
+        "imageErrors": 0,
+        "imageBytes": 0,
+        "slowestImageMs": 0,
+        "widths": [
+          384,
+          640,
+          1280
+        ],
+        "loaded": true,
+        "timing": {
+          "ttfbMs": 2.099999997764826,
+          "domContentLoadedMs": 9.099999997764826,
+          "loadMs": 18.5,
+          "transferSize": 300,
+          "encodedBodySize": 21040
+        }
+      }
+    ],
+    "warmLoadMedianMs": 20.34999999962747,
+    "warmLoadMinMs": 18.5,
+    "warmLoadMaxMs": 21.600000001490116,
+    "imageErrors": 0
+  }
+}

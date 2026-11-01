@@ -1,0 +1,180 @@
+{
+  "claim": "Homepage image optimizer, concurrency 6, the way a browser opens connections. The cold batch is the first visit after the image cache is empty. The warm median is a repeat visit. A cold batch above 500ms, or one image above half of that batch, is the fix. A non-200 image invalidates the run.",
+  "measuredAt": "2026-10-30T20:56:50.738Z",
+  "base": "http://127.0.0.1:3107",
+  "loadAverage": [
+    3.27734375,
+    4.4384765625,
+    4.5947265625
+  ],
+  "concurrency": 6,
+  "imageCount": 13,
+  "cold": {
+    "wallMs": 159,
+    "images": [
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2025%2F10%2FP6-Jacob-Zuma-e1743165563976-jpg-2f25a4ed.webp&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 36,
+        "totalMs": 36.1,
+        "bytes": 22041,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F07%2FIMG_1913-a06c0bba.webp&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 52.3,
+        "totalMs": 52.3,
+        "bytes": 61037,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F07%2FKing-Misuzulu-f1fd62be.webp&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 34.6,
+        "totalMs": 34.8,
+        "bytes": 15113,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F07%2FZimbabwe-President-Emmerson-Mnangagwa-5b7fffa1.webp&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 51.4,
+        "totalMs": 51.5,
+        "bytes": 53435,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F07%2FEkurhuleni-Metro-police-acting-Chief-Julius-Mkhwanazi-512aae7b.webp&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 52.1,
+        "totalMs": 52.1,
+        "bytes": 53855,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F03%2FU-S--President-Donald-Trump-02a1d2e8.jpg&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 35.5,
+        "totalMs": 35.6,
+        "bytes": 27932,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F03%2FSix-dead-as-Qatar-miliray-helicopter-crashes-5a1d2d29.webp&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 60,
+        "totalMs": 60.1,
+        "bytes": 51025,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F03%2FED2030-campaign-7ae97508.gif&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 60.2,
+        "totalMs": 60.6,
+        "bytes": 247639,
+        "type": "image/gif",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F01%2FThe-AA-says-the-version-sold-here-shows-significant-safety-g-818300ac.webp&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 59.5,
+        "totalMs": 59.7,
+        "bytes": 103224,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2025%2F10%2FAfrican-jurists-are-demanding-the-adoption-of-AI-to-protect--536ad26c.jpg&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 72.9,
+        "totalMs": 73.1,
+        "bytes": 155856,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2025%2F12%2FDr-Tlaleng-Mofokeng-245f7f4d.jpg&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 67.4,
+        "totalMs": 67.6,
+        "bytes": 106776,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F01%2FAFP__20260118__936P47H__v1__MidRes__FblAfr2025Match52SenMar-f0cd2395.webp&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 93.7,
+        "totalMs": 93.8,
+        "bytes": 108977,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      },
+      {
+        "path": "/_next/image?url=%2Fmedia%2Fwordpress%2F2026%2F02%2FTikTok-should-change-the-way-it-recommends-content-to-users--d1677e38.avif&w=1920&q=75",
+        "status": 200,
+        "ttfbMs": 63.2,
+        "totalMs": 63.3,
+        "bytes": 101902,
+        "type": "image/jpeg",
+        "cacheControl": "public, max-age=31536000, must-revalidate",
+        "ok": true
+      }
+    ],
+    "errors": 0,
+    "slowestMs": 93.8
+  },
+  "warm": [
+    {
+      "wallMs": 6.7,
+      "errors": 0,
+      "slowestMs": 3.9
+    },
+    {
+      "wallMs": 3.5,
+      "errors": 0,
+      "slowestMs": 1.8
+    },
+    {
+      "wallMs": 3.6,
+      "errors": 0,
+      "slowestMs": 1.8
+    },
+    {
+      "wallMs": 3.9,
+      "errors": 0,
+      "slowestMs": 2.2
+    },
+    {
+      "wallMs": 3.8,
+      "errors": 0,
+      "slowestMs": 2
+    }
+  ],
+  "warmWallMedianMs": 3.8,
+  "warmWallMinMs": 3.5,
+  "warmWallMaxMs": 6.7,
+  "warmErrors": 0
+}

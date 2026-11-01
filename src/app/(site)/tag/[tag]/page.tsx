@@ -39,6 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: topicMetaDescription(name),
     path: `/tag/${encodeURIComponent(slug)}`,
     noindex: !(new Map(await indexedTopics())).has(slug),
+    noNewsIndex: true,
   });
 }
 

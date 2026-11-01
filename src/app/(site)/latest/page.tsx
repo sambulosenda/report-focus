@@ -11,6 +11,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
     title: "Latest News",
     description: LATEST_DESCRIPTION,
     path: pagedPath("/latest", pageParam((await searchParams).page)),
+    noNewsIndex: true,
   });
 }
 const PER_PAGE = 25;

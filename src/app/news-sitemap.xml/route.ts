@@ -29,7 +29,10 @@ export async function GET() {
     // Agency stories are noindex (see isWireByline), so Google News doesn't get them either.
     .filter((s) => !isWireByline(s.author))
     .map((s) => {
-      const keywords = s.tags.split(",").map((t) => t.trim()).filter((t) => t && t.toLowerCase() !== "sample");
+      // Strip the "sample" placeholder and any CMS internal flags (e.g. "Featured", "Breaking")
+      // that should never appear in a public sitemap.
+      const CMS_FLAGS = new Set(["sample", "featured", "breaking", "top story", "top-story", "wire"]);
+      const keywords = s.tags.split(",").map((t) => t.trim()).filter((t) => t && !CMS_FLAGS.has(t.toLowerCase()));
       return `<url><loc>${esc(siteUrl(`/${s.section ?? "news"}/${s.slug}`))}</loc><news:news><news:publication><news:name>${esc(SITE_NAME)}</news:name><news:language>en</news:language></news:publication><news:publication_date>${s.publishedAt?.toISOString()}</news:publication_date><news:title>${esc(s.title)}</news:title>${
         keywords.length ? `<news:keywords>${esc(keywords.join(", "))}</news:keywords>` : ""
       }</news:news>${s.heroImage ? `<image:image><image:loc>${esc(absoluteUrl(s.heroImage))}</image:loc></image:image>` : ""}</url>`;
