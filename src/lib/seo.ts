@@ -41,7 +41,11 @@ export function organizationLd() {
     foundingDate: CONTACT.founded,
     foundingLocation: { "@type": "Country", name: "United Kingdom" },
     address: { "@type": "PostalAddress", addressCountry: CONTACT.countryCode },
-    areaServed: { "@type": "Country", name: "Zimbabwe" },
+    areaServed: [
+      { "@type": "Country", name: "Zimbabwe" },
+      { "@type": "Country", name: "South Africa" },
+      { "@type": "Continent", name: "Africa" },
+    ],
     email: CONTACT.editor,
     publishingPrinciples: siteUrl("/standards"),
     ethicsPolicy: siteUrl("/standards"),
