@@ -39,7 +39,7 @@ export async function LiveUpdates({ slug, showAll }: { slug: string; showAll: bo
   const [shown, stats, related, videos] = await Promise.all([
     liveUpdatesFor(article.id, showAll ? undefined : FIRST_PAGE + 1),
     liveUpdateStats(article.id),
-    relatedStories(article.id, article.categoryId, 4),
+    relatedStories(article.id, article.categoryId, article.tags, 4),
     storiesOfKind(["video"], 1),
   ]);
   const firstHidden = showAll ? undefined : shown[FIRST_PAGE];
