@@ -2,6 +2,7 @@ import { scrubErrorEvent } from "@/lib/error-tracking";
 
 // Server error tracking. Sentry is only loaded when SENTRY_DSN is set, so local development needs no account.
 export async function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs") (await import("@/lib/memory-log")).startMemoryLog();
   if (!process.env.SENTRY_DSN) return;
   const Sentry = await import("@sentry/nextjs");
   Sentry.init({
