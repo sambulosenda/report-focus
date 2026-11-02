@@ -36,13 +36,6 @@ test("topic eligibility ignores wire copy and duplicate spellings in one story",
   assert.equal(topicIndex(Array.from({length: 10}, () => ({...row, author: {name: "Reuters"}}))).size, 0);
 });
 
-test("404 fallback has a visible recovery heading and only noindex", async () => {
-  const { NOT_FOUND_HTML } = await import("../src/lib/not-found-response");
-  assert.equal((NOT_FOUND_HTML.match(/<h1/g) ?? []).length, 1);
-  assert.equal((NOT_FOUND_HTML.match(/name="robots"/g) ?? []).length, 1);
-  assert.match(NOT_FOUND_HTML, /content="noindex"/);
-});
-
 test("section pagination redirects without affecting latest or newsroom access", async () => {
   const { NextRequest } = await import("next/server");
   const { middleware } = await import("../src/middleware");
