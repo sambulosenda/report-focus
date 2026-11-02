@@ -101,7 +101,7 @@ Story and topic follows send a weekday digest only when public coverage has chan
 
 The existing `POST /api/newsletter/send` scheduler also sends follow digests. Editors can see their reader counts and send them from **Newsroom → Newsletters**. Production delivery requires the email provider and scheduler described below; the default console provider logs messages locally. At most one digest per list is sent each day. Delivery uses the existing newsletter batch sender; a provider failure after a partially completed batch can cause duplicates on retry.
 
-Run `npm run test:following` for the isolated in-memory database integration check. It uses console email, never the configured production database or email provider.
+`npm test` includes the isolated in-memory database integration check (`tests/following.test.ts`). It uses console email, never the configured production database or email provider.
 
 Newsletters and breaking-news alerts go through the provider named in `EMAIL_PROVIDER`:
 
@@ -124,7 +124,7 @@ The morning briefing and breaking alerts are also prepared for a WhatsApp channe
 
 Set `WHATSAPP_CHANNEL_URL` to the channel invite (`https://whatsapp.com/channel/…`). Editors copy today’s post from **Newsroom → WhatsApp**, paste it into the channel, and mark it posted. The same morning edition, and the same breaking story, can be marked once. The weekday email schedule does not post to WhatsApp.
 
-Run `npm run test:whatsapp` for the in-memory check of the post text and the once-only mark.
+`npm test` includes the in-memory check of the post text and the once-only mark (`tests/whatsapp.test.ts`).
 
 ## Moving posts over from WordPress
 
