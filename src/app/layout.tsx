@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Libre_Franklin, Newsreader, Playfair_Display, Source_Serif_4 } from "next/font/google";
+import localFont from "next/font/local";
 import { ROBOTS, RSS_ALTERNATE, SHARE_IMAGE } from "@/lib/seo";
 import { HOME_DESCRIPTION, HOME_TITLE, OG_LOCALE, TWITTER_HANDLE } from "@/lib/site";
 import { siteUrl } from "@/lib/utils";
@@ -8,22 +8,39 @@ import "./globals.css";
 // Playfair for the masthead, Newsreader for headlines, Source Serif 4 for body text, Libre Franklin for UI.
 // Headlines are Newsreader roman at weight 600. The italic cut and the variable weight range were
 // preloaded as two files of about 140KB each, and those two requests were the slowest on a phone.
-const playfair = Playfair_Display({ subsets: ["latin"], weight: "600", variable: "--font-playfair", display: "swap", preload: false });
-const headline = Newsreader({
-  subsets: ["latin"],
+// The files are Google Fonts' latin subsets, kept in the repo so a build never depends on reaching Google.
+const playfair = localFont({
+  src: "../fonts/playfair-display-600.woff2",
+  weight: "600",
+  variable: "--font-playfair",
+  display: "swap",
+  preload: false,
+  adjustFontFallback: "Times New Roman",
+});
+const headline = localFont({
+  src: "../fonts/newsreader-600.woff2",
   weight: "600",
   variable: "--font-newsreader",
   display: "swap",
+  adjustFontFallback: "Times New Roman",
 });
-const serif = Source_Serif_4({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  style: ["normal", "italic"],
+const serif = localFont({
+  src: [
+    { path: "../fonts/source-serif-4.woff2", weight: "400 700", style: "normal" },
+    { path: "../fonts/source-serif-4-italic.woff2", weight: "400 700", style: "italic" },
+  ],
   variable: "--font-source-serif",
   display: "swap",
   preload: false,
+  adjustFontFallback: "Times New Roman",
 });
-const sans = Libre_Franklin({ subsets: ["latin"], weight: ["400", "600", "700", "800"], variable: "--font-franklin", display: "swap" });
+const sans = localFont({
+  src: "../fonts/libre-franklin.woff2",
+  weight: "400 800",
+  variable: "--font-franklin",
+  display: "swap",
+  adjustFontFallback: "Arial",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl()),
