@@ -1,6 +1,8 @@
 # Fly.io settings for Report Focus News. Deploy steps are in the README under "Deploying on Fly.io".
 app = "report-focus"
 primary_region = "lhr"
+# Disk-backed overflow so a memory spike slows the site down instead of freezing it.
+swap_size_mb = 512
 
 [build.args]
   DATABASE_URL = "libsql://report-focus-sambulosenda.aws-eu-west-1.turso.io"
@@ -20,6 +22,8 @@ primary_region = "lhr"
   NEXT_PUBLIC_SITE_TIMEZONE = "Africa/Harare"
   EMAIL_PROVIDER = "console"
   SENTRY_ENVIRONMENT = "production"
+  # Caps the server's memory so it crashes and Fly restarts it, instead of hanging once the 1 GB machine fills up.
+  NODE_OPTIONS = "--max-old-space-size=640"
   # Umami visitor stats (cloud.umami.is). The ID is public: it is in every page's script tag.
   UMAMI_WEBSITE_ID = "7cb6e107-aea7-414c-8061-39795bbf480c"
   # Public channel invite. Readers join with one tap.
