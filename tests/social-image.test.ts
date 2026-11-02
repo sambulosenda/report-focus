@@ -19,10 +19,7 @@ test("share crops stay on our pictures and come out 1200 by 630", async () => {
     socialImageSrc("https://media.reportfocusnews.com/2026/10/a.jpg"),
     "https://media.reportfocusnews.com/2026/10/a.jpg",
   );
-  assert.equal(
-    socialImageSrc("https://backend.reportfocusnews.com/wp-content/uploads/photo.jpeg"),
-    "https://backend.reportfocusnews.com/wp-content/uploads/photo.jpeg",
-  );
+  assert.equal(socialImageSrc("https://backend.reportfocusnews.com/wp-content/uploads/photo.jpeg"), null);
   assert.equal(
     socialImagePath("https://media.reportfocusnews.com/2026/10/a.jpg"),
     "/social-image?v=2&src=https%3A%2F%2Fmedia.reportfocusnews.com%2F2026%2F10%2Fa.jpg",
