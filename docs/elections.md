@@ -22,7 +22,7 @@ Readers can filter by province and municipality, and use Refresh results to fetc
 
 `/elections/south-africa-2026?demo=1` displays fictional party names and totals with prominent demo labels and noindex metadata. Demo data is not stored in the database and is never mixed with verified results. The ordinary public page starts with “Awaiting verified results”.
 
-`npm run test:elections` uses an isolated in-memory database and checks vote arithmetic, dates, permissions, source URL validation, duplicate councils, drafts, publication, withdrawals, conflicts and saved revisions.
+`tests/elections.test.ts` (part of `npm test`) uses an isolated in-memory database and checks vote arithmetic, dates, permissions, source URL validation, duplicate councils, drafts, publication, withdrawals, conflicts and saved revisions.
 
 ## Official references
 
