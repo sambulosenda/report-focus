@@ -10,10 +10,11 @@ type Props = {
   sections: { label: string; href: string }[];
   live?: { title: string; href: string } | null;
   channelUrl?: string | null;
+  newsletters?: boolean;
 };
 
 /** Full-screen section menu for phones. */
-export function MobileMenu({ sections, channelUrl }: Props) {
+export function MobileMenu({ sections, channelUrl, newsletters }: Props) {
   const [open, setOpen] = useState(false);
   const path = usePathname();
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -102,9 +103,11 @@ export function MobileMenu({ sections, channelUrl }: Props) {
             <Link href="/login" className="flex h-[46px] items-center justify-center bg-teal text-[15px] font-bold text-white hover:bg-teal-hover">
               Sign in
             </Link>
-            <Link href="/newsletters" className="flex h-[46px] items-center justify-center border border-[#9ca3af] text-[15px] font-bold text-ink">
-              Get The Morning Focus newsletter
-            </Link>
+            {newsletters && (
+              <Link href="/newsletters" className="flex h-[46px] items-center justify-center border border-[#9ca3af] text-[15px] font-bold text-ink">
+                Get The Morning Focus newsletter
+              </Link>
+            )}
             {channelUrl && (
               <a href={channelUrl} target="_blank" rel="noopener noreferrer" className="flex h-[46px] items-center justify-center border border-[#9ca3af] text-[15px] font-bold text-ink">
                 Get the briefing on WhatsApp

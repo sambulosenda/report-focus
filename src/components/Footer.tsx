@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { donateUrl } from "@/lib/ads";
+import { emailIsLive } from "@/lib/email";
 import { navCategories } from "@/lib/queries";
 import { FOOTER_LINKS, SOCIAL, helpLinks } from "@/lib/site";
 import { whatsappChannelUrl } from "@/lib/whatsapp";
@@ -72,7 +73,7 @@ export async function Footer() {
           </div>
           <LinkColumn title="Latest" links={FOOTER_LINKS.watch} />
           <LinkColumn title="Company" links={donateUrl() ? [...FOOTER_LINKS.company, { label: "Support us", href: "/support" }] : FOOTER_LINKS.company} />
-          <LinkColumn title="Standards & help" links={helpLinks(whatsappChannelUrl())} />
+          <LinkColumn title="Standards & help" links={helpLinks(whatsappChannelUrl()).filter((l) => emailIsLive() || l.href !== "/newsletters")} />
         </nav>
       </div>
       <div className="border-t border-teal-line">
