@@ -195,6 +195,8 @@ After that, every push to `main` deploys itself. `.github/workflows/deploy.yml` 
 
 Run it by hand from the Actions tab (Deploy, then Run workflow), and run `scripts/smoke.sh` yourself after a manual `fly deploy`.
 
+If the deploy or the smoke test fails, the workflow redeploys the image that was running before, with the `fly.toml` from that image's commit, and the run stays red. Tick "rehearse rollback" on a manual run to test this.
+
 ### Caching and traffic spikes
 
 Reader pages are cached and rebuilt at most once a minute (live pages every 15 seconds). Publishing, editing or posting a live update refreshes them straight away. Each page is sent with `Cache-Control: s-maxage=…`, so a CDN can serve it too:
