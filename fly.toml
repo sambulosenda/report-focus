@@ -10,6 +10,8 @@ swap_size_mb = 512
   S3_PUBLIC_URL = "https://media.reportfocusnews.com"
   SITE_TIMEZONE = "Africa/Harare"
   NEXT_PUBLIC_SITE_TIMEZONE = "Africa/Harare"
+  # A Sentry DSN is public by design: browsers send errors with it.
+  NEXT_PUBLIC_SENTRY_DSN = "https://697f8934083c64a2777c7c32a2327015@o4507288629608448.ingest.de.sentry.io/4512353132478544"
   UMAMI_WEBSITE_ID = "7cb6e107-aea7-414c-8061-39795bbf480c"
   WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VaAG1nY9WtC0hdfiVb1V"
 
@@ -20,6 +22,7 @@ swap_size_mb = 512
   S3_REGION = "auto"
   SITE_TIMEZONE = "Africa/Harare"
   NEXT_PUBLIC_SITE_TIMEZONE = "Africa/Harare"
+  SENTRY_DSN = "https://697f8934083c64a2777c7c32a2327015@o4507288629608448.ingest.de.sentry.io/4512353132478544"
   EMAIL_PROVIDER = "console"
   SENTRY_ENVIRONMENT = "production"
   # Caps the server's memory so it crashes and Fly restarts it, instead of hanging once the 1 GB machine fills up.
