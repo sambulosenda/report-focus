@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { AdSlot } from "@/components/AdSlot";
 import { FollowCard } from "@/components/FollowCard";
 import { Kicker, NumberedList, RiverStory, SectionTitle, StoryImage, storyHref } from "@/components/Story";
@@ -23,7 +24,8 @@ export async function generateMetadata({ params, pageNumber = 1 }: Props): Promi
   const cat = await categoryBySlug(slug);
   if (cat) {
     const path = sectionPath(cat.slug, pageNumber);
-    return pageMeta({ title: `${cat.name} News`, description: sectionMetaDescription(cat), path, noNewsIndex: true });
+    const title = pageNumber > 1 ? `${cat.name} News, Page ${pageNumber}` : `${cat.name} News`;
+    return pageMeta({ title, description: sectionMetaDescription(cat), path, noNewsIndex: true });
   }
   const info = INFO_PAGES[slug];
   return info ? pageMeta({ title: info.title, description: metaDescription(info.description), path: `/${slug}`, noindex: info.noindex, noNewsIndex: true }) : NOT_FOUND_METADATA;
@@ -60,6 +62,8 @@ export async function SectionPage({ params, pageNumber = 1 }: Props) {
   if (withArt > 0) top.unshift(...top.splice(withArt, 1));
   const [lead, ...second] = top;
   const river = stories.slice(topCount, topCount + RIVER);
+  // A page past the last story would be an empty "soft 404" to Google.
+  if (page > 1 && !river.length) notFound();
   const hasNext = stories.length > topCount + RIVER;
   const description = sectionMetaDescription(cat);
   const ld = collectionLd({

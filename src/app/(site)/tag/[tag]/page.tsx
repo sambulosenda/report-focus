@@ -5,7 +5,7 @@ import { cache } from "react";
 import { CardStory, RiverStory } from "@/components/Story";
 import { FollowCard } from "@/components/FollowCard";
 import { topicFollowList } from "@/lib/following";
-import { storiesByTag } from "@/lib/queries";
+import { categoryBySlug, storiesByTag } from "@/lib/queries";
 import { collectionLd, ldJson, NOT_FOUND_METADATA, pageMeta, topicMetaDescription } from "@/lib/seo";
 import { tagName, tagSlug } from "@/lib/tags";
 import { siteUrl, timeAgo } from "@/lib/utils";
@@ -38,7 +38,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${name} News`,
     description: topicMetaDescription(name),
     path: `/tag/${encodeURIComponent(slug)}`,
-    noindex: !(new Map(await indexedTopics())).has(slug),
+    // A tag named like a section ("politics") would compete with the section page in search.
+    noindex: !(new Map(await indexedTopics())).has(slug) || !!await categoryBySlug(slug),
     noNewsIndex: true,
   });
 }

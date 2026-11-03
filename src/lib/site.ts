@@ -21,6 +21,15 @@ const SECTION_BLURBS: Record<string, string> = {
     "Independent reporting and analysis on South Africa: politics, crime, business and the news that matters to South Africans at home and abroad.",
   africa:
     "Independent reporting and analysis on Africa beyond the Zimbabwe and South Africa desks: politics, conflict, business, health and climate.",
+  world: "World news and analysis: conflict, diplomacy and global events, with what they mean for Zimbabwe, South Africa and the rest of Africa.",
+  politics: "Political news and analysis from Zimbabwe, South Africa and across Africa: elections, parliament, parties, government policy and the people in power.",
+  business: "Business and economic news from Zimbabwe, South Africa and Africa: markets, the currency, jobs, trade, mining and what it means for your money.",
+  technology: "Technology news for Zimbabwe, South Africa and Africa: mobile money, telecoms, startups, internet access and the tech changing how people live.",
+  health: "Health news from Zimbabwe, South Africa and across Africa: hospitals, disease outbreaks, medicine, public health policy and wellbeing.",
+  climate: "Climate and environment news from Zimbabwe, South Africa and Africa: drought, floods, weather, wildlife, energy and the cost of a changing climate.",
+  sports: "Sports news from Zimbabwe, South Africa and Africa: football, cricket, rugby, athletics and the players, results and stories behind the games.",
+  entertainment: "Entertainment news from Zimbabwe, South Africa and Africa: music, film, TV, celebrities, culture and the artists people are talking about.",
+  crime: "Crime and courts news from Zimbabwe, South Africa and Africa: police investigations, arrests, trials, corruption cases and justice for victims.",
 };
 
 /** Meta description for a section. A stored newsroom description is used instead when it is already a full sentence. */
@@ -31,9 +40,9 @@ export function sectionBlurb(slug: string, name: string) {
   );
 }
 
-/** Meta description for a writer who has not written a biography yet. */
+/** Meta description for a writer who has not written a biography yet. Avoids "by <name>", which cleanLead strips as a byline. */
 export function authorBlurb(name: string) {
-  return `Read the stories by ${name} for Report Focus News, with reporting and analysis on Zimbabwe, South Africa and the rest of Africa.`;
+  return `Stories, reporting and analysis from ${name} for Report Focus News, covering Zimbabwe, South Africa and the rest of Africa.`;
 }
 
 /** Meta description for a topic page. */
