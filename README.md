@@ -216,6 +216,8 @@ Reader pages are cached and rebuilt at most once a minute (live pages every 15 s
 
 Set `SITE_URL` to your public address so RSS, sitemap and share links are correct.
 
+In production the server checks its settings when it starts (`src/lib/env-check.ts`). If `SITE_URL` or `DATABASE_URL` is missing, a remote database has no `DATABASE_AUTH_TOKEN`, or an optional setting is set to a bad value, every request fails with the problem in the log, so the health check fails and the deploy stops instead of serving wrong pages.
+
 Optional settings:
 
 - `SITE_TIMEZONE` and `NEXT_PUBLIC_SITE_TIMEZONE`: the newsroom's time zone for dates and times on the site (default `America/New_York`)
