@@ -46,6 +46,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const bySection = new Map<string, Date>();
   const byWriter = new Map<string, Date>();
   const byTag = await indexedTopics();
+  const sectionSlugs = new Set(cats.map((c) => c.slug));
   let latest: Date | undefined;
   const listed = stories.filter((s) => !isWireByline(s.author.name));
   for (const s of listed) {
@@ -54,7 +55,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Desk bylines, wire copy and unconfirmed username accounts have no profile worth listing.
     if (!isDeskByline(s.author.name) && !isUnconfirmedAuthor(s.author.slug)) newest(byWriter, s.author.slug, s.updatedAt);
   }
-  const sectionSlugs = new Set(cats.map((c) => c.slug));
 
   return [
     // The same address as the homepage's canonical link, including the trailing slash.
@@ -67,7 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       images: s.heroImage ? [absoluteUrl(s.heroImage)] : undefined,
     })),
     ...[...byWriter].map(([slug, d]) => ({ url: siteUrl(`/author/${slug}`), lastModified: d })),
-    ...[...byTag]
+    ...[...byTag].filter(([slug]) => !sectionSlugs.has(slug))
       .map(([slug, t]) => ({ url: siteUrl(`/tag/${encodeURIComponent(slug)}`), lastModified: t.at })),
     ...Object.entries(INFO_PAGES)
       .filter(([slug, page]) => !page.noindex && !sectionSlugs.has(slug))

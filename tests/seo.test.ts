@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { metaDescription, sectionMetaDescription } from "../src/lib/seo";
+import { authorMetaDescription, metaDescription, sectionMetaDescription } from "../src/lib/seo";
 import { topicIndex } from "../src/lib/topic-index";
 import { TAG_INDEX_MIN } from "../src/lib/tags";
 
@@ -24,6 +24,16 @@ test("legacy bylines and datelines do not leak into metadata", () => {
   assert.doesNotMatch(metaDescription("Muhoozi vs Trump is not a tweet-war — it’s Uganda’s election crisis entering Washington’s bloodstream By Brilliant Pongo Report Focus News | Political Analyst & Editor’s Desk The Update Uganda’s Chief of Defence Forces, Gen. Muhoozi Kainerugaba, has issued a public warning aimed at U.S. President…"), /By Brilliant|\|/);
   assert.equal(metaDescription("KIGALI, Rwanda – The report was released."), "The report was released.");
   assert.doesNotMatch(sectionMetaDescription({slug: "us", name: "US"}), /independent reporting and analysis on Zimbabwe/);
+});
+
+test("section and author descriptions are full sentences search engines can quote", () => {
+  for (const slug of ["zimbabwe", "south-africa", "africa", "us", "world", "politics", "business", "technology", "health", "climate", "sports", "entertainment", "crime"]) {
+    const d = sectionMetaDescription({slug, name: slug});
+    assert.ok(d.length >= 120 && d.length <= 155 && d.endsWith("."), `${slug}: ${d}`);
+  }
+  const author = authorMetaDescription("Mickal Dube", null);
+  assert.match(author, /Mickal Dube/);
+  assert.ok(author.length >= 120 && author.endsWith("."), author);
 });
 
 test("topic eligibility ignores wire copy and duplicate spellings in one story", () => {
