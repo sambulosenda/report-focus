@@ -232,6 +232,7 @@ export default async function ArticlePage({ params }: Props) {
                 alt={article.heroAlt ?? ""}
                 fill
                 priority
+                fetchPriority="high"
                 sizes="(min-width: 1080px) 1080px, 100vw"
                 unoptimized={!canOptimize(article.heroImage)}
                 className="object-cover"

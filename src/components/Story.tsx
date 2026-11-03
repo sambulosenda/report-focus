@@ -50,6 +50,8 @@ export function StoryImage({
         fill
         sizes={sizes}
         priority={priority}
+        // priority only preloads. Without this hint the browser fetches the lead picture at the same rank as the rest.
+        fetchPriority={priority ? "high" : undefined}
         unoptimized={!canOptimize(story.heroImage)}
         className="object-cover"
       />
