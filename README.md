@@ -188,6 +188,13 @@ First deploy:
    `fly deploy --ha=false --build-secret DATABASE_AUTH_TOKEN="$(turso db tokens create <db name>)"`
 6. Check `https://<app>.fly.dev`, then point the domain at it: `fly certs add reportfocusnews.com` and follow what it prints.
 
+After that, every push to `main` deploys itself. `.github/workflows/deploy.yml` waits for CI to pass on the commit, runs `fly deploy`, then `scripts/smoke.sh` checks the live site. It needs two repository secrets:
+
+- `FLY_API_TOKEN`: `gh secret set FLY_API_TOKEN --body "$(fly tokens create deploy -a <app>)"`
+- `DATABASE_AUTH_TOKEN`: `gh secret set DATABASE_AUTH_TOKEN --body "$(turso db tokens create <db name>)"` (the build runs migrations, so not a read-only token)
+
+Run it by hand from the Actions tab (Deploy, then Run workflow), and run `scripts/smoke.sh` yourself after a manual `fly deploy`.
+
 ### Caching and traffic spikes
 
 Reader pages are cached and rebuilt at most once a minute (live pages every 15 seconds). Publishing, editing or posting a live update refreshes them straight away. Each page is sent with `Cache-Control: s-maxage=…`, so a CDN can serve it too:
