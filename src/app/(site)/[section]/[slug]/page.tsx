@@ -9,6 +9,7 @@ import { FollowCard } from "@/components/FollowCard";
 import { storyFollowList } from "@/lib/following";
 import { LiveBadge } from "@/components/LiveBadge";
 import { NewsletterCard } from "@/components/NewsletterForm";
+import { emailIsLive } from "@/lib/email";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { ShareButtons } from "@/components/ShareButtons";
 import { SaveArticleButton } from "@/components/SavedArticles";
@@ -314,7 +315,7 @@ export default async function ArticlePage({ params }: Props) {
                 <NumberedList stories={popular} numberSize="lg" />
               </div>
               <AdSlot placement="sidebar" />
-              <NewsletterCard text="Five stories before 8 a.m., every weekday." />
+              {emailIsLive() && <NewsletterCard text="Five stories before 8 a.m., every weekday." />}
             </div>
           </aside>
         </div>

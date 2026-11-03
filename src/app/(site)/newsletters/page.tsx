@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { NewsletterCard } from "@/components/NewsletterForm";
 import { WhatsAppJoin } from "@/components/WhatsAppJoin";
 import { STANDING_LISTS, sectionDescription } from "@/lib/newsletters";
 import { navCategories } from "@/lib/queries";
 import { SITE_NAME } from "@/lib/site";
+import { emailIsLive } from "@/lib/email";
 
 export const metadata: Metadata = {
   title: "Newsletters",
@@ -12,6 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function NewslettersPage() {
+  if (!emailIsLive()) notFound();
   const cats = await navCategories();
   return (
     <div className="mx-auto max-w-[1080px] px-4 pb-16 pt-8 md:px-6 md:pt-12">

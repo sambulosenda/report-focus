@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { emailIsLive } from "@/lib/email";
 import { AdSlot } from "@/components/AdSlot";
 import { FollowCard } from "@/components/FollowCard";
 import { Kicker, NumberedList, RiverStory, SectionTitle, StoryImage, storyHref } from "@/components/Story";
@@ -90,9 +91,11 @@ export async function SectionPage({ params, pageNumber = 1 }: Props) {
             </nav>
           )}
         </div>
-        <a href="#section-newsletter" className="inline-flex h-10 items-center border border-teal px-4 text-sm font-bold text-teal hover:bg-teal hover:text-white">
-          Follow {cat.name}
-        </a>
+        {emailIsLive() && (
+          <a href="#section-newsletter" className="inline-flex h-10 items-center border border-teal px-4 text-sm font-bold text-teal hover:bg-teal hover:text-white">
+            Follow {cat.name}
+          </a>
+        )}
       </header>
 
       {stories.length === 0 && <p className="py-10 text-muted">No stories in {cat.name} yet.</p>}
@@ -147,11 +150,13 @@ export async function SectionPage({ params, pageNumber = 1 }: Props) {
             </div>
           )}
           <AdSlot />
-          <div id="section-newsletter"><FollowCard
-            title={`Follow ${cat.name}`}
-            description={`Get the day’s top ${cat.name} stories by email each weekday. Confirm your email to start; unsubscribe at any time.`}
-            list={`section-${cat.slug}`}
-          /></div>
+          {emailIsLive() && (
+            <div id="section-newsletter"><FollowCard
+              title={`Follow ${cat.name}`}
+              description={`Get the day’s top ${cat.name} stories by email each weekday. Confirm your email to start; unsubscribe at any time.`}
+              list={`section-${cat.slug}`}
+            /></div>
+          )}
         </aside>
       </div>
     </div>

@@ -8,6 +8,7 @@ import { INFO_PAGES } from "@/lib/site";
 import { indexedTopics } from "@/lib/topic-queries";
 import { siteUrl } from "@/lib/utils";
 import { whatsappChannelUrl } from "@/lib/whatsapp";
+import { emailIsLive } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...Object.entries(INFO_PAGES)
       .filter(([slug, page]) => !page.noindex && !sectionSlugs.has(slug))
       .map(([slug]) => ({ url: siteUrl(`/${slug}`) })),
-    { url: siteUrl("/newsletters") },
+    ...(emailIsLive() ? [{ url: siteUrl("/newsletters") }] : []),
     ...(whatsappChannelUrl() ? [{ url: siteUrl("/whatsapp") }] : []),
     { url: siteUrl("/elections/south-africa-2026") },
   ];
