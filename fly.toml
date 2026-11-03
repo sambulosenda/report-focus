@@ -33,6 +33,11 @@ swap_size_mb = 512
   # Public channel invite. Readers join with one tap.
   WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VaAG1nY9WtC0hdfiVb1V"
 
+# Checks settings on a throwaway machine with the new image and secrets. A failure stops the deploy before the live
+# machine is touched. Blue-green deploys would also catch crashing code, but Fly doesn't allow them with a volume.
+[deploy]
+  release_command = "npx tsx scripts/check-env.ts"
+
 [processes]
   app = "npx next start -H 0.0.0.0 -p 3000"
   cron = "/app/deploy/cron.sh"
