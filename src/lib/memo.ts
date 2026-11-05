@@ -4,7 +4,7 @@
  */
 export function memo<T>(ttlMs: number, fn: () => Promise<T>, now: () => number = Date.now) {
   let entry: { at: number; value: Promise<T> } | null = null;
-  return (): Promise<T> => {
+  const get = (): Promise<T> => {
     if (entry && now() - entry.at < ttlMs) return entry.value;
     const value = fn();
     const mine = { at: now(), value };
@@ -12,4 +12,7 @@ export function memo<T>(ttlMs: number, fn: () => Promise<T>, now: () => number =
     value.catch(() => { if (entry === mine) entry = null; });
     return value;
   };
+  /** Drops the kept value, so the next call reads again. */
+  get.reset = () => { entry = null; };
+  return get;
 }

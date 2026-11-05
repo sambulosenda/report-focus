@@ -1,39 +1,13 @@
 import type { MetadataRoute } from "next";
-import { desc, eq } from "drizzle-orm";
-import { db } from "@/db";
-import { articles, categories, users } from "@/db/schema";
-import { allCategories, isLive } from "@/lib/queries";
+import { allCategories, sitemapStories } from "@/lib/queries";
 import { absoluteUrl, isDeskByline, isUnconfirmedAuthor, isWireByline } from "@/lib/seo";
 import { INFO_PAGES } from "@/lib/site";
 import { indexedTopics } from "@/lib/topic-queries";
 import { siteUrl } from "@/lib/utils";
 import { whatsappChannelUrl } from "@/lib/whatsapp";
-import { memo } from "@/lib/memo";
 import { emailIsLive } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
-
-// One sitemap file holds up to 50,000 addresses; leave room for sections and authors.
-const MAX_STORIES = 45_000;
-
-// Crawlers fetch the sitemap often and it reads every story, so the list is kept for ten minutes.
-const sitemapStories = memo(10 * 60_000, async () =>
-  db
-      .select({
-        slug: articles.slug,
-        section: categories.slug,
-        heroImage: articles.heroImage,
-        tags: articles.tags,
-        updatedAt: articles.updatedAt,
-        author: { slug: users.slug, name: users.name },
-      })
-      .from(articles)
-      .leftJoin(categories, eq(categories.id, articles.categoryId))
-      .innerJoin(users, eq(users.id, articles.authorId))
-      .where(isLive())
-      .orderBy(desc(articles.publishedAt))
-      .limit(MAX_STORIES),
-);
 
 /**
  * Every public story, section, writer, topic hub and standing page search engines should index.

@@ -8,6 +8,7 @@ import { db } from "@/db";
 import { HOME_PIN_HOURS, HOME_SLOTS, HOME_SLOT_LABEL, KINDS, articles, homePins, liveUpdates, media } from "@/db/schema";
 import type { FormState } from "@/actions/auth";
 import { requireUser } from "@/lib/auth";
+import { resetStoryCaches } from "@/lib/queries";
 import { canDeleteArticle, canEditArticle, canPublish } from "@/lib/permissions";
 import { saveImage } from "@/lib/storage";
 import { formatDateTime, slugify } from "@/lib/utils";
@@ -164,6 +165,7 @@ export async function saveArticle(_prev: ArticleFormState, formData: FormData, r
   // Rescheduling a live story into the future takes it off the site too.
   if (existing && (status !== "published" || (publishedAt && publishedAt > new Date()))) await db.delete(homePins).where(eq(homePins.articleId, existing.id));
 
+  resetStoryCaches();
   revalidatePath("/", "layout");
   if (!existing && !returnNavigation) redirect(`/newsroom/articles/${id}?created=1`);
 
@@ -189,6 +191,7 @@ export async function deleteArticle(formData: FormData) {
     db.delete(homePins).where(eq(homePins.articleId, id)),
     db.delete(articles).where(eq(articles.id, id)),
   ]);
+  resetStoryCaches();
   revalidatePath("/", "layout");
   redirect("/newsroom/articles?deleted=1");
 }

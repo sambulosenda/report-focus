@@ -40,7 +40,24 @@ test("related stories and tag pages stay correct without reading the whole table
   const plan = await db.all<{ detail: string }>(sql`explain query plan select id from articles where id in (select id from articles where status = 'published' order by published_at desc limit 300)`);
   assert.ok(plan.some((r) => r.detail.includes("PRIMARY KEY")), "outer query looks stories up by id");
 
+  // Push the tagged stories out of the 300-story window with newer untagged ones.
+  const { categories } = await import("../src/db/schema");
+  const [quiet, busy] = await db.insert(categories).values([{ name: "Quiet", slug: "quiet" }, { name: "Busy", slug: "busy" }]).returning();
+  const [oldQuiet] = await db.insert(articles).values({ ...story("old-quiet", "Zimbabwe", 600), categoryId: quiet.id }).returning();
+  await db.insert(articles).values(Array.from({ length: 300 }, (_, i) => ({ ...story(`filler-${i}`, "", 0.5), categoryId: busy.id })));
+  const windowed = (await relatedStories(source.id, null, source.tags)).map((s) => s.slug);
+  assert.ok(!windowed.includes("both-tags"), "stories older than the window are not scored");
+  const quietRelated = (await relatedStories(source.id, quiet.id, source.tags)).map((s) => s.id);
+  assert.deepEqual(quietRelated, [oldQuiet.id], "a quiet section still gets its newest stories");
+
   assert.deepEqual((await storiesByTag("ZANU-PF")).map((s) => s.slug).sort(), ["both-tags", "source"]);
   assert.deepEqual(await storiesByTag("no-such-tag"), [], "unknown tags skip the table scan");
   assert.deepEqual(await storiesByTag("ai"), [], "a short tag doesn't match inside another word");
+
+  // A newly tagged story shows up at once after a save resets the tag set.
+  const { resetStoryCaches } = await import("../src/lib/queries");
+  await db.insert(articles).values(story("new-topic", "Fresh topic", 0.2));
+  assert.deepEqual(await storiesByTag("fresh topic"), [], "the kept tag set predates the story");
+  resetStoryCaches();
+  assert.deepEqual((await storiesByTag("fresh topic")).map((s) => s.slug), ["new-topic"]);
 });

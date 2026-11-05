@@ -269,9 +269,10 @@ export async function relatedStories(
     excludeKind ? ne(articles.kind, excludeKind) : undefined,
   ];
 
-  if (tagList.length === 0) {
-    return storyQuery().where(and(isLive(), ...filters)).orderBy(...newestFirst).limit(limit);
-  }
+  const newestMatching = (skip: number[] = []) =>
+    storyQuery().where(and(isLive(), ...filters, skip.length ? notInArray(articles.id, skip) : undefined)).orderBy(...newestFirst).limit(limit - skip.length);
+
+  if (tagList.length === 0) return newestMatching();
 
   // Score only the newest live stories. Scoring by tag can't use an index, so without this window every story page
   // read the whole articles table each time it was rebuilt. The live check sits inside the window on purpose:
@@ -296,7 +297,9 @@ export async function relatedStories(
     .orderBy(sql`${scoreCol} desc`, ...newestFirst)
     .limit(limit);
 
-  return rows.map(({ _score, ...s }) => s);
+  const scored = rows.map(({ _score, ...s }) => s);
+  // A quiet section may have nothing in the window; top up with its newest stories, as the untagged path does.
+  return scored.length < limit ? [...scored, ...(await newestMatching(scored.map((s) => s.id)))] : scored;
 }
 
 /** The stories for a newsletter edition: the past day's top stories, editors' picks first, then the most read. */
@@ -437,4 +440,32 @@ export async function legacyTarget(key: string) {
   const live = row.status === "published" && row.publishedAt && row.publishedAt <= new Date();
   if (!row.articleSlug || !live) return null;
   return `/${row.section ?? "news"}/${row.articleSlug}`;
+}
+
+// One sitemap file holds up to 50,000 addresses; leave room for sections and authors.
+const SITEMAP_MAX_STORIES = 45_000;
+
+// Crawlers fetch the sitemap often and it reads every story, so the list is kept for ten minutes.
+export const sitemapStories = memo(10 * 60_000, async () =>
+  db
+      .select({
+        slug: articles.slug,
+        section: categories.slug,
+        heroImage: articles.heroImage,
+        tags: articles.tags,
+        updatedAt: articles.updatedAt,
+        author: { slug: users.slug, name: users.name },
+      })
+      .from(articles)
+      .leftJoin(categories, eq(categories.id, articles.categoryId))
+      .innerJoin(users, eq(users.id, articles.authorId))
+      .where(isLive())
+      .orderBy(desc(articles.publishedAt))
+      .limit(SITEMAP_MAX_STORIES),
+);
+
+/** Call after a story is saved, deleted or published, so the tag set and sitemap list don't wait out their timers. */
+export function resetStoryCaches() {
+  liveTagSet.reset();
+  sitemapStories.reset();
 }
