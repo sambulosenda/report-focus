@@ -3,6 +3,8 @@ import { and, desc, eq, inArray, like, lte, ne, notInArray, or, sql, type Column
 import { cache } from "react";
 import { db } from "@/db";
 import { articles, categories, homePins, legacyRedirects, liveUpdates, users, type Kind } from "@/db/schema";
+import { memo } from "./memo";
+import { tagNeedle, tagTokens } from "./tag-tokens";
 
 /** A story is public once it is published and its publish time has arrived (future times act as a schedule). */
 export const isLive = () => and(eq(articles.status, "published"), lte(articles.publishedAt, new Date()));
@@ -240,6 +242,9 @@ export async function storiesByAuthor(authorId: number, limit = 30, offset = 0) 
     .offset(offset);
 }
 
+/** How many of the newest stories relatedStories scores. */
+const RELATED_WINDOW = 300;
+
 /**
  * Stories related to the given article, ranked by tag overlap then recency.
  * Scores each candidate by how many of its tags appear in the source story's
@@ -258,16 +263,20 @@ export async function relatedStories(
     .map((t) => t.trim().toLowerCase())
     .filter((t) => t && t !== "sample");
 
-  const baseWhere = and(
-    isLive(),
+  const filters = [
     ne(articles.id, articleId),
     categoryId ? eq(articles.categoryId, categoryId) : undefined,
     excludeKind ? ne(articles.kind, excludeKind) : undefined,
-  );
+  ];
 
   if (tagList.length === 0) {
-    return storyQuery().where(baseWhere).orderBy(...newestFirst).limit(limit);
+    return storyQuery().where(and(isLive(), ...filters)).orderBy(...newestFirst).limit(limit);
   }
+
+  // Score only the newest live stories. Scoring by tag can't use an index, so without this window every story page
+  // read the whole articles table each time it was rebuilt. The live check sits inside the window on purpose:
+  // repeating it outside makes SQLite walk every published story again instead of looking up these ids.
+  const recent = db.select({ id: articles.id }).from(articles).where(isLive()).orderBy(desc(articles.publishedAt)).limit(RELATED_WINDOW);
 
   // Score each row by how many tags it shares with the source article.
   const tagScoreExpr = tagList.map((tag) =>
@@ -283,7 +292,7 @@ export async function relatedStories(
     .from(articles)
     .leftJoin(categories, eq(categories.id, articles.categoryId))
     .innerJoin(users, eq(users.id, articles.authorId))
-    .where(baseWhere)
+    .where(and(inArray(articles.id, recent), ...filters))
     .orderBy(sql`${scoreCol} desc`, ...newestFirst)
     .limit(limit);
 
@@ -345,9 +354,22 @@ export async function knownTags(limit = 500) {
   return [...counts.values()].sort((a, b) => b.n - a.n).slice(0, limit).map((t) => t.label);
 }
 
+/**
+ * Every tag on a live story, refreshed every five minutes. The tag lookup below can't use an index and reads the
+ * whole articles table, so unknown tags (old WordPress tag links that bots keep crawling) are turned away here.
+ */
+const liveTagSet = memo(5 * 60_000, async () => {
+  const rows = await db.select({ tags: articles.tags }).from(articles).where(isLive());
+  const all = new Set<string>();
+  for (const r of rows) for (const t of tagTokens(r.tags)) all.add(t);
+  return all;
+});
+
 /** Stories carrying this exact tag (any case), so "ai" doesn't also match "Ukraine". */
 export async function storiesByTag(tag: string, limit = 30) {
-  const needle = `%,${tag.trim().toLowerCase().replace(/[%_]/g, "")},%`;
+  const clean = tagNeedle(tag);
+  if (!clean || !(await liveTagSet()).has(clean)) return [];
+  const needle = `%,${clean},%`;
   return storyQuery()
     .where(and(isLive(), like(sql`',' || replace(lower(${articles.tags}), ', ', ',') || ','`, needle)))
     .orderBy(desc(articles.publishedAt))
