@@ -9,7 +9,6 @@ RUN npm ci
 COPY . .
 
 # Settings the build bakes in. They're not secret, so fly.toml passes them as build args.
-ARG DATABASE_URL
 ARG SITE_URL
 ARG S3_PUBLIC_URL
 ARG SITE_TIMEZONE=America/New_York
@@ -25,11 +24,10 @@ ARG NEXT_PUBLIC_SOCIAL_TIKTOK
 ARG UMAMI_WEBSITE_ID
 ARG WHATSAPP_CHANNEL_URL
 
-# The build reads the database to prepare the homepage, so migrations run first (the README's order).
-# The Turso token arrives as a build secret: `fly deploy --build-secret DATABASE_AUTH_TOKEN=...`. It never lands in the image.
-RUN --mount=type=secret,id=DATABASE_AUTH_TOKEN \
-    export DATABASE_AUTH_TOKEN="$(cat /run/secrets/DATABASE_AUTH_TOKEN 2>/dev/null)" && \
-    npm run db:migrate && npm run build
+# The real database is a file on the Fly volume, which a build can't see. So the build runs against an empty one,
+# then throws away the blank pages it prepared: the server builds them from the real database on first visit.
+RUN export DATABASE_URL=file:./data/build.db && \
+    npm run db:migrate && npm run build && node deploy/drop-prerendered.mjs && rm -rf data
 
 FROM node:22-slim
 WORKDIR /app
@@ -42,5 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
     chmod +x /usr/local/bin/supercronic
 # Dev dependencies stay: the backup job runs its script with tsx.
 COPY --from=build /app ./
+# Resized pictures go to the volume, so a new release doesn't re-encode the whole archive on first visit.
+RUN rm -rf .next/cache/images && ln -s /data/image-cache .next/cache/images
 EXPOSE 3000
-CMD ["npx", "next", "start", "-H", "0.0.0.0", "-p", "3000"]
+CMD ["/app/deploy/start.sh"]

@@ -329,8 +329,7 @@ Staff who sign in to the newsroom get one cookie that keeps them signed in. It i
 
 We do not sell your information. We share it only with services that help us run the site, and only as far as they need it:
 
-- Fly.io, which hosts the site
-- Turso, which stores our database
+- Fly.io, which hosts the site and stores our database
 - Cloudflare, which delivers pages and photos
 - Resend, which sends our emails
 - Sentry, which reports errors

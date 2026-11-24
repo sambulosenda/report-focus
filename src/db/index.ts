@@ -11,6 +11,8 @@ const client =
     url: process.env.DATABASE_URL ?? "file:./data/report-focus.db",
     authToken: process.env.DATABASE_AUTH_TOKEN || undefined,
     fetch: fetchWithTimeout(10_000),
+    // File databases only: a write waits this long for another write to finish instead of failing at once.
+    timeout: 5_000,
   });
 
 if (process.env.NODE_ENV !== "production") globalForDb.client = client;

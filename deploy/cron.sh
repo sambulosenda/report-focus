@@ -1,7 +1,7 @@
 #!/bin/sh
-# Scheduled jobs for the "cron" machine on Fly.io. Times are in SITE_TIMEZONE.
+# Scheduled jobs on Fly.io, started by deploy/start.sh next to the website. Times are in SITE_TIMEZONE.
 #   - The day's newsletters, weekdays at NEWSLETTER_TIME (default 06:30). Each edition goes out at most once a day, so retries are safe.
-#   - A database backup every night at 02:15, only when BACKUP_S3_BUCKET is set (this machine's disk is wiped on restart).
+#   - A database backup every night at 02:15, only when BACKUP_S3_BUCKET is set.
 set -eu
 time="${NEWSLETTER_TIME:-06:30}"
 hour="${time%%:*}"
