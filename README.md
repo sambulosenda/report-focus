@@ -187,7 +187,13 @@ First deploy:
 5. Deploy: `fly deploy --ha=false`. The machine runs the migrations each time it starts.
 6. Check `https://<app>.fly.dev`, then point the domain at it: `fly certs add reportfocusnews.com` and follow what it prints.
 
-The database is one file, `/data/db/report-focus.db`. To restore a backup, stop the site, replace that file (`sqlite3 report-focus.db < backups/<file>.sql`, then `fly ssh sftp`), and start it again. Fly also keeps daily snapshots of the volume for five days.
+The database is one file, `/data/db/report-focus.db`. To restore a backup:
+
+1. Build the file on your computer: `sqlite3 restore.db < backups/<file>.sql`.
+2. Upload it next to the live one while the site runs: `fly ssh sftp put restore.db /data/db/restore.db`.
+3. Swap it in and restart, so the server opens the new file: `fly ssh console -C "sh -c 'cd /data/db && rm -f report-focus.db-wal report-focus.db-shm && mv restore.db report-focus.db'"`, then `fly machine restart <machine id>`.
+
+Anything written between the upload and the restart is lost. Fly also keeps daily snapshots of the volume for five days.
 
 After that, every push to `main` deploys itself. `.github/workflows/deploy.yml` waits for CI to pass on the commit, runs `fly deploy`, then `scripts/smoke.sh` checks the live site. It needs one repository secret:
 
