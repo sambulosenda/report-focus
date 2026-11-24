@@ -46,10 +46,9 @@ jobs:
           cat "$GITHUB_OUTPUT"
       - name: Deploy
         id: deploy
-        run: flyctl deploy --remote-only --ha=false --build-secret DATABASE_AUTH_TOKEN="$DATABASE_AUTH_TOKEN"
+        run: flyctl deploy --remote-only --ha=false
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-          DATABASE_AUTH_TOKEN: ${{ secrets.DATABASE_AUTH_TOKEN }}
       - name: Smoke test
         id: smoke
         run: |

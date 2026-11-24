@@ -5,7 +5,6 @@ primary_region = "lhr"
 swap_size_mb = 512
 
 [build.args]
-  DATABASE_URL = "libsql://report-focus-sambulosenda.aws-eu-west-1.turso.io"
   SITE_URL = "https://reportfocusnews.com"
   S3_PUBLIC_URL = "https://media.reportfocusnews.com"
   SITE_TIMEZONE = "Africa/Harare"
@@ -16,7 +15,8 @@ swap_size_mb = 512
   WHATSAPP_CHANNEL_URL = "https://whatsapp.com/channel/0029VaAG1nY9WtC0hdfiVb1V"
 
 [env]
-  DATABASE_URL = "libsql://report-focus-sambulosenda.aws-eu-west-1.turso.io"
+  # A SQLite file on the volume below. Backed up to BACKUP_S3_BUCKET every night (deploy/cron.sh).
+  DATABASE_URL = "file:/data/db/report-focus.db"
   SITE_URL = "https://reportfocusnews.com"
   S3_PUBLIC_URL = "https://media.reportfocusnews.com"
   S3_REGION = "auto"
@@ -38,15 +38,17 @@ swap_size_mb = 512
 [deploy]
   release_command = "npx tsx scripts/check-env.ts"
 
+# Migrates the database, starts the scheduled jobs (deploy/cron.sh), then the website. All on one machine,
+# because a volume attaches to one machine only and the nightly backup has to read the database file.
 [processes]
-  app = "npx next start -H 0.0.0.0 -p 3000"
-  cron = "/app/deploy/cron.sh"
+  app = "/app/deploy/start.sh"
 
-# Resized pictures survive deploys, so a new release doesn't re-encode the whole archive on first visit.
-# Create once: fly volumes create image_cache -r lhr -s 1
+# Holds the database (/data/db) and resized pictures (/data/image-cache). A machine can mount one volume, so they share.
+# The name is from when it held only pictures; Fly can't rename a volume.
+# Create once: fly volumes create image_cache -r lhr -s 3
 [mounts]
   source = "image_cache"
-  destination = "/app/.next/cache/images"
+  destination = "/data"
   processes = ["app"]
 
 [http_service]
@@ -70,12 +72,9 @@ swap_size_mb = 512
     method = "GET"
     path = "/api/health"
 
+# Four shared CPUs: Fly slows a shared CPU to a small share once its burst is spent, and one was not enough
+# to build pages and run the database when crawlers hit a cold site (Nov 2026 outage).
 [[vm]]
-  size = "shared-cpu-1x"
+  size = "shared-cpu-4x"
   memory = "1gb"
   processes = ["app"]
-
-[[vm]]
-  size = "shared-cpu-1x"
-  memory = "512mb"
-  processes = ["cron"]

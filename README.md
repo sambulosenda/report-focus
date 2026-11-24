@@ -42,7 +42,7 @@ A fast, modern news site with a built-in newsroom. Readers get an ABC News–sty
 
 - [Next.js 15](https://nextjs.org) (App Router, React Server Components, Server Actions) and TypeScript
 - Tailwind CSS 4
-- [Drizzle ORM](https://orm.drizzle.team) on SQLite / [libSQL](https://turso.tech). Locally it's a file; in production point it at Turso.
+- [Drizzle ORM](https://orm.drizzle.team) on SQLite, through the [libSQL](https://github.com/tursodatabase/libsql) client. The database is one file.
 - Password login with bcrypt and database-backed sessions in an http-only cookie
 
 ## Getting started
@@ -165,33 +165,39 @@ Good to know:
 
 The app needs a database and somewhere to keep uploaded images.
 
-- **Database:** [Turso](https://turso.tech) (`DATABASE_URL` / `DATABASE_AUTH_TOKEN`) is recommended: it keeps automatic backups you can restore to any point in time. A SQLite file on a persistent disk also works on a single server.
+- **Database:** a SQLite file on a persistent disk (`DATABASE_URL=file:/path/to/site.db`), on a single server. Back it up nightly with `npm run db:backup`. A remote libSQL server (`libsql://...` plus `DATABASE_AUTH_TOKEN`) also works.
 - **Images:** set the `S3_*` settings in `.env.example` to store uploads in Cloudflare R2 or S3. Most hosts wipe the server's own disk on each deploy, so `UPLOAD_DIR` is only for local work or a server with a persistent volume. Moving later? Run `npm run uploads:move` once.
-- **Order:** run `npm run db:migrate && npm run build && npm start`. The build reads the database to prepare the homepage, so `DATABASE_URL` must be set at build time too.
+- **Order:** run `npm run db:migrate && npm run build && npm start`. The build reads the database to prepare the homepage, so `DATABASE_URL` must be set at build time too. If the build can't reach the real database, build against an empty one and run `node deploy/drop-prerendered.mjs` afterwards, as the `Dockerfile` does.
 
 ### Deploying on Fly.io
 
-`Dockerfile` and `fly.toml` run the site on [Fly.io](https://fly.io) with Turso as the database and an R2 bucket for images. Fly starts two kinds of machine:
+`Dockerfile` and `fly.toml` run the site on [Fly.io](https://fly.io) with the database as a SQLite file on a Fly volume and an R2 bucket for images. One machine runs everything (`deploy/start.sh`):
 
-- `app`: the website. One machine stays on all the time, because page caches and the view counter live in its memory. Keep it at one (`fly scale count app=1`).
-- `cron`: the scheduled jobs in `deploy/cron.sh`. It sends the day's newsletters each weekday at `NEWSLETTER_TIME` (default 06:30, in `SITE_TIMEZONE`) and, when `BACKUP_S3_BUCKET` is set, backs up the database every night at 02:15.
+- the website. It stays on all the time, because page caches and the view counter live in its memory. Keep it at one (`fly scale count app=1`): the volume with the database attaches to one machine only.
+- the scheduled jobs in `deploy/cron.sh`. They send the day's newsletters each weekday at `NEWSLETTER_TIME` (default 06:30, in `SITE_TIMEZONE`) and, when `BACKUP_S3_BUCKET` is set, back up the database every night at 02:15.
 
 First deploy:
 
-1. Put the Turso database address in both `DATABASE_URL` lines of `fly.toml`, and the bucket's public address in both `S3_PUBLIC_URL` lines.
+1. Put the bucket's public address in both `S3_PUBLIC_URL` lines of `fly.toml`.
 2. Create the app without deploying: `fly launch --no-deploy --copy-config`.
 3. Set the secrets (each one is typed into your terminal, never into a file):
-   `fly secrets set DATABASE_AUTH_TOKEN=... CRON_SECRET=... S3_BUCKET=... S3_ENDPOINT=... S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=...`
-   Add `RESEND_API_KEY` (and `EMAIL_PROVIDER = "resend"` in `fly.toml`), `BACKUP_S3_BUCKET` and `SENTRY_DSN` when you have them.
-4. Create the volume that keeps resized pictures across deploys: `fly volumes create image_cache -r lhr -s 1`.
-5. Deploy. The build runs the migrations and reads the database, so it needs the Turso token too:
-   `fly deploy --ha=false --build-secret DATABASE_AUTH_TOKEN="$(turso db tokens create <db name>)"`
+   `fly secrets set CRON_SECRET=... S3_BUCKET=... S3_ENDPOINT=... S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=... BACKUP_S3_BUCKET=...`
+   Add `RESEND_API_KEY` (and `EMAIL_PROVIDER = "resend"` in `fly.toml`) and `SENTRY_DSN` when you have them.
+4. Create the volume that holds the database and the resized pictures: `fly volumes create image_cache -r lhr -s 3`.
+5. Deploy: `fly deploy --ha=false`. The machine runs the migrations each time it starts.
 6. Check `https://<app>.fly.dev`, then point the domain at it: `fly certs add reportfocusnews.com` and follow what it prints.
 
-After that, every push to `main` deploys itself. `.github/workflows/deploy.yml` waits for CI to pass on the commit, runs `fly deploy`, then `scripts/smoke.sh` checks the live site. It needs two repository secrets:
+The database is one file, `/data/db/report-focus.db`. To restore a backup:
+
+1. Build the file on your computer: `sqlite3 restore.db < backups/<file>.sql`.
+2. Upload it next to the live one while the site runs: `fly ssh sftp put restore.db /data/db/restore.db`.
+3. Swap it in and restart, so the server opens the new file: `fly ssh console -C "sh -c 'cd /data/db && rm -f report-focus.db-wal report-focus.db-shm && mv restore.db report-focus.db'"`, then `fly machine restart <machine id>`.
+
+Anything written between the upload and the restart is lost. Fly also keeps daily snapshots of the volume for five days.
+
+After that, every push to `main` deploys itself. `.github/workflows/deploy.yml` waits for CI to pass on the commit, runs `fly deploy`, then `scripts/smoke.sh` checks the live site. It needs one repository secret:
 
 - `FLY_API_TOKEN`: `gh secret set FLY_API_TOKEN --body "$(fly tokens create deploy -a <app>)"`
-- `DATABASE_AUTH_TOKEN`: `gh secret set DATABASE_AUTH_TOKEN --body "$(turso db tokens create <db name>)"` (the build runs migrations, so not a read-only token)
 
 Run it by hand from the Actions tab (Deploy, then Run workflow), and run `scripts/smoke.sh` yourself after a manual `fly deploy`.
 
@@ -209,7 +215,7 @@ Reader pages are cached and rebuilt at most once a minute (live pages every 15 s
 
 - **Errors:** create a free project on [Sentry](https://sentry.io) and set `SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_DSN` (the second one before building). Nothing is sent while they are empty.
 - **Uptime:** point an uptime checker (Better Stack, UptimeRobot) at `/api/health`. It answers 200 when the site can reach its database and 503 when it can't.
-- **Backups:** besides Turso's own backups, schedule `npm run db:backup` nightly with `BACKUP_S3_BUCKET` set to a private bucket. Restore with `sqlite3 new.db < backups/<file>.sql`. Try a restore once before launch.
+- **Backups:** schedule `npm run db:backup` nightly with `BACKUP_S3_BUCKET` set to a private bucket. Restore with `sqlite3 new.db < backups/<file>.sql`. Try a restore once before launch.
 
 ### Security
 
